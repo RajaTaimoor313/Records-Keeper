@@ -146,6 +146,11 @@ class DatabaseHelper {
     return await db.insert('products', row);
   }
 
+  Future<List<Map<String, dynamic>>> getProducts() async {
+    final db = await instance.database;
+    return await db.query('products', orderBy: 'company ASC, brand ASC');
+  }
+
   // Close database
   Future<void> close() async {
     final db = await instance.database;
