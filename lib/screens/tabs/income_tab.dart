@@ -227,14 +227,14 @@ class _IncomeTabState extends State<IncomeTab> {
                 color: Colors.grey.withOpacity(0.1),
                 spreadRadius: 1,
                 blurRadius: 5,
-                offset: Offset(0, 2),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Income Management',
                 style: TextStyle(
                   fontSize: 24,
@@ -242,13 +242,13 @@ class _IncomeTabState extends State<IncomeTab> {
                   color: Colors.deepPurple,
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     flex: 10,
                     child: AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 300),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -264,7 +264,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               ? Colors.transparent 
                               : Colors.deepPurple.withOpacity(0.3),
                             blurRadius: 8,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
@@ -280,7 +280,7 @@ class _IncomeTabState extends State<IncomeTab> {
                           },
                           borderRadius: BorderRadius.circular(12),
                           child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -289,7 +289,7 @@ class _IncomeTabState extends State<IncomeTab> {
                                   color: !showAddForm ? Colors.grey[600] : Colors.white,
                                   size: 20,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
                                   'Add Data',
                                   style: TextStyle(
@@ -306,11 +306,11 @@ class _IncomeTabState extends State<IncomeTab> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     flex: 10,
                     child: AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 300),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -326,7 +326,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               ? Colors.transparent 
                               : Colors.deepPurple.withOpacity(0.3),
                             blurRadius: 8,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
@@ -342,7 +342,7 @@ class _IncomeTabState extends State<IncomeTab> {
                           },
                           borderRadius: BorderRadius.circular(12),
                           child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -351,7 +351,7 @@ class _IncomeTabState extends State<IncomeTab> {
                                   color: showAddForm ? Colors.grey[600] : Colors.white,
                                   size: 20,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
                                   'View Data',
                                   style: TextStyle(
@@ -375,7 +375,7 @@ class _IncomeTabState extends State<IncomeTab> {
         ),
         Expanded(
           child: AnimatedSwitcher(
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             child: showAddForm ? _buildAddForm() : _buildDataView(),
             transitionBuilder: (Widget child, Animation<double> animation) {
               return FadeTransition(
@@ -417,19 +417,19 @@ class _IncomeTabState extends State<IncomeTab> {
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: Colors.deepPurple.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.add_chart,
                         color: Colors.deepPurple,
                         size: 24,
                       ),
                     ),
-                    SizedBox(width: 12),
-                    Text(
+                    const SizedBox(width: 12),
+                    const Text(
                       'Add Income',
                       style: TextStyle(
                         fontSize: 24,
@@ -447,10 +447,10 @@ class _IncomeTabState extends State<IncomeTab> {
                       controller: dateController,
                       decoration: InputDecoration(
                         labelText: 'Date',
-                        labelStyle: TextStyle(color: Colors.deepPurple),
+                        labelStyle: const TextStyle(color: Colors.deepPurple),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple),
+                          borderSide: const BorderSide(color: Colors.deepPurple),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -458,9 +458,9 @@ class _IncomeTabState extends State<IncomeTab> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                         ),
-                        prefixIcon: Icon(Icons.calendar_today, color: Colors.deepPurple),
+                        prefixIcon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -471,10 +471,10 @@ class _IncomeTabState extends State<IncomeTab> {
                 InputDecorator(
                   decoration: InputDecoration(
                     labelText: 'Category',
-                    labelStyle: TextStyle(color: Colors.deepPurple),
+                    labelStyle: const TextStyle(color: Colors.deepPurple),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple),
+                      borderSide: const BorderSide(color: Colors.deepPurple),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -482,9 +482,9 @@ class _IncomeTabState extends State<IncomeTab> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                      borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                     ),
-                    prefixIcon: Icon(Icons.category, color: Colors.deepPurple),
+                    prefixIcon: const Icon(Icons.category, color: Colors.deepPurple),
                     filled: true,
                     fillColor: Colors.white,
                   ),
@@ -493,8 +493,8 @@ class _IncomeTabState extends State<IncomeTab> {
                       value: selectedCategory,
                       isDense: true,
                       isExpanded: true,
-                      hint: Text('Select a category'),
-                      style: TextStyle(
+                      hint: const Text('Select a category'),
+                      style: const TextStyle(
                         color: Colors.black87,
                         fontSize: 16,
                       ),
@@ -517,10 +517,10 @@ class _IncomeTabState extends State<IncomeTab> {
                   controller: detailsController,
                   decoration: InputDecoration(
                     labelText: 'Details',
-                    labelStyle: TextStyle(color: Colors.deepPurple),
+                    labelStyle: const TextStyle(color: Colors.deepPurple),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple),
+                      borderSide: const BorderSide(color: Colors.deepPurple),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -528,9 +528,9 @@ class _IncomeTabState extends State<IncomeTab> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                      borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                     ),
-                    prefixIcon: Icon(Icons.description, color: Colors.deepPurple),
+                    prefixIcon: const Icon(Icons.description, color: Colors.deepPurple),
                     filled: true,
                     fillColor: Colors.white,
                   ),
@@ -541,10 +541,10 @@ class _IncomeTabState extends State<IncomeTab> {
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Amount',
-                    labelStyle: TextStyle(color: Colors.deepPurple),
+                    labelStyle: const TextStyle(color: Colors.deepPurple),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple),
+                      borderSide: const BorderSide(color: Colors.deepPurple),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -552,17 +552,17 @@ class _IncomeTabState extends State<IncomeTab> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                      borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                     ),
-                    prefixIcon: Icon(Icons.attach_money, color: Colors.deepPurple),
+                    prefixIcon: const Icon(Icons.attach_money, color: Colors.deepPurple),
                     filled: true,
                     fillColor: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  icon: Icon(Icons.save, color: Colors.white),
-                  label: Text(
+                  icon: const Icon(Icons.save, color: Colors.white),
+                  label: const Text(
                     'Save Income',
                     style: TextStyle(
                       color: Colors.white,
@@ -572,7 +572,7 @@ class _IncomeTabState extends State<IncomeTab> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 3,
                     shadowColor: Colors.deepPurple.withOpacity(0.5),
                     shape: RoundedRectangleBorder(
@@ -591,7 +591,7 @@ class _IncomeTabState extends State<IncomeTab> {
 
   Widget _buildDataView() {
     if (isLoading) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -621,11 +621,11 @@ class _IncomeTabState extends State<IncomeTab> {
                 controller: searchController,
                 decoration: InputDecoration(
                   hintText: 'Search in all fields...',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  prefixIcon: Icon(Icons.search, color: Colors.deepPurple),
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.deepPurple),
+                    borderSide: const BorderSide(color: Colors.deepPurple),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -633,14 +633,14 @@ class _IncomeTabState extends State<IncomeTab> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                    borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                   ),
                   filled: true,
                   fillColor: Colors.white,
                 ),
                 onChanged: (value) => _filterRecords(),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -648,10 +648,10 @@ class _IncomeTabState extends State<IncomeTab> {
                     child: InputDecorator(
                       decoration: InputDecoration(
                         labelText: 'Filter by Category',
-                        labelStyle: TextStyle(color: Colors.deepPurple),
+                        labelStyle: const TextStyle(color: Colors.deepPurple),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple),
+                          borderSide: const BorderSide(color: Colors.deepPurple),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -659,9 +659,9 @@ class _IncomeTabState extends State<IncomeTab> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                         ),
-                        prefixIcon: Icon(Icons.filter_alt, color: Colors.deepPurple),
+                        prefixIcon: const Icon(Icons.filter_alt, color: Colors.deepPurple),
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -670,13 +670,13 @@ class _IncomeTabState extends State<IncomeTab> {
                           value: filterCategory,
                           isDense: true,
                           isExpanded: true,
-                          hint: Text('All Categories'),
-                          style: TextStyle(
+                          hint: const Text('All Categories'),
+                          style: const TextStyle(
                             color: Colors.black87,
                             fontSize: 16,
                           ),
                           items: [
-                            DropdownMenuItem<String>(
+                            const DropdownMenuItem<String>(
                               value: null,
                               child: Text('All Categories'),
                             ),
@@ -697,16 +697,16 @@ class _IncomeTabState extends State<IncomeTab> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     flex: 2,
                     child: InputDecorator(
                       decoration: InputDecoration(
                         labelText: 'Sort by',
-                        labelStyle: TextStyle(color: Colors.deepPurple),
+                        labelStyle: const TextStyle(color: Colors.deepPurple),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple),
+                          borderSide: const BorderSide(color: Colors.deepPurple),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -714,9 +714,9 @@ class _IncomeTabState extends State<IncomeTab> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                         ),
-                        prefixIcon: Icon(Icons.sort, color: Colors.deepPurple),
+                        prefixIcon: const Icon(Icons.sort, color: Colors.deepPurple),
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -725,8 +725,8 @@ class _IncomeTabState extends State<IncomeTab> {
                           value: sortBy,
                           isDense: true,
                           isExpanded: true,
-                          hint: Text('Sort...'),
-                          style: TextStyle(
+                          hint: const Text('Sort...'),
+                          style: const TextStyle(
                             color: Colors.black87,
                             fontSize: 16,
                           ),
@@ -736,7 +736,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Date'),
+                                  const Text('Date'),
                                   if (sortBy == 'Date')
                                     Icon(
                                       isAscending
@@ -753,7 +753,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Amount'),
+                                  const Text('Amount'),
                                   if (sortBy == 'Amount')
                                     Icon(
                                       isAscending
@@ -775,14 +775,14 @@ class _IncomeTabState extends State<IncomeTab> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.deepPurple.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.refresh, color: Colors.deepPurple),
+                      icon: const Icon(Icons.refresh, color: Colors.deepPurple),
                       onPressed: () {
                         setState(() {
                           filterCategory = null;
@@ -810,7 +810,7 @@ class _IncomeTabState extends State<IncomeTab> {
                         size: 64,
                         color: Colors.grey[400],
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         'No records found',
                         style: TextStyle(
@@ -819,7 +819,7 @@ class _IncomeTabState extends State<IncomeTab> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         'Try adjusting your search or filters',
                         style: TextStyle(
@@ -839,18 +839,18 @@ class _IncomeTabState extends State<IncomeTab> {
                         color: Colors.grey.withOpacity(0.1),
                         spreadRadius: 1,
                         blurRadius: 5,
-                        offset: Offset(0, 2),
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  margin: EdgeInsets.all(16),
+                  margin: const EdgeInsets.all(16),
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.deepPurple.shade50,
-                            borderRadius: BorderRadius.only(
+                            borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(12),
                               topRight: Radius.circular(12),
                             ),
@@ -872,7 +872,7 @@ class _IncomeTabState extends State<IncomeTab> {
                         ),
                         ListView.builder(
                           shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           itemCount: filteredRecords.length,
                           itemBuilder: (context, index) {
                             final record = filteredRecords[index];
@@ -902,7 +902,7 @@ class _IncomeTabState extends State<IncomeTab> {
                                       flex: 2,
                                       child: Text(
                                         'Rs. ${record.amount.toStringAsFixed(2)}',
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: Colors.green,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
@@ -945,7 +945,7 @@ class _IncomeTabState extends State<IncomeTab> {
       flex: flex,
       child: Text(
         text,
-        style: TextStyle(
+        style: const TextStyle(
           color: Colors.black87,
           fontSize: 14,
         ),

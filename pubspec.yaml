@@ -38,6 +38,7 @@ dependencies:
   sqflite_common_ffi: ^2.3.2
   path: ^1.8.3
   path_provider: ^2.1.2
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
@@ -91,3 +92,6 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  assets:
+    - assets/logo.jpg

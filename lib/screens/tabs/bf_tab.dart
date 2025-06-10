@@ -64,10 +64,10 @@ class _BFTabState extends State<BFTab> {
     final now = DateTime.now();
     quickDates = [
       now, // Today
-      now.subtract(Duration(days: 1)), // Yesterday
-      now.subtract(Duration(days: 2)), // 2 days ago
-      now.subtract(Duration(days: 3)), // 3 days ago
-      now.subtract(Duration(days: 4)), // 4 days ago
+      now.subtract(const Duration(days: 1)), // Yesterday
+      now.subtract(const Duration(days: 2)), // 2 days ago
+      now.subtract(const Duration(days: 3)), // 3 days ago
+      now.subtract(const Duration(days: 4)), // 4 days ago
     ];
   }
 
@@ -200,7 +200,7 @@ class _BFTabState extends State<BFTab> {
           if (picked.isBefore(startDate!)) {
             // Show error message if end date is before start date
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
+              const SnackBar(
                 content: Text('End date must be after start date'),
                 backgroundColor: Colors.red,
               ),
@@ -250,7 +250,7 @@ class _BFTabState extends State<BFTab> {
                 color: Colors.grey.withOpacity(0.1),
                 spreadRadius: 1,
                 blurRadius: 5,
-                offset: Offset(0, 2),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -260,7 +260,7 @@ class _BFTabState extends State<BFTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     'Financial Summary',
                     style: TextStyle(
                       fontSize: 24,
@@ -274,27 +274,27 @@ class _BFTabState extends State<BFTab> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.refresh, color: Colors.deepPurple),
+                      icon: const Icon(Icons.refresh, color: Colors.deepPurple),
                       onPressed: _resetToCurrentMonth,
                       tooltip: 'Reset to Current Month',
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.deepPurple.shade50,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.date_range, color: Colors.deepPurple),
-                    SizedBox(width: 8),
+                    const Icon(Icons.date_range, color: Colors.deepPurple),
+                    const SizedBox(width: 8),
                     Text(
                       _getDateRangeText(),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.deepPurple,
                         fontWeight: FontWeight.w600,
                       ),
@@ -302,7 +302,7 @@ class _BFTabState extends State<BFTab> {
                   ],
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Checkbox(
@@ -328,32 +328,32 @@ class _BFTabState extends State<BFTab> {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _selectDate(context, true),
-                      icon: Icon(Icons.calendar_today, size: 18),
+                      icon: const Icon(Icons.calendar_today, size: 18),
                       label: Text(isDateRange ? 'Start Date' : 'Select Date'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.deepPurple,
                         side: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                     ),
                   ),
                   if (isDateRange) ...[
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _selectDate(context, false),
-                        icon: Icon(Icons.calendar_today, size: 18),
-                        label: Text('End Date'),
+                        icon: const Icon(Icons.calendar_today, size: 18),
+                        label: const Text('End Date'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.deepPurple,
                           side: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
                       ),
                     ),
@@ -365,7 +365,7 @@ class _BFTabState extends State<BFTab> {
         ),
         Expanded(
           child: isLoading
-              ? Center(
+              ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -397,7 +397,7 @@ class _BFTabState extends State<BFTab> {
                               color: Colors.blue,
                             ),
                           ),
-                          SizedBox(width: 16),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: _buildFinancialCard(
                               title: 'Other Income',
@@ -408,7 +408,7 @@ class _BFTabState extends State<BFTab> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
@@ -419,7 +419,7 @@ class _BFTabState extends State<BFTab> {
                               color: Colors.purple,
                             ),
                           ),
-                          SizedBox(width: 16),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: _buildFinancialCard(
                               title: 'Total Expenditure',
@@ -430,7 +430,7 @@ class _BFTabState extends State<BFTab> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: _buildFinancialCard(
@@ -498,7 +498,7 @@ class _BFTabState extends State<BFTab> {
                 const SizedBox(height: 4),
                 Text(
                   'Rs. ${amount.toStringAsFixed(2)}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,

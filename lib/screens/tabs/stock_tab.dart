@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../database_helper.dart';
+import 'dart:math';
 
 class Product {
+  final String id;
   final String company;
   final String brand;
   final double ctnRate;
   final double boxRate;
+  final double salePrice;
   final int ctnPacking;
   final int boxPacking;
   final int unitsPacking;
 
   Product({
+    required this.id,
     required this.company,
     required this.brand,
     required this.ctnRate,
     required this.boxRate,
+    required this.salePrice,
     required this.ctnPacking,
     required this.boxPacking,
     required this.unitsPacking,
@@ -23,10 +28,12 @@ class Product {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'company': company,
       'brand': brand,
       'ctnRate': ctnRate,
       'boxRate': boxRate,
+      'salePrice': salePrice,
       'ctnPacking': ctnPacking,
       'boxPacking': boxPacking,
       'unitsPacking': unitsPacking,
@@ -60,6 +67,9 @@ class _StockTabState extends State<StockTab> {
   final TextEditingController _boxPackingController = TextEditingController();
   final TextEditingController _unitsPackingController = TextEditingController();
 
+  // Replace trade rate controllers with sale price controller
+  final TextEditingController _salePriceController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -76,6 +86,7 @@ class _StockTabState extends State<StockTab> {
     _ctnPackingController.dispose();
     _boxPackingController.dispose();
     _unitsPackingController.dispose();
+    _salePriceController.dispose();
     super.dispose();
   }
 
@@ -90,10 +101,12 @@ class _StockTabState extends State<StockTab> {
         productRecords = records
             .map(
               (record) => Product(
+                id: record['id'] ?? '',
                 company: record['company'],
                 brand: record['brand'],
                 ctnRate: record['ctnRate'],
                 boxRate: record['boxRate'],
+                salePrice: record['salePrice'],
                 ctnPacking: record['ctnPacking'],
                 boxPacking: record['boxPacking'],
                 unitsPacking: record['unitsPacking'],
@@ -169,24 +182,57 @@ class _StockTabState extends State<StockTab> {
   }
 
   void _resetForm() {
-    _formKey.currentState?.reset();
     _companyController.clear();
     _brandController.clear();
     _ctnRateController.clear();
     _boxRateController.clear();
+    _salePriceController.clear();
     _ctnPackingController.clear();
     _boxPackingController.clear();
     _unitsPackingController.clear();
+    _formKey.currentState?.reset();
+  }
+
+  void _calculateBoxRate() {
+    if (_ctnRateController.text.isNotEmpty && _boxPackingController.text.isNotEmpty) {
+      try {
+        final ctnRate = double.parse(_ctnRateController.text);
+        final boxPacking = int.parse(_boxPackingController.text);
+        if (boxPacking > 0) {
+          final boxRate = ctnRate / boxPacking;
+          _boxRateController.text = boxRate.toStringAsFixed(2);
+        }
+      } catch (e) {
+        _boxRateController.clear();
+      }
+    } else {
+      _boxRateController.clear();
+    }
+  }
+
+  String _generateProductId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    String id;
+    do {
+      id = List.generate(5, (index) => chars[random.nextInt(chars.length)]).join();
+    } while (productRecords.any((product) => product.id == id));
+    return id;
   }
 
   Future<void> _saveProduct() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
+        // Calculate box rate one final time before saving
+        _calculateBoxRate();
+        
         final product = Product(
+          id: _generateProductId(),
           company: _companyController.text.trim(),
           brand: _brandController.text.trim(),
           ctnRate: double.parse(_ctnRateController.text),
           boxRate: double.parse(_boxRateController.text),
+          salePrice: double.parse(_salePriceController.text),
           ctnPacking: int.parse(_ctnPackingController.text),
           boxPacking: int.parse(_boxPackingController.text),
           unitsPacking: int.parse(_unitsPackingController.text),
@@ -202,6 +248,7 @@ class _StockTabState extends State<StockTab> {
         );
 
         _resetForm();
+        _loadProducts();
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -227,7 +274,7 @@ class _StockTabState extends State<StockTab> {
                 color: Colors.grey.withOpacity(0.1),
                 spreadRadius: 1,
                 blurRadius: 5,
-                offset: Offset(0, 2),
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -239,7 +286,7 @@ class _StockTabState extends State<StockTab> {
                 children: [
                   Text(
                     showForm ? 'Add New Product' : 'Product List',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.deepPurple,
@@ -267,7 +314,7 @@ class _StockTabState extends State<StockTab> {
                             },
                             borderRadius: BorderRadius.circular(8),
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -278,7 +325,7 @@ class _StockTabState extends State<StockTab> {
                                         : Colors.grey[600],
                                     size: 20,
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
                                     'Add Product',
                                     style: TextStyle(
@@ -296,7 +343,7 @@ class _StockTabState extends State<StockTab> {
                           ),
                         ),
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Container(
                         height: 45,
                         decoration: BoxDecoration(
@@ -317,7 +364,7 @@ class _StockTabState extends State<StockTab> {
                             },
                             borderRadius: BorderRadius.circular(8),
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -328,7 +375,7 @@ class _StockTabState extends State<StockTab> {
                                         : Colors.grey[600],
                                     size: 20,
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
                                     'View Products',
                                     style: TextStyle(
@@ -355,7 +402,7 @@ class _StockTabState extends State<StockTab> {
         ),
         Expanded(
           child: AnimatedSwitcher(
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             child: showForm ? _buildAddForm() : _buildDataView(),
             transitionBuilder: (Widget child, Animation<double> animation) {
               return FadeTransition(opacity: animation, child: child);
@@ -379,10 +426,10 @@ class _StockTabState extends State<StockTab> {
               controller: _companyController,
               decoration: InputDecoration(
                 labelText: 'Company',
-                labelStyle: TextStyle(color: Colors.deepPurple),
+                labelStyle: const TextStyle(color: Colors.deepPurple),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.deepPurple),
+                  borderSide: const BorderSide(color: Colors.deepPurple),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -392,9 +439,9 @@ class _StockTabState extends State<StockTab> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                  borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                 ),
-                prefixIcon: Icon(Icons.business, color: Colors.deepPurple),
+                prefixIcon: const Icon(Icons.business, color: Colors.deepPurple),
                 filled: true,
                 fillColor: Colors.white,
               ),
@@ -405,17 +452,17 @@ class _StockTabState extends State<StockTab> {
                 return null;
               },
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Brand Field
             TextFormField(
               controller: _brandController,
               decoration: InputDecoration(
                 labelText: 'Brand',
-                labelStyle: TextStyle(color: Colors.deepPurple),
+                labelStyle: const TextStyle(color: Colors.deepPurple),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.deepPurple),
+                  borderSide: const BorderSide(color: Colors.deepPurple),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -425,9 +472,9 @@ class _StockTabState extends State<StockTab> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+                  borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                 ),
-                prefixIcon: Icon(
+                prefixIcon: const Icon(
                   Icons.branding_watermark,
                   color: Colors.deepPurple,
                 ),
@@ -441,10 +488,10 @@ class _StockTabState extends State<StockTab> {
                 return null;
               },
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Invoice Rate Section
-            Text(
+            const Text(
               'Invoice Rate',
               style: TextStyle(
                 fontSize: 16,
@@ -452,26 +499,18 @@ class _StockTabState extends State<StockTab> {
                 color: Colors.deepPurple,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: _ctnRateController,
-                    keyboardType: TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d{0,2}'),
-                      ),
-                    ],
                     decoration: InputDecoration(
                       labelText: 'CTN Rate',
-                      labelStyle: TextStyle(color: Colors.deepPurple),
+                      labelStyle: const TextStyle(color: Colors.deepPurple),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.deepPurple),
+                        borderSide: const BorderSide(color: Colors.deepPurple),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -481,87 +520,100 @@ class _StockTabState extends State<StockTab> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple,
-                          width: 2,
-                        ),
+                        borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                       ),
-                      prefixIcon: Icon(
-                        Icons.attach_money,
-                        color: Colors.deepPurple,
-                      ),
+                      prefixIcon: const Icon(Icons.attach_money, color: Colors.deepPurple),
                       filled: true,
                       fillColor: Colors.white,
                     ),
+                    keyboardType: TextInputType.number,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Please enter CTN rate';
-                      }
-                      if (double.tryParse(value) == null ||
-                          double.parse(value) <= 0) {
-                        return 'Please enter a valid rate';
                       }
                       return null;
                     },
+                    onChanged: (value) => _calculateBoxRate(),
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: TextFormField(
                     controller: _boxRateController,
-                    keyboardType: TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d{0,2}'),
-                      ),
-                    ],
                     decoration: InputDecoration(
                       labelText: 'Box Rate',
-                      labelStyle: TextStyle(color: Colors.deepPurple),
+                      labelStyle: const TextStyle(color: Colors.deepPurple),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.deepPurple),
+                        borderSide: const BorderSide(color: Colors.deepPurple),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
-                          color: Colors.deepPurple.withOpacity(0.5),
+                          color: Colors.deepPurple,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple,
-                          width: 2,
-                        ),
+                        borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                       ),
-                      prefixIcon: Icon(
-                        Icons.attach_money,
-                        color: Colors.deepPurple,
-                      ),
+                      prefixIcon: const Icon(Icons.calculate, color: Colors.deepPurple),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: Colors.grey.shade100,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter box rate';
-                      }
-                      if (double.tryParse(value) == null ||
-                          double.parse(value) <= 0) {
-                        return 'Please enter a valid rate';
-                      }
-                      return null;
-                    },
+                    readOnly: true,
+                    enabled: false,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
+
+            // Trade Rate Section
+            const Text(
+              'Trade Rate',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _salePriceController,
+              decoration: InputDecoration(
+                labelText: 'Sale Price per Box',
+                labelStyle: const TextStyle(color: Colors.deepPurple),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepPurple),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.deepPurple.withOpacity(0.5),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                ),
+                prefixIcon: const Icon(Icons.attach_money, color: Colors.deepPurple),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter sale price';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
 
             // Packing Section
-            Text(
+            const Text(
               'Packing',
               style: TextStyle(
                 fontSize: 16,
@@ -569,7 +621,7 @@ class _StockTabState extends State<StockTab> {
                 color: Colors.deepPurple,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -579,10 +631,10 @@ class _StockTabState extends State<StockTab> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
                       labelText: 'CTN',
-                      labelStyle: TextStyle(color: Colors.deepPurple),
+                      labelStyle: const TextStyle(color: Colors.deepPurple),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.deepPurple),
+                        borderSide: const BorderSide(color: Colors.deepPurple),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -592,12 +644,12 @@ class _StockTabState extends State<StockTab> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
+                        borderSide: const BorderSide(
                           color: Colors.deepPurple,
                           width: 2,
                         ),
                       ),
-                      prefixIcon: Icon(
+                      prefixIcon: const Icon(
                         Icons.inventory,
                         color: Colors.deepPurple,
                       ),
@@ -616,18 +668,19 @@ class _StockTabState extends State<StockTab> {
                     },
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: TextFormField(
                     controller: _boxPackingController,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (_) => _calculateBoxRate(),
                     decoration: InputDecoration(
-                      labelText: 'Box',
-                      labelStyle: TextStyle(color: Colors.deepPurple),
+                      labelText: 'Box Packing',
+                      labelStyle: const TextStyle(color: Colors.deepPurple),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.deepPurple),
+                        borderSide: const BorderSide(color: Colors.deepPurple),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -637,31 +690,24 @@ class _StockTabState extends State<StockTab> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple,
-                          width: 2,
-                        ),
+                        borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
                       ),
-                      prefixIcon: Icon(
-                        Icons.inventory_2,
-                        color: Colors.deepPurple,
-                      ),
+                      prefixIcon: const Icon(Icons.inventory_2, color: Colors.deepPurple),
                       filled: true,
                       fillColor: Colors.white,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter box';
+                        return 'Please enter box packing';
                       }
-                      if (int.tryParse(value) == null ||
-                          int.parse(value) <= 0) {
+                      if (int.tryParse(value) == null || int.parse(value) <= 0) {
                         return 'Please enter a valid number';
                       }
                       return null;
                     },
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: TextFormField(
                     controller: _unitsPackingController,
@@ -669,10 +715,10 @@ class _StockTabState extends State<StockTab> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
                       labelText: 'Units',
-                      labelStyle: TextStyle(color: Colors.deepPurple),
+                      labelStyle: const TextStyle(color: Colors.deepPurple),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.deepPurple),
+                        borderSide: const BorderSide(color: Colors.deepPurple),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -682,12 +728,12 @@ class _StockTabState extends State<StockTab> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
+                        borderSide: const BorderSide(
                           color: Colors.deepPurple,
                           width: 2,
                         ),
                       ),
-                      prefixIcon: Icon(
+                      prefixIcon: const Icon(
                         Icons.format_list_numbered,
                         color: Colors.deepPurple,
                       ),
@@ -708,7 +754,7 @@ class _StockTabState extends State<StockTab> {
                 ),
               ],
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // Action Buttons
             Row(
@@ -716,29 +762,29 @@ class _StockTabState extends State<StockTab> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _saveProduct,
-                    icon: Icon(Icons.save, color: Colors.white),
-                    label: Text(
+                    icon: const Icon(Icons.save, color: Colors.white),
+                    label: const Text(
                       'Save Product',
                       style: TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 OutlinedButton.icon(
                   onPressed: _resetForm,
-                  icon: Icon(Icons.refresh),
-                  label: Text('Reset'),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reset'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.deepPurple,
-                    side: BorderSide(color: Colors.deepPurple),
-                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    side: const BorderSide(color: Colors.deepPurple),
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -754,7 +800,7 @@ class _StockTabState extends State<StockTab> {
 
   Widget _buildDataView() {
     if (isLoading) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -781,42 +827,46 @@ class _StockTabState extends State<StockTab> {
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Container(
-                  constraints: BoxConstraints(minWidth: 800),
+                  constraints: const BoxConstraints(minWidth: 800),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextField(
-                        controller: searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search products...',
-                          hintStyle: TextStyle(color: Colors.grey),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Colors.deepPurple,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.deepPurple),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
-                              color: Colors.deepPurple.withOpacity(0.5),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(
+                      Container(
+                        width: double.infinity,
+                        constraints: const BoxConstraints(maxWidth: 800),
+                        child: TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search products...',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            prefixIcon: const Icon(
+                              Icons.search,
                               color: Colors.deepPurple,
-                              width: 2,
                             ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: Colors.deepPurple.withOpacity(0.5),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Colors.deepPurple,
+                                width: 2,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
                           ),
-                          filled: true,
-                          fillColor: Colors.white,
+                          onChanged: (value) => _filterRecords(),
                         ),
-                        onChanged: (value) => _filterRecords(),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           SizedBox(
@@ -824,10 +874,10 @@ class _StockTabState extends State<StockTab> {
                             child: InputDecorator(
                               decoration: InputDecoration(
                                 labelText: 'Sort by',
-                                labelStyle: TextStyle(color: Colors.deepPurple),
+                                labelStyle: const TextStyle(color: Colors.deepPurple),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(
+                                  borderSide: const BorderSide(
                                     color: Colors.deepPurple,
                                   ),
                                 ),
@@ -839,12 +889,12 @@ class _StockTabState extends State<StockTab> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(
+                                  borderSide: const BorderSide(
                                     color: Colors.deepPurple,
                                     width: 2,
                                   ),
                                 ),
-                                prefixIcon: Icon(
+                                prefixIcon: const Icon(
                                   Icons.sort,
                                   color: Colors.deepPurple,
                                 ),
@@ -856,8 +906,8 @@ class _StockTabState extends State<StockTab> {
                                   value: sortBy,
                                   isDense: true,
                                   isExpanded: true,
-                                  hint: Text('Sort...'),
-                                  style: TextStyle(
+                                  hint: const Text('Sort...'),
+                                  style: const TextStyle(
                                     color: Colors.black87,
                                     fontSize: 16,
                                   ),
@@ -896,14 +946,14 @@ class _StockTabState extends State<StockTab> {
                               ),
                             ),
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.deepPurple.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: IconButton(
-                              icon: Icon(
+                              icon: const Icon(
                                 Icons.refresh,
                                 color: Colors.deepPurple,
                               ),
@@ -933,7 +983,7 @@ class _StockTabState extends State<StockTab> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         'No products found',
                         style: TextStyle(
@@ -942,7 +992,7 @@ class _StockTabState extends State<StockTab> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         'Try adjusting your search or filters',
                         style: TextStyle(fontSize: 14, color: Colors.grey[500]),
@@ -953,251 +1003,104 @@ class _StockTabState extends State<StockTab> {
               : Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade200),
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 3,
-                        offset: Offset(0, 1),
+                        color: Colors.grey.withOpacity(0.08),
+                        spreadRadius: 2,
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
                     children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey.shade200),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.view_list_rounded,
+                              color: Colors.deepPurple.shade400,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Product List',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.deepPurple.shade700,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '${filteredRecords.length} Products',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       // Header Table
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        child: Container(
-                          constraints: BoxConstraints(
-                            minWidth:
-                                800, // Minimum width before scrolling starts
-                          ),
+                        child: SizedBox(
+                          width: 800,
                           child: Table(
                             border: TableBorder(
                               horizontalInside: BorderSide(
-                                color: Colors.grey.shade300,
+                                color: Colors.grey.shade200,
+                                width: 1,
                               ),
                               verticalInside: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
-                              top: BorderSide(color: Colors.grey.shade300),
-                              bottom: BorderSide(
-                                color: Colors.grey.shade300,
-                                width: 2,
+                                color: Colors.grey.shade200,
+                                width: 1,
                               ),
                             ),
-                            defaultVerticalAlignment:
-                                TableCellVerticalAlignment.middle,
+                            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                             columnWidths: const <int, TableColumnWidth>{
-                              0: FlexColumnWidth(2), // Company
-                              1: FlexColumnWidth(2), // Brand
-                              2: FlexColumnWidth(2), // Invoice Rate (spans 2)
-                              3: FlexColumnWidth(3), // Packing (spans 3)
+                              0: FlexColumnWidth(1.5),
+                              1: FlexColumnWidth(2),
+                              2: FlexColumnWidth(2),
+                              3: FlexColumnWidth(4),
+                              4: FlexColumnWidth(6),
                             },
                             children: [
                               TableRow(
                                 decoration: BoxDecoration(
-                                  color: Colors.deepPurple.shade50.withOpacity(
-                                    0.7,
-                                  ),
+                                  color: Colors.deepPurple.shade50.withOpacity(0.7),
                                 ),
                                 children: [
-                                  // Company - spans 2 rows
-                                  TableCell(
-                                    verticalAlignment:
-                                        TableCellVerticalAlignment.fill,
-                                    child: Container(
-                                      height: 88,
-                                      padding: EdgeInsets.all(8),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        'Company',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.deepPurple.shade700,
-                                          fontSize: 13.5,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  // Brand - spans 2 rows
-                                  TableCell(
-                                    verticalAlignment:
-                                        TableCellVerticalAlignment.fill,
-                                    child: Container(
-                                      height: 88,
-                                      padding: EdgeInsets.all(8),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        'Brand',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.deepPurple.shade700,
-                                          fontSize: 13.5,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  // Invoice Rate header
-                                  TableCell(
-                                    child: Container(
-                                      height: 48,
-                                      padding: EdgeInsets.all(8),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        'Invoice Rate',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.deepPurple.shade700,
-                                          fontSize: 13.5,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  // Packing header
-                                  TableCell(
-                                    child: Container(
-                                      height: 48,
-                                      padding: EdgeInsets.all(8),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        'Packing',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.deepPurple.shade700,
-                                          fontSize: 13.5,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                  _buildHeaderCell('ID', true),
+                                  _buildHeaderCell('Company', true),
+                                  _buildHeaderCell('Brand', true),
+                                  _buildHeaderCell('Invoice Rate', false),
+                                  _buildHeaderCell('Packing', false),
                                 ],
                               ),
                               TableRow(
                                 decoration: BoxDecoration(
-                                  color: Colors.deepPurple.shade50.withOpacity(
-                                    0.5,
-                                  ),
+                                  color: Colors.deepPurple.shade50.withOpacity(0.5),
                                 ),
                                 children: [
-                                  // Empty cells for Company and Brand (spanned)
                                   TableCell(child: Container()),
                                   TableCell(child: Container()),
-                                  // Invoice Rate sub-headers
-                                  TableCell(
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Container(
-                                            height: 40,
-                                            padding: EdgeInsets.all(8),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'CTN',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Colors.deepPurple.shade700,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 1,
-                                          height: 40,
-                                          color: Colors.grey.shade300,
-                                        ),
-                                        Expanded(
-                                          child: Container(
-                                            height: 40,
-                                            padding: EdgeInsets.all(8),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'Box',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Colors.deepPurple.shade700,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Packing sub-headers
-                                  TableCell(
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Container(
-                                            height: 40,
-                                            padding: EdgeInsets.all(8),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'CTN',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Colors.deepPurple.shade700,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 1,
-                                          height: 40,
-                                          color: Colors.grey.shade300,
-                                        ),
-                                        Expanded(
-                                          child: Container(
-                                            height: 40,
-                                            padding: EdgeInsets.all(8),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'Box',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Colors.deepPurple.shade700,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          width: 1,
-                                          height: 40,
-                                          color: Colors.grey.shade300,
-                                        ),
-                                        Expanded(
-                                          child: Container(
-                                            height: 40,
-                                            padding: EdgeInsets.all(8),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'Units',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    Colors.deepPurple.shade700,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  TableCell(child: Container()),
+                                  _buildSubHeaderRow(['CTN', 'Box']),
+                                  _buildSubHeaderRow(['CTN', 'Box', 'Units']),
                                 ],
                               ),
                             ],
@@ -1205,111 +1108,19 @@ class _StockTabState extends State<StockTab> {
                         ),
                       ),
                       // Data rows
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Container(
-                          constraints: BoxConstraints(
-                            minWidth: 800, // Match header table minimum width
-                          ),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: filteredRecords.length,
-                            itemBuilder: (context, index) {
-                              final product = filteredRecords[index];
-                              final isEven = index % 2 == 0;
-
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: isEven
-                                      ? Colors.grey.shade50
-                                      : Colors.white,
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.grey.shade200,
-                                    ),
-                                  ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: 800,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: List.generate(
+                                  filteredRecords.length,
+                                  (index) => _buildDataRow(filteredRecords[index], index % 2 == 0),
                                 ),
-                                child: Table(
-                                  columnWidths: const <int, TableColumnWidth>{
-                                    0: FlexColumnWidth(2),
-                                    1: FlexColumnWidth(2),
-                                    2: FlexColumnWidth(2),
-                                    3: FlexColumnWidth(3),
-                                  },
-                                  children: [
-                                    TableRow(
-                                      children: [
-                                        TableCell(
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 12,
-                                            ),
-                                            child: Text(
-                                              product.company,
-                                              style: TextStyle(
-                                                color: Colors.black87,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        TableCell(
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 12,
-                                            ),
-                                            child: Text(
-                                              product.brand,
-                                              style: TextStyle(
-                                                color: Colors.black87,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        TableCell(
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 12,
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'Rs. ${product.ctnRate.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                color: Colors.green.shade700,
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        TableCell(
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 12,
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'Rs. ${product.boxRate.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                color: Colors.green.shade700,
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -1318,6 +1129,224 @@ class _StockTabState extends State<StockTab> {
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _buildHeaderCell(String text, bool isSpanned) {
+    return TableCell(
+      verticalAlignment: isSpanned ? TableCellVerticalAlignment.fill : TableCellVerticalAlignment.middle,
+      child: Container(
+        height: isSpanned ? 88 : 48,
+        padding: const EdgeInsets.all(12),
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.deepPurple.shade700,
+            fontSize: 13.5,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubHeaderRow(List<String> items) {
+    return TableCell(
+      child: Row(
+        children: items.map((item) {
+          final isLast = item == items.last;
+          return Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 40,
+                    padding: const EdgeInsets.all(8),
+                    alignment: Alignment.center,
+                    child: Text(
+                      item,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.deepPurple.shade700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+                if (!isLast)
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.grey.shade300,
+                  ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildDataRow(Product product, bool isEven) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isEven ? Colors.grey.shade50 : Colors.white,
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade200),
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              // Handle row tap if needed
+            },
+            child: Table(
+              columnWidths: const <int, TableColumnWidth>{
+                0: FlexColumnWidth(1.5),
+                1: FlexColumnWidth(2),
+                2: FlexColumnWidth(2),
+                3: FlexColumnWidth(4),
+                4: FlexColumnWidth(6),
+              },
+              children: [
+                TableRow(
+                  children: [
+                    _buildDataCell(product.id, isId: true),
+                    _buildDataCell(product.company),
+                    _buildDataCell(product.brand),
+                    _buildInvoiceRateCell(product.ctnRate, product.boxRate, product.salePrice),
+                    _buildPackingCell(product.ctnPacking, product.boxPacking, product.unitsPacking),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDataCell(String text, {bool isId = false}) {
+    return TableCell(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isId ? Colors.deepPurple.shade700 : Colors.grey.shade800,
+            fontSize: 13,
+            height: 1.4,
+            fontWeight: isId ? FontWeight.w600 : null,
+            letterSpacing: isId ? 0.5 : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInvoiceRateCell(double ctnRate, double boxRate, double salePrice) {
+    return TableCell(
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              alignment: Alignment.center,
+              child: Column(
+                children: [
+                  Text(
+                    'Invoice: Rs. ${ctnRate.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Sale: Rs. ${salePrice.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: Colors.blue.shade700,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(width: 1, height: 40, color: Colors.grey.shade200),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              alignment: Alignment.center,
+              child: Text(
+                'Rs. ${boxRate.toStringAsFixed(2)}',
+                style: TextStyle(
+                  color: Colors.green.shade700,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPackingCell(int ctn, int box, int units) {
+    return TableCell(
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              alignment: Alignment.center,
+              child: Text(
+                '$ctn',
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+          Container(width: 1, height: 40, color: Colors.grey.shade200),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              alignment: Alignment.center,
+              child: Text(
+                '$box',
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+          Container(width: 1, height: 40, color: Colors.grey.shade200),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              alignment: Alignment.center,
+              child: Text(
+                '$units',
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

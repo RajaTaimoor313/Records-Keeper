@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:records_keeper/screens/cash_flow_screen.dart';
 import 'package:records_keeper/screens/tabs/stock_tab.dart';
+import 'package:records_keeper/screens/tabs/stock_report_tab.dart';
+import 'package:records_keeper/screens/tabs/stock_summary_tab.dart';
+import 'package:records_keeper/screens/tabs/shops/add_shop_tab.dart';
+import 'package:records_keeper/screens/tabs/shops/view_shops_tab.dart';
+import 'package:records_keeper/screens/tabs/sales/invoice_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,8 +20,12 @@ class _HomeScreenState extends State<HomeScreen>
   bool _panelVisible = true;
   bool _cashFlowExpanded = false;
   bool _stockExpanded = false;
+  bool _newTabExpanded = false;
+  bool _salesExpanded = false;
   String? _cashFlowSubTab;
   String? _stockSubTab;
+  String? _newTabSubTab;
+  String? _salesSubTab;
   late AnimationController _animationController;
 
   @override
@@ -175,12 +184,8 @@ class _HomeScreenState extends State<HomeScreen>
             _buildPanelItem(0, Icons.dashboard_rounded, 'Dashboard'),
             _buildCashFlowItem(),
             _buildStockItem(),
-            _buildPanelItem(3, Icons.shopping_cart_rounded, 'Add Sales'),
-            _buildPanelItem(4, Icons.store_rounded, 'Check Stock'),
-            _buildPanelItem(5, Icons.people_rounded, 'Buyers List'),
-            _buildPanelItem(6, Icons.payments_rounded, 'Pending Payments'),
-            _buildPanelItem(7, Icons.inventory_2_rounded, 'Pending Stock'),
-            _buildPanelItem(8, Icons.history_rounded, 'History'),
+            _buildNewTabItem(),
+            _buildSalesItem(),
           ],
         ),
       ),
@@ -344,14 +349,13 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: _stockExpanded ? 240 : 0,
+          height: _stockExpanded ? 192 : 0, // 48 pixels per item * 4 items
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
             child: Column(
               children: [
                 _buildStockSubItem('Add New Product'),
-                _buildStockSubItem('Update Stock (Closing)'),
-                _buildStockSubItem('Enter Sale'),
+                _buildStockSubItem('Stock Report'),
                 _buildStockSubItem('Stock Summary'),
                 _buildStockSubItem('Adjustments'),
               ],
@@ -391,6 +395,211 @@ class _HomeScreenState extends State<HomeScreen>
           setState(() {
             _selectedIndex = 2;
             _stockSubTab = tabName;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildSalesItem() {
+    return Column(
+      children: [
+        ListTile(
+          horizontalTitleGap: 8,
+          minLeadingWidth: 20,
+          leading: SizedBox(
+            width: 24,
+            height: 24,
+            child: Icon(
+              Icons.point_of_sale_rounded,
+              size: 20,
+              color: (_selectedIndex == 10 && _salesSubTab != null)
+                  ? Colors.deepPurple
+                  : Colors.grey.shade700,
+            ),
+          ),
+          title: Row(
+            children: [
+              Text(
+                'Sales',
+                style: TextStyle(
+                  color: (_selectedIndex == 10 && _salesSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                  fontWeight: (_selectedIndex == 10 && _salesSubTab != null)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              AnimatedRotation(
+                turns: _salesExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 20,
+                  color: (_selectedIndex == 10 && _salesSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          onTap: () {
+            setState(() {
+              _salesExpanded = !_salesExpanded;
+            });
+          },
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _salesExpanded ? 144 : 0, // 48 pixels per item * 3 items
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildSalesSubItem('Invoice'),
+                _buildSalesSubItem('Load Form'),
+                _buildSalesSubItem('Pick List'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSalesSubItem(String tabName) {
+    final isSelected = _selectedIndex == 10 && _salesSubTab == tabName;
+
+    return Container(
+      padding: const EdgeInsets.only(left: 32.0),
+      child: ListTile(
+        horizontalTitleGap: 8,
+        minLeadingWidth: 20,
+        leading: SizedBox(
+          width: 24,
+          height: 24,
+          child: Icon(
+            Icons.arrow_right_rounded,
+            size: 20,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+          ),
+        ),
+        title: Text(
+          tabName,
+          style: TextStyle(
+            fontSize: 14,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        onTap: () {
+          setState(() {
+            _selectedIndex = 10;
+            _salesSubTab = tabName;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildNewTabItem() {
+    return Column(
+      children: [
+        ListTile(
+          horizontalTitleGap: 8,
+          minLeadingWidth: 20,
+          leading: SizedBox(
+            width: 24,
+            height: 24,
+            child: Icon(
+              Icons.store_mall_directory_rounded,
+              size: 20,
+              color: (_selectedIndex == 9 && _newTabSubTab != null)
+                  ? Colors.deepPurple
+                  : Colors.grey.shade700,
+            ),
+          ),
+          title: Row(
+            children: [
+              Text(
+                'Shops',
+                style: TextStyle(
+                  color: (_selectedIndex == 9 && _newTabSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                  fontWeight: (_selectedIndex == 9 && _newTabSubTab != null)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              AnimatedRotation(
+                turns: _newTabExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 20,
+                  color: (_selectedIndex == 9 && _newTabSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          onTap: () {
+            setState(() {
+              _newTabExpanded = !_newTabExpanded;
+            });
+          },
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _newTabExpanded ? 96 : 0,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildNewTabSubItem('Add'),
+                _buildNewTabSubItem('View'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNewTabSubItem(String tabName) {
+    final isSelected = _selectedIndex == 9 && _newTabSubTab == tabName;
+
+    return Container(
+      padding: const EdgeInsets.only(left: 32.0),
+      child: ListTile(
+        horizontalTitleGap: 8,
+        minLeadingWidth: 20,
+        leading: SizedBox(
+          width: 24,
+          height: 24,
+          child: Icon(
+            Icons.arrow_right_rounded,
+            size: 20,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+          ),
+        ),
+        title: Text(
+          tabName,
+          style: TextStyle(
+            fontSize: 14,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        onTap: () {
+          setState(() {
+            _selectedIndex = 9;
+            _newTabSubTab = tabName;
           });
         },
       ),
@@ -469,21 +678,39 @@ class _HomeScreenState extends State<HomeScreen>
         switch (_stockSubTab) {
           case 'Add New Product':
             return const StockTab();
+          case 'Stock Report':
+            return const StockReportTab();
+          case 'Stock Summary':
+            return const StockSummaryTab();
           default:
             return _buildPlaceholder('Stock - $_stockSubTab');
         }
-      case 3:
-        return _buildPlaceholder('Add Sales');
-      case 4:
-        return _buildPlaceholder('Check Stock');
-      case 5:
-        return _buildPlaceholder('Buyers List');
-      case 6:
-        return _buildPlaceholder('Pending Payments');
-      case 7:
-        return _buildPlaceholder('Pending Stock');
-      case 8:
-        return _buildPlaceholder('History');
+      case 9:
+        if (_newTabSubTab == null) {
+          return _buildNewTabEmptyState();
+        }
+        switch (_newTabSubTab) {
+          case 'Add':
+            return const AddShopTab();
+          case 'View':
+            return const ViewShopsTab();
+          default:
+            return _buildPlaceholder('Shops - $_newTabSubTab');
+        }
+      case 10:
+        if (_salesSubTab == null) {
+          return _buildSalesEmptyState();
+        }
+        switch (_salesSubTab) {
+          case 'Invoice':
+            return const InvoiceTab();
+          case 'Load Form':
+            return _buildPlaceholder('Sales - Load Form');
+          case 'Pick List':
+            return _buildPlaceholder('Sales - Pick List');
+          default:
+            return _buildPlaceholder('Sales - $_salesSubTab');
+        }
       default:
         return _buildPlaceholder('Dashboard');
     }
@@ -540,6 +767,59 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(height: 8),
           Text(
             'Choose from Add New Product, Update Stock, Enter Sale, Stock Summary, or Adjustments',
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNewTabEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.store_mall_directory_rounded,
+            size: 64,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Select a sub-item from the Shops menu',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalesEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.point_of_sale_outlined,
+            size: 64,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Select a Sales option',
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Choose from Invoice, Load Form, or Pick List',
             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             textAlign: TextAlign.center,
           ),
