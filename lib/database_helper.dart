@@ -1,6 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
+import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -286,22 +287,24 @@ class DatabaseHelper {
   }
 
   // Product operations
-  Future<void> insertProduct(Map<String, dynamic> row) async {
+  Future<String> insertProduct(Map<String, dynamic> product) async {
     final db = await instance.database;
-    try {
-      await db.insert(
-        'products',
-        row,
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    } catch (e) {
-      throw Exception('Failed to insert product: $e');
-    }
+    await db.insert('products', product);
+    return product['id'] as String;
   }
 
   Future<List<Map<String, dynamic>>> getProducts() async {
     final db = await instance.database;
-    return await db.query('products', orderBy: 'company ASC, brand ASC');
+    return await db.query('products');
+  }
+
+  Future<void> deleteProduct(String id) async {
+    final db = await instance.database;
+    await db.delete(
+      'products',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   // Shop operations

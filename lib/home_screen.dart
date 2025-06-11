@@ -6,6 +6,7 @@ import 'package:records_keeper/screens/tabs/stock_summary_tab.dart';
 import 'package:records_keeper/screens/tabs/shops/add_shop_tab.dart';
 import 'package:records_keeper/screens/tabs/shops/view_shops_tab.dart';
 import 'package:records_keeper/screens/tabs/sales/invoice_tab.dart';
+import 'package:records_keeper/screens/tabs/view_products_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -355,9 +356,9 @@ class _HomeScreenState extends State<HomeScreen>
             child: Column(
               children: [
                 _buildStockSubItem('Add New Product'),
+                _buildStockSubItem('View Products'),
                 _buildStockSubItem('Stock Report'),
                 _buildStockSubItem('Stock Summary'),
-                _buildStockSubItem('Adjustments'),
               ],
             ),
           ),
@@ -682,6 +683,8 @@ class _HomeScreenState extends State<HomeScreen>
             return const StockReportTab();
           case 'Stock Summary':
             return const StockSummaryTab();
+          case 'View Products':
+            return const ViewProductsTab();
           default:
             return _buildPlaceholder('Stock - $_stockSubTab');
         }

@@ -1124,7 +1124,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
                 _buildTableHeader(scale),
                 ..._items.asMap().entries.map((entry) {
                   return _buildTableRow(entry.value, entry.key, scale);
-                }).toList(),
+                }),
                 if (_items.length < 3) ...[
                   ...List.generate(3 - _items.length, (index) => 
                     Container(

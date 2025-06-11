@@ -8,6 +8,7 @@ class Product {
   final String brand;
   final double ctnRate;
   final double boxRate;
+  final double salePrice;
   final int ctnPacking;
   final int boxPacking;
   final int unitsPacking;
@@ -18,6 +19,7 @@ class Product {
     required this.brand,
     required this.ctnRate,
     required this.boxRate,
+    required this.salePrice,
     required this.ctnPacking,
     required this.boxPacking,
     required this.unitsPacking,
@@ -30,6 +32,7 @@ class Product {
       'brand': brand,
       'ctnRate': ctnRate,
       'boxRate': boxRate,
+      'salePrice': salePrice,
       'ctnPacking': ctnPacking,
       'boxPacking': boxPacking,
       'unitsPacking': unitsPacking,
@@ -43,6 +46,7 @@ class Product {
       brand: map['brand'],
       ctnRate: map['ctnRate'],
       boxRate: map['boxRate'],
+      salePrice: map['salePrice'],
       ctnPacking: map['ctnPacking'],
       boxPacking: map['boxPacking'],
       unitsPacking: map['unitsPacking'],
@@ -539,7 +543,7 @@ class _StockReportTabState extends State<StockReportTab> {
                   return results.map((map) => Product.fromMap(map)).toList();
                 },
                 displayStringForOption: (Product product) {
-                  return '${product.id} - ${product.company} ${product.brand}';
+                  return '${product.company} - ${product.brand}';
                 },
                 fieldViewBuilder: (
                   BuildContext context,
@@ -577,7 +581,7 @@ class _StockReportTabState extends State<StockReportTab> {
                       elevation: 4.0,
                       child: Container(
                         constraints: const BoxConstraints(maxHeight: 200),
-                        width: MediaQuery.of(context).size.width - 64, // Adjust width based on padding
+                        width: MediaQuery.of(context).size.width - 64,
                         child: ListView.builder(
                           padding: EdgeInsets.zero,
                           shrinkWrap: true,
@@ -586,14 +590,17 @@ class _StockReportTabState extends State<StockReportTab> {
                             final Product product = options.elementAt(index);
                             return ListTile(
                               title: Text(
-                                '${product.id} - ${product.company} ${product.brand}',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                '${product.company} - ${product.brand}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
                               ),
                               subtitle: Text(
-                                'Box Rate: ${product.boxRate} | CTN Rate: ${product.ctnRate}',
+                                'Box Rate: Rs. ${product.boxRate.toStringAsFixed(2)} | Trade Rate: Rs. ${product.salePrice.toStringAsFixed(2)}',
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
-                                  fontSize: 12,
+                                  fontSize: 13,
                                 ),
                               ),
                               onTap: () {
@@ -635,7 +642,7 @@ class _StockReportTabState extends State<StockReportTab> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'ID: ${_selectedProduct!.id}',
+                                    'Trade Rate: Rs. ${_selectedProduct!.salePrice.toStringAsFixed(2)}',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
