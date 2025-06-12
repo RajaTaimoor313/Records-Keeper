@@ -39,8 +39,8 @@ dependencies:
   path: ^1.8.3
   path_provider: ^2.1.2
   intl: ^0.18.1
-  printing: ^5.11.0
-  pdf: ^3.10.4
+  printing: ^5.14.2
+  pdf: ^3.11.3
 
 dev_dependencies:
   flutter_test:
@@ -96,4 +96,4 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   assets:
-    - assets/logo.jpg
+    - assets/logo.png

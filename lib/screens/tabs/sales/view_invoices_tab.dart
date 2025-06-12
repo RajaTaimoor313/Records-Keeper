@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:flutter/services.dart';
 import '../../../database_helper.dart';
 
 class ViewInvoicesTab extends StatefulWidget {
@@ -13,12 +17,14 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
   bool _isLoading = true;
   List<Invoice> _invoices = [];
   int _currentPage = 0;
-  final Set<String> _selectedInvoices = {};  // Store selected invoice IDs
+  final Set<String> _selectedInvoices = {};
+  Uint8List? _logoImage;
 
   @override
   void initState() {
     super.initState();
     _loadInvoices();
+    _loadLogoImage();
   }
 
   Future<void> _loadInvoices() async {
@@ -44,6 +50,17 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _loadLogoImage() async {
+    try {
+      final ByteData data = await rootBundle.load('assets/logo.png');
+      setState(() {
+        _logoImage = data.buffer.asUint8List();
+      });
+    } catch (e) {
+      print('Error loading logo: $e');
     }
   }
 
@@ -103,6 +120,304 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
         );
       }
     }
+  }
+
+  Future<void> _printInvoices() async {
+    if (_selectedInvoices.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one invoice to print'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Create PDF document
+    final pdf = pw.Document();
+
+    // Get selected invoices
+    final selectedInvoices = _invoices.where((invoice) => _selectedInvoices.contains(invoice.id)).toList();
+
+    // Calculate number of pages needed
+    final int totalPages = (selectedInvoices.length / 4).ceil();
+
+    // Create logo image if available
+    final logoImage = _logoImage != null ? pw.MemoryImage(_logoImage!) : null;
+
+    // Generate pages
+    for (var pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+      final startIdx = pageIndex * 4;
+      final endIdx = (startIdx + 4 > selectedInvoices.length) ? selectedInvoices.length : startIdx + 4;
+      final pageInvoices = selectedInvoices.sublist(startIdx, endIdx);
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 20),  // Wider margins for better appearance
+          build: (pw.Context context) {
+            return pw.GridView(
+              crossAxisCount: 2,
+              childAspectRatio: 0.8,  // Make invoices slightly taller
+              mainAxisSpacing: 20,      // More space between rows
+              crossAxisSpacing: 20,     // More space between columns
+              children: pageInvoices.map((invoice) {
+                return pw.Container(
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+                    borderRadius: pw.BorderRadius.circular(4),
+                    color: PdfColors.white,
+                    boxShadow: [
+                      pw.BoxShadow(
+                        color: PdfColors.grey200,
+                        offset: const PdfPoint(0, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: _buildPdfInvoice(invoice, logoImage),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      );
+    }
+
+    // Show print preview
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: 'Invoices_${DateTime.now().millisecondsSinceEpoch}.pdf',
+    );
+  }
+
+  pw.Widget _buildPdfInvoice(Invoice invoice, pw.ImageProvider? logoImage) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // Header with Logo
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            if (logoImage != null)
+              pw.Container(
+                width: 24,
+                height: 24,
+                child: pw.ClipRRect(
+                  horizontalRadius: 2,
+                  verticalRadius: 2,
+                  child: pw.Image(logoImage),
+                ),
+              ),
+            pw.SizedBox(width: 4),
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'INVOICE',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.deepPurple,
+                    ),
+                  ),
+                  pw.SizedBox(height: 2),
+                  pw.Row(
+                    children: [
+                      pw.Expanded(
+                        child: pw.Text(
+                          'Invoice #: ${invoice.invoiceNumber}',
+                          style: pw.TextStyle(
+                            fontSize: 6.5,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      pw.Text(
+                        DateFormat('dd/MM/yyyy').format(invoice.date),
+                        style: pw.TextStyle(
+                          fontSize: 6.5,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 6),
+
+        // Shop Details
+        pw.Text(
+          '${invoice.shopName}  -> code: ${invoice.shopCode}',
+          style: pw.TextStyle(
+            fontSize: 7,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.deepPurple,
+          ),
+        ),
+        pw.SizedBox(height: 2),
+        pw.Row(
+          children: [
+            pw.Expanded(
+              child: pw.Text(
+                'Owner: ${invoice.ownerName}',
+                style: pw.TextStyle(
+                  fontSize: 6.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.deepPurple,
+                ),
+              ),
+            ),
+            pw.Text(
+              'Category: ${invoice.category}',
+              style: pw.TextStyle(
+                fontSize: 6.5,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.deepPurple,
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 6),
+
+        // Items Table
+        pw.Expanded(
+          child: pw.Container(
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+              borderRadius: pw.BorderRadius.circular(2),
+            ),
+            child: pw.Column(
+              children: [
+                // Table Header
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 2),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey100,
+                    border: pw.Border(
+                      bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
+                    ),
+                  ),
+                  child: pw.Row(
+                    children: [
+                      _buildPdfTableHeaderCell('Sr.', 1),
+                      _buildPdfTableHeaderCell('Description', 4),
+                      _buildPdfTableHeaderCell('Rate', 2),
+                      _buildPdfTableHeaderCell('Units', 1),
+                      _buildPdfTableHeaderCell('Price', 2),
+                    ],
+                  ),
+                ),
+                // Table Rows
+                pw.Expanded(
+                  child: pw.Column(
+                    children: [
+                      ...invoice.items.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        return pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(vertical: 1),
+                          decoration: pw.BoxDecoration(
+                            color: index.isEven ? PdfColors.grey50 : PdfColors.white,
+                            border: pw.Border(
+                              bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
+                            ),
+                          ),
+                          child: pw.Row(
+                            children: [
+                              _buildPdfTableCell((index + 1).toString(), 1),
+                              _buildPdfTableCell(item.description, 4),
+                              _buildPdfTableCell(item.rate.toStringAsFixed(2), 2),
+                              _buildPdfTableCell(item.unit.toString(), 1),
+                              _buildPdfTableCell(item.amount.toStringAsFixed(2), 2),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        pw.SizedBox(height: 6),
+
+        // Totals Section
+        pw.Container(
+          padding: const pw.EdgeInsets.all(4),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+            borderRadius: pw.BorderRadius.circular(2),
+            color: PdfColors.grey50,
+          ),
+          child: pw.Column(
+            children: [
+              _buildPdfTotalRow('Subtotal:', invoice.subtotal),
+              pw.SizedBox(height: 1),
+              _buildPdfTotalRow('Discount:', invoice.discount),
+              pw.Divider(color: PdfColors.grey300, height: 2),
+              _buildPdfTotalRow('Total:', invoice.total, isTotal: true),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPdfTableHeaderCell(String text, int flex) {
+    return pw.Expanded(
+      flex: flex,
+      child: pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 2),
+        child: pw.Text(
+          text,
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(
+            fontSize: 6,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.deepPurple,
+          ),
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildPdfTableCell(String text, int flex) {
+    return pw.Expanded(
+      flex: flex,
+      child: pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 2),
+        child: pw.Text(
+          text,
+          textAlign: pw.TextAlign.center,
+          style: const pw.TextStyle(
+            fontSize: 6,
+          ),
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildPdfTotalRow(String label, double amount, {bool isTotal = false}) {
+    final textStyle = pw.TextStyle(
+      fontSize: 6.5,
+      fontWeight: isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
+      color: isTotal ? PdfColors.deepPurple : PdfColors.black,
+    );
+
+    return pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      children: [
+        pw.Text(label, style: textStyle),
+        pw.Text(amount.toStringAsFixed(2), style: textStyle),
+      ],
+    );
   }
 
   @override
@@ -170,50 +485,64 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Selection Info and Clear Button
-                  if (_selectedInvoices.isNotEmpty)
-                    Row(
-                      children: [
-                        Text(
-                          '${_selectedInvoices.length} selected',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                  Row(
+                    children: [
+                      if (_selectedInvoices.isNotEmpty) ...[
+                        ElevatedButton.icon(
+                          onPressed: _deleteSelectedInvoices,
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          label: Text('Delete (${_selectedInvoices.length})'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade50,
+                            foregroundColor: Colors.red,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedInvoices.clear();
-                            });
-                          },
-                          child: const Text('Clear Selection'),
-                        ),
-                      ],
-                    )
-                  else
-                    const SizedBox.shrink(),
-                  
-                  // Delete Buttons
-                  Row(
-                    children: [
-                      if (_selectedInvoices.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ElevatedButton.icon(
-                            onPressed: _deleteSelectedInvoices,
-                            icon: const Icon(Icons.delete, color: Colors.white),
-                            label: const Text('Delete Selected'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
+                        ElevatedButton.icon(
+                          onPressed: _printInvoices,
+                          icon: const Icon(Icons.print),
+                          label: Text('Print (${_selectedInvoices.length})'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
                           ),
                         ),
+                      ],
                     ],
                   ),
+                  if (totalPages > 1)
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: _currentPage > 0
+                              ? () {
+                                  setState(() {
+                                    _currentPage--;
+                                  });
+                                }
+                              : null,
+                          icon: const Icon(Icons.chevron_left),
+                          color: Colors.deepPurple,
+                        ),
+                        Text(
+                          'Page ${_currentPage + 1} of $totalPages',
+                          style: const TextStyle(
+                            color: Colors.deepPurple,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _currentPage < totalPages - 1
+                              ? () {
+                                  setState(() {
+                                    _currentPage++;
+                                  });
+                                }
+                              : null,
+                          icon: const Icon(Icons.chevron_right),
+                          color: Colors.deepPurple,
+                        ),
+                      ],
+                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -269,40 +598,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                 }).toList(),
               ),
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: _currentPage > 0
-                        ? () {
-                            setState(() {
-                              _currentPage--;
-                            });
-                          }
-                        : null,
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    'Page ${_currentPage + 1} of $totalPages',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward),
-                    onPressed: _currentPage < totalPages - 1
-                        ? () {
-                            setState(() {
-                              _currentPage++;
-                            });
-                          }
-                        : null,
-                  ),
-                ],
-              ),
             ],
           ),
         );
@@ -316,6 +611,9 @@ class Invoice {
   final String invoiceNumber;
   final DateTime date;
   final String shopName;
+  final String shopCode;
+  final String ownerName;
+  final String category;
   final List<InvoiceItem> items;
   final double subtotal;
   final double discount;
@@ -326,6 +624,9 @@ class Invoice {
     required this.invoiceNumber,
     required this.date,
     required this.shopName,
+    required this.shopCode,
+    required this.ownerName,
+    required this.category,
     required this.items,
     required this.subtotal,
     required this.discount,
@@ -338,6 +639,9 @@ class Invoice {
       invoiceNumber: map['invoiceNumber'],
       date: DateTime.parse(map['date']),
       shopName: map['shopName'],
+      shopCode: map['shopCode'],
+      ownerName: map['ownerName'],
+      category: map['category'],
       items: (map['items'] as List).map((item) => InvoiceItem.fromMap(item)).toList(),
       subtotal: map['subtotal'],
       discount: map['discount'],
@@ -483,7 +787,7 @@ class InvoiceWidget extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(2 * scale),
                 child: Image.asset(
-                  'assets/logo.jpg',
+                  'assets/logo.png',
                   width: 40 * scale,
                   height: 40 * scale,
                   fit: BoxFit.cover,
@@ -564,20 +868,40 @@ class InvoiceWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Shop Details',
+                '${invoice.shopName}  -> code: ${invoice.shopCode}',
                 style: TextStyle(
                   fontSize: 12 * scale,
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
                 ),
               ),
-              SizedBox(height: 8 * scale),
-              Text(
-                invoice.shopName,
-                style: TextStyle(
-                  fontSize: 12 * scale,
-                  fontWeight: FontWeight.w500,
-                ),
+              SizedBox(height: 4 * scale),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Owner: ${invoice.ownerName}',
+                      style: TextStyle(
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  SizedBox(width: 8 * scale),
+                  Expanded(
+                    child: Text(
+                      'Category: ${invoice.category}',
+                      style: TextStyle(
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

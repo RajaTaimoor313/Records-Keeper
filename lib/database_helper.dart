@@ -8,8 +8,6 @@ class DatabaseHelper {
   static Database? _database;
   static bool _isDeleting = false;
   static bool _isInitialized = false;
-  static const _databaseName = "accounts.db";
-  static const _databaseVersion = 5;
 
   DatabaseHelper._init();
 
@@ -146,6 +144,9 @@ class DatabaseHelper {
         invoiceNumber TEXT NOT NULL,
         date TEXT NOT NULL,
         shopName TEXT NOT NULL,
+        shopCode TEXT NOT NULL,
+        ownerName TEXT NOT NULL,
+        category TEXT NOT NULL,
         subtotal REAL NOT NULL,
         discount REAL NOT NULL,
         total REAL NOT NULL,
@@ -198,6 +199,9 @@ class DatabaseHelper {
           invoiceNumber TEXT NOT NULL,
           date TEXT NOT NULL,
           shopName TEXT NOT NULL,
+          shopCode TEXT NOT NULL,
+          ownerName TEXT NOT NULL,
+          category TEXT NOT NULL,
           items TEXT NOT NULL,
           subtotal REAL NOT NULL,
           discount REAL NOT NULL,

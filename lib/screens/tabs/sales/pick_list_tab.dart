@@ -351,9 +351,7 @@ class _PickListTabState extends State<PickListTab> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 ElevatedButton.icon(
-                                  onPressed: () {
-                                    // TODO: Implement proceed action
-                                  },
+                                  onPressed: () {},
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.deepPurple,
                                     foregroundColor: Colors.white,

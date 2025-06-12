@@ -154,51 +154,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
     }
   }
 
-  Widget _buildShopSelection(double scale) {
-    if (_isSearching) {
-      return Expanded(
-        child: SizedBox(
-          height: 24 * scale,
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              textTheme: TextTheme(
-                titleMedium: TextStyle(fontSize: 12 * scale),
-                bodySmall: TextStyle(fontSize: 10 * scale),
-              ),
-            ),
-            child: _buildShopAutocomplete(scale),
-          ),
-        ),
-      );
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (_selectedShop != null)
-          Text(
-            _selectedShop!.name,
-            style: TextStyle(
-              fontSize: 12 * scale,
-              color: Colors.black87,
-            ),
-          ),
-        SizedBox(width: 8 * scale),
-        InkWell(
-          onTap: () {
-            setState(() {
-              _isSearching = true;
-            });
-          },
-          child: Icon(
-            Icons.search,
-            size: 16 * scale,
-            color: Colors.deepPurple,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildShopAutocomplete(double scale) {
     return Autocomplete<Shop>(
@@ -334,7 +289,11 @@ class _InvoiceTabState extends State<InvoiceTab> {
         Expanded(
           child: Text(
             'Owner: ${_selectedShop!.ownerName}',
-            style: TextStyle(fontSize: 12 * scale),
+            style: TextStyle(
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -342,7 +301,11 @@ class _InvoiceTabState extends State<InvoiceTab> {
         Expanded(
           child: Text(
             'Category: ${_selectedShop!.category}',
-            style: TextStyle(fontSize: 12 * scale),
+            style: TextStyle(
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -350,37 +313,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
     );
   }
 
-  Widget _buildProductSelection(double scale) {
-    if (_isSearchingProduct) {
-      return Expanded(
-        child: SizedBox(
-          height: 24 * scale,
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              textTheme: TextTheme(
-                titleMedium: TextStyle(fontSize: 12 * scale),
-                bodySmall: TextStyle(fontSize: 10 * scale),
-              ),
-            ),
-            child: _buildProductAutocomplete(scale),
-          ),
-        ),
-      );
-    }
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _isSearchingProduct = true;
-        });
-      },
-      child: Icon(
-        Icons.search,
-        size: 16 * scale,
-        color: Colors.deepPurple,
-      ),
-    );
-  }
 
   Widget _buildProductAutocomplete(double scale) {
     return Autocomplete<Product>(
@@ -906,11 +838,27 @@ class _InvoiceTabState extends State<InvoiceTab> {
   }
 
   Widget _buildInvoice(BuildContext context, double scale) {
-    // Calculate height based on number of items
-    final double baseHeight = 421 * scale; // Height for 3 items
-    final double itemHeight = 32 * scale; // Height per additional item
-    final int extraItems = _items.length > 3 ? _items.length - 3 : 0;
-    final double totalHeight = baseHeight + (extraItems * itemHeight);
+    // Calculate height for each section
+    final double headerHeight = 80 * scale; // Logo, invoice number, date
+    final double shopDetailsHeight = _selectedShop != null ? 80 * scale : 40 * scale; // Shop details section
+    final double itemHeaderHeight = 40 * scale; // Item details header
+    final double itemRowHeight = 32 * scale; // Height per item row
+    final double minItemsHeight = 3 * itemRowHeight; // Minimum height for 3 items
+    final double itemsHeight = _items.length > 3 
+        ? _items.length * itemRowHeight 
+        : minItemsHeight; // Actual items height
+    final double totalsSectionHeight = 100 * scale; // Totals section
+    final double signatureSectionHeight = 60 * scale; // Signature section
+    final double paddingHeight = 48 * scale; // Total padding (12 * 4)
+
+    // Calculate total height
+    final double totalHeight = headerHeight + 
+                             shopDetailsHeight + 
+                             itemHeaderHeight + 
+                             itemsHeight + 
+                             totalsSectionHeight + 
+                             signatureSectionHeight + 
+                             paddingHeight;
 
     return Container(
       width: 297 * scale,
@@ -939,7 +887,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(2 * scale),
                 child: Image.asset(
-                  'assets/logo.jpg',
+                  'assets/logo.png',
                   width: 40 * scale,
                   height: 40 * scale,
                   fit: BoxFit.cover,
@@ -1005,20 +953,28 @@ class _InvoiceTabState extends State<InvoiceTab> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Shop Details',
-                    style: TextStyle(
-                      fontSize: 12 * scale,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isSearching = true;
+                  });
+                },
+                child: Text(
+                  _selectedShop != null 
+                      ? '${_selectedShop!.name}  -> code: ${_selectedShop!.code}'
+                      : 'Add Shop',
+                  style: TextStyle(
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
                   ),
-                  _buildShopSelection(scale),
-                ],
+                ),
               ),
+              if (_isSearching)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8 * scale),
+                  child: _buildShopAutocomplete(scale),
+                ),
               if (_selectedShop != null) ...[
                 SizedBox(height: 8 * scale),
                 _buildShopDetails(scale),
@@ -1027,20 +983,42 @@ class _InvoiceTabState extends State<InvoiceTab> {
           ),
           SizedBox(height: 8 * scale),
 
-          // Item Details Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Add Item Section
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Item Details',
-                style: TextStyle(
-                  fontSize: 12 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isSearchingProduct = true;
+                  });
+                },
+                child: Text(
+                  'Add Item',
+                  style: TextStyle(
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
                 ),
               ),
-              _buildProductSelection(scale),
+              if (_isSearchingProduct)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8 * scale),
+                  child: _buildProductAutocomplete(scale),
+                ),
             ],
+          ),
+          SizedBox(height: 8 * scale),
+
+          // Item Details Section
+          Text(
+            'Item Details',
+            style: TextStyle(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+            ),
           ),
           SizedBox(height: 8 * scale),
 
@@ -1049,30 +1027,26 @@ class _InvoiceTabState extends State<InvoiceTab> {
             child: Column(
               children: [
                 _buildTableHeader(scale),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        ..._items.asMap().entries.map((entry) {
-                          return _buildTableRow(entry.value, entry.key, scale);
-                        }),
-                        if (_items.length < 3) ...[
-                          ...List.generate(3 - _items.length, (index) => 
-                            Container(
-                              height: 32 * scale,
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(color: Colors.grey.shade300),
-                                  right: BorderSide(color: Colors.grey.shade300),
-                                  bottom: BorderSide(color: Colors.grey.shade300),
-                                ),
-                              ),
-                            )
+                Column(
+                  children: [
+                    ..._items.asMap().entries.map((entry) {
+                      return _buildTableRow(entry.value, entry.key, scale);
+                    }),
+                    if (_items.length < 3) ...[
+                      ...List.generate(3 - _items.length, (index) => 
+                        Container(
+                          height: 32 * scale,
+                          decoration: BoxDecoration(
+                            border: Border(
+                              left: BorderSide(color: Colors.grey.shade300),
+                              right: BorderSide(color: Colors.grey.shade300),
+                              bottom: BorderSide(color: Colors.grey.shade300),
+                            ),
                           ),
-                        ],
-                      ],
-                    ),
-                  ),
+                        )
+                      ),
+                    ],
+                  ],
                 ),
                 _buildTotalsSection(scale),
                 SizedBox(height: 8 * scale),
@@ -1118,6 +1092,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
         'invoiceNumber': _invoiceNumberController.text,
         'date': _selectedDate,
         'shopName': _selectedShop!.name,
+        'shopCode': _selectedShop!.code,
+        'ownerName': _selectedShop!.ownerName,
+        'category': _selectedShop!.category,
         'items': _items.map((item) => {
           'description': item.description,
           'rate': item.rate,

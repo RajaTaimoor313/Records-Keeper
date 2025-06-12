@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../database_helper.dart';
 import 'dart:math' as math;
 
@@ -378,9 +377,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   ElevatedButton.icon(
-                                    onPressed: () {
-                                      // TODO: Implement proceed action
-                                    },
+                                    onPressed: () {},
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.deepPurple,
                                       foregroundColor: Colors.white,
@@ -458,9 +455,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 ElevatedButton.icon(
-                                  onPressed: () {
-                                    // TODO: Implement proceed action
-                                  },
+                                  onPressed: () {},
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.deepPurple,
                                     foregroundColor: Colors.white,
