@@ -12,6 +12,7 @@ class Product {
   final int ctnPacking;
   final int boxPacking;
   final int unitsPacking;
+  final double salePrice;
 
   Product({
     required this.id,
@@ -22,6 +23,7 @@ class Product {
     required this.ctnPacking,
     required this.boxPacking,
     required this.unitsPacking,
+    required this.salePrice,
   });
 
   static Product fromMap(Map<String, dynamic> map) {
@@ -34,6 +36,7 @@ class Product {
       ctnPacking: map['ctnPacking'],
       boxPacking: map['boxPacking'],
       unitsPacking: map['unitsPacking'],
+      salePrice: map['salePrice'],
     );
   }
 }
@@ -71,7 +74,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
   final TextEditingController _shopSearchController = TextEditingController();
   final TextEditingController _productSearchController = TextEditingController();
   List<Product> _products = [];
-  Product? _selectedProduct;
 
   // Initialize with empty list
   final List<InvoiceItem> _items = [];
@@ -394,14 +396,21 @@ class _InvoiceTabState extends State<InvoiceTab> {
       displayStringForOption: (Product product) => '${product.company} - ${product.brand}',
       onSelected: (Product product) {
         setState(() {
-          _selectedProduct = product;
           _isSearchingProduct = false;
-          // Add the selected product to the items list
-          _items.add(InvoiceItem(
-            description: product.brand,
-            rate: product.ctnRate,
-            unit: 1,
-          ));
+          // Check if product already exists in items
+          final existingItemIndex = _items.indexWhere((item) => item.description == product.brand);
+          if (existingItemIndex != -1) {
+            // Increment unit if product already exists
+            _items[existingItemIndex].unit++;
+            _items[existingItemIndex].amount = _items[existingItemIndex].rate * _items[existingItemIndex].unit;
+          } else {
+            // Add new item if product doesn't exist
+            _items.add(InvoiceItem(
+              description: product.brand,
+              rate: product.salePrice, // Use sale price instead of ctn rate
+              unit: 1,
+            ));
+          }
         });
       },
       fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
@@ -522,10 +531,11 @@ class _InvoiceTabState extends State<InvoiceTab> {
       ),
       child: Row(
         children: [
+          _buildTableCell('', flex: 1, isHeader: true, scale: scale),
           _buildTableCell('Description', flex: 3, isHeader: true, scale: scale),
           _buildTableCell('Rate', flex: 2, isHeader: true, scale: scale),
           _buildTableCell('Unit', isHeader: true, scale: scale),
-          _buildTableCell('Amount', flex: 2, isHeader: true, scale: scale),
+          _buildTableCell('Price', flex: 2, isHeader: true, scale: scale),
           _buildTableCell('', flex: 1, isHeader: true, scale: scale, isLast: true), // For actions
         ],
       ),
@@ -543,8 +553,8 @@ class _InvoiceTabState extends State<InvoiceTab> {
       flex: flex,
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: 4 * scale,
-          vertical: 6 * scale,
+          horizontal: 8 * scale,
+          vertical: 8 * scale,
         ),
         decoration: BoxDecoration(
           border: Border(
@@ -555,7 +565,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
           text,
           textAlign: align,
           style: TextStyle(
-            fontSize: 11 * scale,
+            fontSize: 12 * scale,
             fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
             color: isHeader ? Colors.deepPurple : Colors.black87,
           ),
@@ -578,18 +588,22 @@ class _InvoiceTabState extends State<InvoiceTab> {
       ),
       child: Row(
         children: [
-          _buildEditableCell(
-            text: item.description,
+          _buildTableCell(
+            (index + 1).toString(),
+            flex: 1,
+            scale: scale,
+            align: TextAlign.center,
+          ),
+          _buildTableCell(
+            item.description,
             flex: 3,
             scale: scale,
-            onTap: () => _editItemDescription(index),
           ),
-          _buildEditableCell(
-            text: item.rate.toStringAsFixed(2),
+          _buildTableCell(
+            item.rate.toStringAsFixed(2),
             flex: 2,
             scale: scale,
             align: TextAlign.right,
-            onTap: () => _editItemRate(index),
           ),
           _buildEditableCell(
             text: item.unit.toString(),
@@ -671,93 +685,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
         ),
       ),
     );
-  }
-
-  Future<void> _editItemDescription(int index) async {
-    final item = _items[index];
-    final TextEditingController controller = TextEditingController(text: item.description);
-    
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Description'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Description',
-            border: OutlineInputBorder(),
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    if (result != null && result.isNotEmpty) {
-      setState(() {
-        _items[index].description = result;
-      });
-    }
-  }
-
-  Future<void> _editItemRate(int index) async {
-    final item = _items[index];
-    final TextEditingController controller = TextEditingController(
-      text: item.rate.toStringAsFixed(2),
-    );
-    
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Rate'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Rate',
-            border: OutlineInputBorder(),
-          ),
-          keyboardType: TextInputType.number,
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    if (result != null) {
-      final newRate = double.tryParse(result);
-      if (newRate != null) {
-        setState(() {
-          _items[index].rate = newRate;
-          _items[index].amount = newRate * _items[index].unit;
-        });
-      }
-    }
   }
 
   Future<void> _editItemUnit(int index) async {
@@ -1122,24 +1049,31 @@ class _InvoiceTabState extends State<InvoiceTab> {
             child: Column(
               children: [
                 _buildTableHeader(scale),
-                ..._items.asMap().entries.map((entry) {
-                  return _buildTableRow(entry.value, entry.key, scale);
-                }),
-                if (_items.length < 3) ...[
-                  ...List.generate(3 - _items.length, (index) => 
-                    Container(
-                      height: 32 * scale,
-                      decoration: BoxDecoration(
-                        border: Border(
-                          left: BorderSide(color: Colors.grey.shade300),
-                          right: BorderSide(color: Colors.grey.shade300),
-                          bottom: BorderSide(color: Colors.grey.shade300),
-                        ),
-                      ),
-                    )
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        ..._items.asMap().entries.map((entry) {
+                          return _buildTableRow(entry.value, entry.key, scale);
+                        }),
+                        if (_items.length < 3) ...[
+                          ...List.generate(3 - _items.length, (index) => 
+                            Container(
+                              height: 32 * scale,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(color: Colors.grey.shade300),
+                                  right: BorderSide(color: Colors.grey.shade300),
+                                  bottom: BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                            )
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ],
-                const Spacer(),
+                ),
                 _buildTotalsSection(scale),
                 SizedBox(height: 8 * scale),
                 _buildSignatureSection(scale),
@@ -1151,6 +1085,106 @@ class _InvoiceTabState extends State<InvoiceTab> {
     );
   }
 
+  Future<void> _saveInvoice() async {
+    // Validate form fields
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Validate shop selection and items
+    if (_selectedShop == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a shop'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add at least one item to the invoice'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final invoice = {
+        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+        'invoiceNumber': _invoiceNumberController.text,
+        'date': _selectedDate,
+        'shopName': _selectedShop!.name,
+        'items': _items.map((item) => {
+          'description': item.description,
+          'rate': item.rate,
+          'unit': item.unit,
+          'amount': item.amount,
+        }).toList(),
+        'subtotal': subtotal,
+        'discount': discount,
+        'total': total,
+      };
+
+      // Save invoice
+      await DatabaseHelper.instance.insertInvoice(invoice);
+
+      // Add items to load form
+      for (final item in _items) {
+        await DatabaseHelper.instance.insertLoadFormItem({
+          'brandName': item.description,
+          'units': item.unit,
+        });
+      }
+
+      // Add or update pick list item
+      await DatabaseHelper.instance.insertOrUpdatePickListItem({
+        'code': _selectedShop!.code,
+        'shopName': _selectedShop!.name,
+        'ownerName': _selectedShop!.ownerName,
+        'billAmount': total,
+        'paymentType': '', // Will be editable in pick list
+        'recovery': 0, // Will be editable in pick list
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invoice saved successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Clear form
+      _clearForm();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving invoice: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _clearForm() {
+    setState(() {
+      _selectedShop = null;
+      _items.clear();
+      _discountController.text = '0';
+      _generateInvoiceNumber();
+      _selectedDate = DateTime.now();
+      _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1160,48 +1194,51 @@ class _InvoiceTabState extends State<InvoiceTab> {
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
               ),
             )
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final double maxWidth = constraints.maxWidth;
-                final int invoicesPerRow = (maxWidth / 350).floor().clamp(1, 2);
-                final double availableWidth = maxWidth - 32;
-                final double scale = ((availableWidth / invoicesPerRow) / 297).clamp(0.5, 1.0);
+          : Form(
+              key: _formKey,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final double maxWidth = constraints.maxWidth;
+                  final int invoicesPerRow = (maxWidth / 350).floor().clamp(1, 2);
+                  final double availableWidth = maxWidth - 32;
+                  final double scale = ((availableWidth / invoicesPerRow) / 297).clamp(0.5, 1.0);
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Wrap(
-                        spacing: 16,
-                        runSpacing: 16,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          _buildInvoice(context, scale),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: 200,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Implement printing functionality
-                          },
-                          icon: const Icon(Icons.print),
-                          label: const Text('Print Invoice'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            _buildInvoice(context, scale),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: 200,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              _saveInvoice();
+                            },
+                            icon: const Icon(Icons.print),
+                            label: const Text('Generate Invoice'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
     );
   }

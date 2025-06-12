@@ -7,6 +7,9 @@ import 'package:records_keeper/screens/tabs/shops/add_shop_tab.dart';
 import 'package:records_keeper/screens/tabs/shops/view_shops_tab.dart';
 import 'package:records_keeper/screens/tabs/sales/invoice_tab.dart';
 import 'package:records_keeper/screens/tabs/view_products_tab.dart';
+import 'package:records_keeper/screens/tabs/sales/view_invoices_tab.dart';
+import 'package:records_keeper/screens/tabs/sales/load_form.dart';
+import 'package:records_keeper/screens/tabs/sales/pick_list_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -454,12 +457,13 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: _salesExpanded ? 144 : 0, // 48 pixels per item * 3 items
+          height: _salesExpanded ? 192 : 0,
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
             child: Column(
               children: [
-                _buildSalesSubItem('Invoice'),
+                _buildSalesSubItem('Generate Invoice'),
+                _buildSalesSubItem('View Invoices'),
                 _buildSalesSubItem('Load Form'),
                 _buildSalesSubItem('Pick List'),
               ],
@@ -705,12 +709,14 @@ class _HomeScreenState extends State<HomeScreen>
           return _buildSalesEmptyState();
         }
         switch (_salesSubTab) {
-          case 'Invoice':
+          case 'Generate Invoice':
             return const InvoiceTab();
+          case 'View Invoices':
+            return const ViewInvoicesTab();
           case 'Load Form':
-            return _buildPlaceholder('Sales - Load Form');
+            return const LoadFormTab();
           case 'Pick List':
-            return _buildPlaceholder('Sales - Pick List');
+            return const PickListTab();
           default:
             return _buildPlaceholder('Sales - $_salesSubTab');
         }

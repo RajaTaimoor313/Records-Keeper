@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import '../../database_helper.dart';
-import '../../database_helper.dart';
 
 class Product {
   final String id;
@@ -96,6 +95,7 @@ class _StockTabState extends State<StockTab> {
 
     try {
       final records = await DatabaseHelper.instance.getProducts();
+      if (!mounted) return;
       setState(() {
         productRecords = records
             .map(

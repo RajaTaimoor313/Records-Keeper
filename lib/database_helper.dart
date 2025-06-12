@@ -1,7 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
-import 'package:sqflite/sqflite.dart';
+import 'dart:convert';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -9,7 +9,7 @@ class DatabaseHelper {
   static bool _isDeleting = false;
   static bool _isInitialized = false;
   static const _databaseName = "accounts.db";
-  static const _databaseVersion = 4;
+  static const _databaseVersion = 5;
 
   DatabaseHelper._init();
 
@@ -45,17 +45,15 @@ class DatabaseHelper {
   Future<Database> get database async {
     await initialize();
     if (_database != null) return _database!;
-    _database = await _initDB('accounts.db');
+    _database = await _initDatabase();
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
-
+  Future<Database> _initDatabase() async {
+    final String path = join(await getDatabasesPath(), 'records_keeper.db');
     return await openDatabase(
       path,
-      version: 3,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -135,19 +133,81 @@ class DatabaseHelper {
         code TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         owner_name TEXT NOT NULL,
-        category TEXT NOT NULL
+        category TEXT NOT NULL,
+        address TEXT,
+        phone TEXT
+      )
+    ''');
+
+    // Invoices table
+    await db.execute('''
+      CREATE TABLE invoices (
+        id TEXT PRIMARY KEY,
+        invoiceNumber TEXT NOT NULL,
+        date TEXT NOT NULL,
+        shopName TEXT NOT NULL,
+        subtotal REAL NOT NULL,
+        discount REAL NOT NULL,
+        total REAL NOT NULL,
+        items TEXT NOT NULL
+      )
+    ''');
+
+    // Create load form table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS load_form (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        brandName TEXT NOT NULL,
+        units INTEGER NOT NULL,
+        issue INTEGER DEFAULT 0,
+        returnQty INTEGER DEFAULT 0,
+        sale INTEGER DEFAULT 0,
+        saledReturn INTEGER DEFAULT 0
+      )
+    ''');
+
+    // Pick List table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS pick_list (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT,
+        shopName TEXT,
+        ownerName TEXT,
+        billAmount REAL DEFAULT 0,
+        paymentType TEXT DEFAULT '',
+        recovery REAL DEFAULT 0
       )
     ''');
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Drop the old products table if it exists
-      await db.execute('DROP TABLE IF EXISTS products');
-      
-      // Create the new products table
       await db.execute('''
-        CREATE TABLE products (
+        CREATE TABLE IF NOT EXISTS shops (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          ownerName TEXT NOT NULL,
+          category TEXT NOT NULL
+        )
+      ''');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS invoices (
+          id TEXT PRIMARY KEY,
+          invoiceNumber TEXT NOT NULL,
+          date TEXT NOT NULL,
+          shopName TEXT NOT NULL,
+          items TEXT NOT NULL,
+          subtotal REAL NOT NULL,
+          discount REAL NOT NULL,
+          total REAL NOT NULL
+        )
+      ''');
+    }
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS products (
           id TEXT PRIMARY KEY,
           company TEXT NOT NULL,
           brand TEXT NOT NULL,
@@ -155,56 +215,37 @@ class DatabaseHelper {
           boxRate REAL NOT NULL,
           ctnPacking INTEGER NOT NULL,
           boxPacking INTEGER NOT NULL,
-          unitsPacking INTEGER NOT NULL
+          unitsPacking INTEGER NOT NULL,
+          salePrice REAL NOT NULL
         )
       ''');
-
-      // Create the stock records table
+    }
+    if (oldVersion < 5) {
+      // Create load form table
       await db.execute('''
-        CREATE TABLE stock_records (
+        CREATE TABLE IF NOT EXISTS load_form (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          product_id TEXT NOT NULL,
-          date TEXT NOT NULL,
-          opening_stock_ctn INTEGER NOT NULL,
-          opening_stock_units INTEGER NOT NULL,
-          opening_stock_total REAL NOT NULL,
-          opening_stock_value REAL NOT NULL,
-          received_ctn INTEGER NOT NULL,
-          received_units INTEGER NOT NULL,
-          received_total REAL NOT NULL,
-          received_value REAL NOT NULL,
-          total_stock_ctn INTEGER NOT NULL,
-          total_stock_units INTEGER NOT NULL,
-          total_stock_total REAL NOT NULL,
-          total_stock_value REAL NOT NULL,
-          closing_stock_ctn INTEGER NOT NULL,
-          closing_stock_units INTEGER NOT NULL,
-          closing_stock_total REAL NOT NULL,
-          closing_stock_value REAL NOT NULL,
-          sale_ctn INTEGER NOT NULL,
-          sale_units INTEGER NOT NULL,
-          sale_total REAL NOT NULL,
-          sale_value REAL NOT NULL,
-          FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+          brandName TEXT NOT NULL,
+          units INTEGER NOT NULL,
+          issue INTEGER DEFAULT 0,
+          returnQty INTEGER DEFAULT 0,
+          sale INTEGER DEFAULT 0,
+          saledReturn INTEGER DEFAULT 0
         )
       ''');
     }
-
-    if (oldVersion < 3) {
-      // Add shops table in version 3
+    if (oldVersion < 6) {
       await db.execute('''
-        CREATE TABLE shops (
-          code TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          owner_name TEXT NOT NULL,
-          category TEXT NOT NULL
+        CREATE TABLE IF NOT EXISTS pick_list (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          code TEXT,
+          shopName TEXT,
+          ownerName TEXT,
+          billAmount REAL DEFAULT 0,
+          paymentType TEXT DEFAULT '',
+          recovery REAL DEFAULT 0
         )
       ''');
-    }
-
-    if (oldVersion < 4) {
-      // Add sale price column
-      await db.execute('ALTER TABLE products ADD COLUMN salePrice REAL DEFAULT 0');
     }
   }
 
@@ -379,6 +420,143 @@ class DatabaseHelper {
     } catch (e) {
       return false;
     }
+  }
+
+  // Invoice methods
+  Future<void> insertInvoice(Map<String, dynamic> invoice) async {
+    final Database db = await database;
+    await db.insert(
+      'invoices',
+      {
+        ...invoice,
+        'items': jsonEncode(invoice['items']),
+        'date': invoice['date'].toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getInvoices() async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('invoices');
+    return maps.map((map) {
+      return {
+        ...map,
+        'items': jsonDecode(map['items']),
+      };
+    }).toList();
+  }
+
+  Future<void> deleteInvoice(String id) async {
+    final db = await database;
+    await db.delete(
+      'invoices',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<Map<String, dynamic>?> getInvoice(String id) async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'invoices',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (maps.isEmpty) return null;
+
+    return {
+      ...maps.first,
+      'items': jsonDecode(maps.first['items']),
+    };
+  }
+
+  // Load Form Methods
+  Future<int> insertLoadFormItem(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    
+    // Check if brand already exists
+    final List<Map<String, dynamic>> existing = await db.query(
+      'load_form',
+      where: 'brandName = ?',
+      whereArgs: [row['brandName']],
+    );
+
+    if (existing.isNotEmpty) {
+      // Update existing record by adding units
+      final existingUnits = existing.first['units'] as int;
+      final newUnits = existingUnits + (row['units'] as int);
+      
+      await db.update(
+        'load_form',
+        {'units': newUnits},
+        where: 'brandName = ?',
+        whereArgs: [row['brandName']],
+      );
+      return existing.first['id'] as int;
+    } else {
+      // Insert new record
+      return await db.insert('load_form', row);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getLoadFormItems() async {
+    final db = await instance.database;
+    return await db.query('load_form', orderBy: 'id ASC');
+  }
+
+  Future<int> updateLoadFormItem(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.update(
+      'load_form',
+      row,
+      where: 'id = ?',
+      whereArgs: [row['id']],
+    );
+  }
+
+  // Pick List operations
+  Future<void> insertOrUpdatePickListItem(Map<String, dynamic> item) async {
+    final db = await database;
+    
+    // Check if shop already exists in pick list
+    final List<Map<String, dynamic>> existingItems = await db.query(
+      'pick_list',
+      where: 'shopName = ?',
+      whereArgs: [item['shopName']],
+    );
+
+    if (existingItems.isNotEmpty) {
+      // Update existing record by adding to billAmount
+      final existingItem = existingItems.first;
+      final newBillAmount = (existingItem['billAmount'] as double) + (item['billAmount'] as double);
+      
+      await db.update(
+        'pick_list',
+        {'billAmount': newBillAmount},
+        where: 'id = ?',
+        whereArgs: [existingItem['id']],
+      );
+    } else {
+      // Insert new record
+      await db.insert('pick_list', item);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPickListItems() async {
+    final db = await database;
+    return db.query('pick_list');
+  }
+
+  Future<void> updatePickListItem(Map<String, dynamic> item) async {
+    final db = await database;
+    await db.update(
+      'pick_list',
+      item,
+      where: 'id = ?',
+      whereArgs: [item['id']],
+    );
   }
 
   // Close database
