@@ -791,52 +791,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
     );
   }
 
-  Widget _buildSignatureSection(double scale) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 20 * scale,
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300),
-                  ),
-                ),
-              ),
-              Text(
-                'Customer Signature',
-                style: TextStyle(fontSize: 8 * scale),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(width: 16 * scale),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 20 * scale,
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300),
-                  ),
-                ),
-              ),
-              Text(
-                'Authorized Signature',
-                style: TextStyle(fontSize: 8 * scale),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
+  
   Widget _buildInvoice(BuildContext context, double scale) {
     // Calculate height for each section
     final double headerHeight = 80 * scale; // Logo, invoice number, date
@@ -963,18 +918,18 @@ class _InvoiceTabState extends State<InvoiceTab> {
                   _selectedShop != null 
                       ? '${_selectedShop!.name}  -> code: ${_selectedShop!.code}'
                       : 'Add Shop',
-                  style: TextStyle(
-                    fontSize: 12 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
+                    style: TextStyle(
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
                   ),
-                ),
               ),
               if (_isSearching)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 8 * scale),
                   child: _buildShopAutocomplete(scale),
-                ),
+              ),
               if (_selectedShop != null) ...[
                 SizedBox(height: 8 * scale),
                 _buildShopDetails(scale),
@@ -995,12 +950,12 @@ class _InvoiceTabState extends State<InvoiceTab> {
                 },
                 child: Text(
                   'Add Item',
-                  style: TextStyle(
-                    fontSize: 12 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                  ),
+                style: TextStyle(
+                  fontSize: 12 * scale,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
                 ),
+              ),
               ),
               if (_isSearchingProduct)
                 Padding(
@@ -1011,46 +966,34 @@ class _InvoiceTabState extends State<InvoiceTab> {
           ),
           SizedBox(height: 8 * scale),
 
-          // Item Details Section
-          Text(
-            'Item Details',
-            style: TextStyle(
-              fontSize: 12 * scale,
-              fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-
           // Items Table
           Expanded(
             child: Column(
               children: [
                 _buildTableHeader(scale),
                 Column(
-                  children: [
-                    ..._items.asMap().entries.map((entry) {
-                      return _buildTableRow(entry.value, entry.key, scale);
-                    }),
-                    if (_items.length < 3) ...[
-                      ...List.generate(3 - _items.length, (index) => 
-                        Container(
-                          height: 32 * scale,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              left: BorderSide(color: Colors.grey.shade300),
-                              right: BorderSide(color: Colors.grey.shade300),
-                              bottom: BorderSide(color: Colors.grey.shade300),
-                            ),
+                      children: [
+                        ..._items.asMap().entries.map((entry) {
+                          return _buildTableRow(entry.value, entry.key, scale);
+                        }),
+                        if (_items.length < 3) ...[
+                          ...List.generate(3 - _items.length, (index) => 
+                            Container(
+                              height: 32 * scale,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(color: Colors.grey.shade300),
+                                  right: BorderSide(color: Colors.grey.shade300),
+                                  bottom: BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                            )
                           ),
-                        )
-                      ),
-                    ],
-                  ],
+                        ],
+                      ],
                 ),
                 _buildTotalsSection(scale),
                 SizedBox(height: 8 * scale),
-                _buildSignatureSection(scale),
               ],
             ),
           ),

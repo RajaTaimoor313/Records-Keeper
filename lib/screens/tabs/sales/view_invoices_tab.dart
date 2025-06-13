@@ -16,15 +16,41 @@ class ViewInvoicesTab extends StatefulWidget {
 class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
   bool _isLoading = true;
   List<Invoice> _invoices = [];
-  int _currentPage = 0;
+  List<Invoice> _filteredInvoices = [];
   final Set<String> _selectedInvoices = {};
   Uint8List? _logoImage;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadInvoices();
     _loadLogoImage();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterInvoices(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredInvoices = _invoices;
+      } else {
+        _filteredInvoices = _invoices.where((invoice) {
+          final invoiceNumber = invoice.invoiceNumber.toLowerCase();
+          final shopName = invoice.shopName.toLowerCase();
+          final ownerName = invoice.ownerName.toLowerCase();
+          final searchLower = query.toLowerCase();
+
+          return invoiceNumber.contains(searchLower) ||
+              shopName.contains(searchLower) ||
+              ownerName.contains(searchLower);
+        }).toList();
+      }
+    });
   }
 
   Future<void> _loadInvoices() async {
@@ -36,6 +62,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       final invoicesData = await DatabaseHelper.instance.getInvoices();
       setState(() {
         _invoices = invoicesData.map((data) => Invoice.fromMap(data)).toList();
+        _filteredInvoices = _invoices;
         _isLoading = false;
       });
     } catch (e) {
@@ -66,26 +93,28 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
 
   Future<void> _deleteSelectedInvoices() async {
     // Show confirmation dialog
-    final bool confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Selected Invoices'),
-        content: Text('Are you sure you want to delete ${_selectedInvoices.length} selected invoice(s)?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+    final bool confirm =
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete Selected Invoices'),
+            content: Text(
+              'Are you sure you want to delete ${_selectedInvoices.length} selected invoice(s)?',
             ),
-            child: const Text('Delete'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (!confirm) return;
 
@@ -137,7 +166,9 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     final pdf = pw.Document();
 
     // Get selected invoices
-    final selectedInvoices = _invoices.where((invoice) => _selectedInvoices.contains(invoice.id)).toList();
+    final selectedInvoices = _invoices
+        .where((invoice) => _selectedInvoices.contains(invoice.id))
+        .toList();
 
     // Calculate number of pages needed
     final int totalPages = (selectedInvoices.length / 4).ceil();
@@ -148,33 +179,31 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     // Generate pages
     for (var pageIndex = 0; pageIndex < totalPages; pageIndex++) {
       final startIdx = pageIndex * 4;
-      final endIdx = (startIdx + 4 > selectedInvoices.length) ? selectedInvoices.length : startIdx + 4;
+      final endIdx = (startIdx + 4 > selectedInvoices.length)
+          ? selectedInvoices.length
+          : startIdx + 4;
       final pageInvoices = selectedInvoices.sublist(startIdx, endIdx);
 
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 20),  // Wider margins for better appearance
+          margin: const pw.EdgeInsets.symmetric(
+            horizontal: 40,
+            vertical: 20,
+          ), // Wider margins for better appearance
           build: (pw.Context context) {
             return pw.GridView(
               crossAxisCount: 2,
-              childAspectRatio: 0.8,  // Make invoices slightly taller
-              mainAxisSpacing: 20,      // More space between rows
-              crossAxisSpacing: 20,     // More space between columns
+              mainAxisSpacing: 20, // More space between rows
+              crossAxisSpacing: 20, // More space between columns
               children: pageInvoices.map((invoice) {
                 return pw.Container(
                   padding: const pw.EdgeInsets.all(8),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
-                    borderRadius: pw.BorderRadius.circular(4),
-                    color: PdfColors.white,
-                    boxShadow: [
-                      pw.BoxShadow(
-                        color: PdfColors.grey200,
-                        offset: const PdfPoint(0, 1),
-                        blurRadius: 2,
-                      ),
-                    ],
+                    borderRadius: const pw.BorderRadius.all(
+                      pw.Radius.circular(4),
+                    ),
                   ),
                   child: _buildPdfInvoice(invoice, logoImage),
                 );
@@ -194,7 +223,8 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
 
   pw.Widget _buildPdfInvoice(Invoice invoice, pw.ImageProvider? logoImage) {
     return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      mainAxisSize: pw.MainAxisSize.min,
       children: [
         // Header with Logo
         pw.Row(
@@ -202,15 +232,15 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           children: [
             if (logoImage != null)
               pw.Container(
-                width: 24,
-                height: 24,
+                width: 32,
+                height: 32,
                 child: pw.ClipRRect(
                   horizontalRadius: 2,
                   verticalRadius: 2,
                   child: pw.Image(logoImage),
                 ),
               ),
-            pw.SizedBox(width: 4),
+            pw.SizedBox(width: 8),
             pw.Expanded(
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -218,19 +248,19 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                   pw.Text(
                     'INVOICE',
                     style: pw.TextStyle(
-                      fontSize: 9,
+                      fontSize: 12,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.deepPurple,
                     ),
                   ),
-                  pw.SizedBox(height: 2),
+                  pw.SizedBox(height: 4),
                   pw.Row(
                     children: [
                       pw.Expanded(
                         child: pw.Text(
                           'Invoice #: ${invoice.invoiceNumber}',
                           style: pw.TextStyle(
-                            fontSize: 6.5,
+                            fontSize: 8,
                             fontWeight: pw.FontWeight.bold,
                           ),
                         ),
@@ -238,7 +268,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                       pw.Text(
                         DateFormat('dd/MM/yyyy').format(invoice.date),
                         style: pw.TextStyle(
-                          fontSize: 6.5,
+                          fontSize: 8,
                           fontWeight: pw.FontWeight.bold,
                         ),
                       ),
@@ -249,25 +279,39 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
             ),
           ],
         ),
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 10),
 
         // Shop Details
-        pw.Text(
-          '${invoice.shopName}  -> code: ${invoice.shopCode}',
-          style: pw.TextStyle(
-            fontSize: 7,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.deepPurple,
-          ),
+        pw.Row(
+          children: [
+            pw.Expanded(
+              child: pw.Text(
+                invoice.shopName,
+                style: pw.TextStyle(
+                  fontSize: 9,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.deepPurple,
+                ),
+              ),
+            ),
+            pw.Text(
+              'code: ${invoice.shopCode}',
+              style: pw.TextStyle(
+                fontSize: 9,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.deepPurple,
+              ),
+            ),
+          ],
         ),
-        pw.SizedBox(height: 2),
+        pw.SizedBox(height: 4),
         pw.Row(
           children: [
             pw.Expanded(
               child: pw.Text(
                 'Owner: ${invoice.ownerName}',
                 style: pw.TextStyle(
-                  fontSize: 6.5,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.deepPurple,
                 ),
@@ -276,81 +320,77 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
             pw.Text(
               'Category: ${invoice.category}',
               style: pw.TextStyle(
-                fontSize: 6.5,
+                fontSize: 8,
                 fontWeight: pw.FontWeight.bold,
                 color: PdfColors.deepPurple,
               ),
             ),
           ],
         ),
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 10),
 
         // Items Table
-        pw.Expanded(
-          child: pw.Container(
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
-              borderRadius: pw.BorderRadius.circular(2),
-            ),
-            child: pw.Column(
-              children: [
-                // Table Header
-                pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(vertical: 2),
+        pw.Container(
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
+            borderRadius: pw.BorderRadius.circular(2),
+          ),
+          child: pw.Column(
+            mainAxisSize: pw.MainAxisSize.min,
+            children: [
+              // Table Header
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey100,
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
+                  ),
+                ),
+                child: pw.Row(
+                  children: [
+                    _buildPdfTableHeaderCell('Sr.', 1),
+                    _buildPdfTableHeaderCell('Description', 4),
+                    _buildPdfTableHeaderCell('Rate', 2),
+                    _buildPdfTableHeaderCell('Unit', 1),
+                    _buildPdfTableHeaderCell('Price', 2),
+                  ],
+                ),
+              ),
+              // Table Rows
+              ...invoice.items.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                return pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 3),
                   decoration: pw.BoxDecoration(
-                    color: PdfColors.grey100,
+                    color: index.isEven ? PdfColors.grey50 : PdfColors.white,
                     border: pw.Border(
-                      bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
+                      bottom: pw.BorderSide(
+                        color: PdfColors.grey300,
+                        width: 0.5,
+                      ),
                     ),
                   ),
                   child: pw.Row(
                     children: [
-                      _buildPdfTableHeaderCell('Sr.', 1),
-                      _buildPdfTableHeaderCell('Description', 4),
-                      _buildPdfTableHeaderCell('Rate', 2),
-                      _buildPdfTableHeaderCell('Units', 1),
-                      _buildPdfTableHeaderCell('Price', 2),
+                      _buildPdfTableCell((index + 1).toString(), 1),
+                      _buildPdfTableCell(item.description, 4),
+                      _buildPdfTableCell(item.rate.toStringAsFixed(2), 2),
+                      _buildPdfTableCell(item.unit.toString(), 1),
+                      _buildPdfTableCell(item.amount.toStringAsFixed(2), 2),
                     ],
                   ),
-                ),
-                // Table Rows
-                pw.Expanded(
-                  child: pw.Column(
-                    children: [
-                      ...invoice.items.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final item = entry.value;
-                        return pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(vertical: 1),
-                          decoration: pw.BoxDecoration(
-                            color: index.isEven ? PdfColors.grey50 : PdfColors.white,
-                            border: pw.Border(
-                              bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
-                            ),
-                          ),
-                          child: pw.Row(
-                            children: [
-                              _buildPdfTableCell((index + 1).toString(), 1),
-                              _buildPdfTableCell(item.description, 4),
-                              _buildPdfTableCell(item.rate.toStringAsFixed(2), 2),
-                              _buildPdfTableCell(item.unit.toString(), 1),
-                              _buildPdfTableCell(item.amount.toStringAsFixed(2), 2),
-                            ],
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                );
+              }),
+            ],
           ),
         ),
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 10),
 
         // Totals Section
         pw.Container(
-          padding: const pw.EdgeInsets.all(4),
+          padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: pw.BoxDecoration(
             border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
             borderRadius: pw.BorderRadius.circular(2),
@@ -359,12 +399,66 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           child: pw.Column(
             children: [
               _buildPdfTotalRow('Subtotal:', invoice.subtotal),
-              pw.SizedBox(height: 1),
+              pw.SizedBox(height: 3),
               _buildPdfTotalRow('Discount:', invoice.discount),
-              pw.Divider(color: PdfColors.grey300, height: 2),
+              pw.Divider(color: PdfColors.grey300, height: 4),
               _buildPdfTotalRow('Total:', invoice.total, isTotal: true),
             ],
           ),
+        ),
+        pw.SizedBox(height: 20),
+
+        // Signature Section
+        pw.Row(
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Container(
+                    height: 20,
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border(
+                        bottom: pw.BorderSide(
+                          color: PdfColors.grey300,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    'Customer Signature',
+                    style: pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(width: 16),
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Container(
+                    height: 20,
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border(
+                        bottom: pw.BorderSide(
+                          color: PdfColors.grey300,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    'Authorized Signature',
+                    style: pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -379,7 +473,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           text,
           textAlign: pw.TextAlign.center,
           style: pw.TextStyle(
-            fontSize: 6,
+            fontSize: 8,
             fontWeight: pw.FontWeight.bold,
             color: PdfColors.deepPurple,
           ),
@@ -396,17 +490,19 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
         child: pw.Text(
           text,
           textAlign: pw.TextAlign.center,
-          style: const pw.TextStyle(
-            fontSize: 6,
-          ),
+          style: const pw.TextStyle(fontSize: 7.5),
         ),
       ),
     );
   }
 
-  pw.Widget _buildPdfTotalRow(String label, double amount, {bool isTotal = false}) {
+  pw.Widget _buildPdfTotalRow(
+    String label,
+    double amount, {
+    bool isTotal = false,
+  }) {
     final textStyle = pw.TextStyle(
-      fontSize: 6.5,
+      fontSize: 8,
       fontWeight: isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
       color: isTotal ? PdfColors.deepPurple : PdfColors.black,
     );
@@ -416,6 +512,378 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       children: [
         pw.Text(label, style: textStyle),
         pw.Text(amount.toStringAsFixed(2), style: textStyle),
+      ],
+    );
+  }
+
+  void _showCompleteInvoice(BuildContext context, Invoice invoice) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  width: 297,
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade200,
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with Logo
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: Image.asset(
+                              'assets/logo.png',
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'INVOICE',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Invoice #',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            invoice.invoiceNumber,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Date',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            DateFormat('dd/MM/yyyy').format(invoice.date),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Shop Details
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  invoice.shopName,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'code: ${invoice.shopCode}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Owner: ${invoice.ownerName}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Category: ${invoice.category}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Items Table
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Column(
+                          children: [
+                            // Table Header
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                border: Border(
+                                  bottom: BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  _buildTableHeaderCell('Sr.', 1, align: TextAlign.center),
+                                  _buildTableHeaderCell('Description', 4, align: TextAlign.center),
+                                  _buildTableHeaderCell('Rate', 2, align: TextAlign.center),
+                                  _buildTableHeaderCell('Unit', 2, align: TextAlign.center),
+                                  _buildTableHeaderCell('Price', 2, align: TextAlign.center),
+                                ],
+                              ),
+                            ),
+                            // Table Rows
+                            ...invoice.items.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final item = entry.value;
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: index.isEven ? Colors.grey.shade50 : Colors.white,
+                                  border: Border(
+                                    bottom: BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    _buildTableCell((index + 1).toString(), 1, align: TextAlign.center),
+                                    _buildTableCell(item.description, 4, align: TextAlign.center),
+                                    _buildTableCell(item.rate.toStringAsFixed(2), 2, align: TextAlign.center),
+                                    _buildTableCell(item.unit.toString(), 2, align: TextAlign.center),
+                                    _buildTableCell(item.amount.toStringAsFixed(2), 2, align: TextAlign.center),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Totals Section
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildTotalRow('Subtotal:', invoice.subtotal),
+                            const SizedBox(height: 4),
+                            _buildTotalRow('Discount:', invoice.discount),
+                            const SizedBox(height: 4),
+                            const Divider(color: Colors.grey),
+                            const SizedBox(height: 4),
+                            _buildTotalRow('Total:', invoice.total, isTotal: true),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Signature Section
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(color: Colors.grey.shade300),
+                                    ),
+                                  ),
+                                ),
+                                const Text(
+                                  'Customer Signature',
+                                  style: TextStyle(fontSize: 8),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(color: Colors.grey.shade300),
+                                    ),
+                                  ),
+                                ),
+                                const Text(
+                                  'Authorized Signature',
+                                  style: TextStyle(fontSize: 8),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.grey),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableHeaderCell(String text, int flex, {TextAlign align = TextAlign.left}) {
+    return Expanded(
+      flex: flex,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        decoration: BoxDecoration(
+          border: Border(right: BorderSide(color: Colors.grey.shade300)),
+        ),
+        child: Text(
+          text,
+          textAlign: align,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: Colors.deepPurple,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableCell(String text, int flex, {TextAlign align = TextAlign.left}) {
+    return Expanded(
+      flex: flex,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        decoration: BoxDecoration(
+          border: Border(right: BorderSide(color: Colors.grey.shade300)),
+        ),
+        child: Text(
+          text,
+          textAlign: align,
+          style: const TextStyle(fontSize: 11, color: Colors.black87),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalRow(String label, double amount, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            color: isTotal ? Colors.deepPurple : Colors.black87,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Rs. ${amount.toStringAsFixed(2)}',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            color: isTotal ? Colors.deepPurple : Colors.black87,
+          ),
+        ),
       ],
     );
   }
@@ -452,156 +920,227 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
             const SizedBox(height: 8),
             Text(
               'Generate some invoices to see them here',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             ),
           ],
         ),
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double maxWidth = constraints.maxWidth;
-        final int invoicesPerRow = (maxWidth / 350).floor().clamp(1, 2);
-        final double availableWidth = maxWidth - 32;
-        final double scale = ((availableWidth / invoicesPerRow) / 297).clamp(0.5, 1.0);
-
-        final int totalPages = (_invoices.length / 4).ceil();
-        final int startIndex = _currentPage * 4;
-        final int endIndex = (startIndex + 4 > _invoices.length)
-            ? _invoices.length
-            : startIndex + 4;
-        final List<Invoice> currentPageInvoices =
-            _invoices.sublist(startIndex, endIndex);
-
-        return SingleChildScrollView(
+    return Column(
+      children: [
+        Container(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Action Buttons Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      if (_selectedInvoices.isNotEmpty) ...[
-                        ElevatedButton.icon(
-                          onPressed: _deleteSelectedInvoices,
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
-                          label: Text('Delete (${_selectedInvoices.length})'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade50,
-                            foregroundColor: Colors.red,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          onPressed: _printInvoices,
-                          icon: const Icon(Icons.print),
-                          label: Text('Print (${_selectedInvoices.length})'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (totalPages > 1)
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: _currentPage > 0
-                              ? () {
-                                  setState(() {
-                                    _currentPage--;
-                                  });
-                                }
-                              : null,
-                          icon: const Icon(Icons.chevron_left),
-                          color: Colors.deepPurple,
-                        ),
-                        Text(
-                          'Page ${_currentPage + 1} of $totalPages',
-                          style: const TextStyle(
-                            color: Colors.deepPurple,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _currentPage < totalPages - 1
-                              ? () {
-                                  setState(() {
-                                    _currentPage++;
-                                  });
-                                }
-                              : null,
-                          icon: const Icon(Icons.chevron_right),
-                          color: Colors.deepPurple,
-                        ),
-                      ],
-                    ),
-                ],
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade200,
+                blurRadius: 2,
+                offset: const Offset(0, 1),
               ),
-              const SizedBox(height: 16),
-              // Invoices Grid
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                alignment: WrapAlignment.center,
-                children: currentPageInvoices.map((invoice) {
-                  final bool isSelected = _selectedInvoices.contains(invoice.id);
-                  return Stack(
-                    children: [
-                      InvoiceWidget(
-                        invoice: invoice,
-                        scale: scale,
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                if (isSelected) {
-                                  _selectedInvoices.remove(invoice.id);
-                                } else {
-                                  _selectedInvoices.add(invoice.id);
-                                }
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(4),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: isSelected ? Colors.deepPurple : Colors.white,
-                                border: Border.all(
-                                  color: isSelected ? Colors.deepPurple : Colors.grey.shade400,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Icon(
-                                isSelected ? Icons.check_box : Icons.check_box_outline_blank,
-                                size: 20,
-                                color: isSelected ? Colors.white : Colors.grey.shade600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
             ],
           ),
-        );
-      },
+          child: Column(
+            children: [
+              // Search Bar
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 14,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search the Invoice...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(Icons.clear, color: Colors.grey.shade400),
+                            onPressed: () {
+                              _searchController.clear();
+                              _filterInvoices('');
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  onChanged: _filterInvoices,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Action Buttons
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _selectedInvoices.isEmpty ? null : _deleteSelectedInvoices,
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                    ),
+                    label: Text('Delete (${_selectedInvoices.length})'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade50,
+                      foregroundColor: Colors.red,
+                      disabledBackgroundColor: Colors.grey.shade100,
+                      disabledForegroundColor: Colors.grey.shade400,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: _selectedInvoices.isEmpty ? null : _printInvoices,
+                    icon: const Icon(Icons.print),
+                    label: Text('Print (${_selectedInvoices.length})'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.grey.shade100,
+                      disabledForegroundColor: Colors.grey.shade400,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _filteredInvoices.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.search_off,
+                        size: 64,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No matching invoices found',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Try different search terms',
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: _filteredInvoices.length,
+                  itemBuilder: (context, index) {
+                    final invoice = _filteredInvoices[index];
+                    final bool isSelected = _selectedInvoices.contains(invoice.id);
+                    
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8.0),
+                      child: InkWell(
+                        onTap: () => _showCompleteInvoice(context, invoice),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            children: [
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      if (isSelected) {
+                                        _selectedInvoices.remove(invoice.id);
+                                      } else {
+                                        _selectedInvoices.add(invoice.id);
+                                      }
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? Colors.deepPurple : Colors.white,
+                                      border: Border.all(
+                                        color: isSelected ? Colors.deepPurple : Colors.grey.shade400,
+                                      ),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Icon(
+                                      isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                                      size: 20,
+                                      color: isSelected ? Colors.white : Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                width: 40,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '${index + 1}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Invoice #${invoice.invoiceNumber}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      invoice.shopName,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black87,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                'Rs. ${invoice.total.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
@@ -642,7 +1181,9 @@ class Invoice {
       shopCode: map['shopCode'],
       ownerName: map['ownerName'],
       category: map['category'],
-      items: (map['items'] as List).map((item) => InvoiceItem.fromMap(item)).toList(),
+      items: (map['items'] as List)
+          .map((item) => InvoiceItem.fromMap(item))
+          .toList(),
       subtotal: map['subtotal'],
       discount: map['discount'],
       total: map['total'],
@@ -672,361 +1213,3 @@ class InvoiceItem {
     );
   }
 }
-
-class InvoiceWidget extends StatelessWidget {
-  final Invoice invoice;
-  final double scale;
-
-  const InvoiceWidget({
-    super.key,
-    required this.invoice,
-    required this.scale,
-  });
-
-  Widget _buildTableHeaderCell(String text, int flex, {TextAlign align = TextAlign.left}) {
-    return Expanded(
-      flex: flex,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 4 * scale,
-          vertical: 6 * scale,
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            right: BorderSide(color: Colors.grey.shade300),
-          ),
-        ),
-        child: Text(
-          text,
-          textAlign: align,
-          style: TextStyle(
-            fontSize: 11 * scale,
-            fontWeight: FontWeight.bold,
-            color: Colors.deepPurple,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTableCell(String text, int flex, {TextAlign align = TextAlign.left}) {
-    return Expanded(
-      flex: flex,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 4 * scale,
-          vertical: 6 * scale,
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            right: BorderSide(color: Colors.grey.shade300),
-          ),
-        ),
-        child: Text(
-          text,
-          textAlign: align,
-          style: TextStyle(
-            fontSize: 11 * scale,
-            color: Colors.black87,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTotalRow(String label, double amount, {bool isTotal = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11 * scale,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? Colors.deepPurple : Colors.black87,
-          ),
-        ),
-        SizedBox(width: 8 * scale),
-        Text(
-          'Rs. ${amount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontSize: 11 * scale,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? Colors.deepPurple : Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 297 * scale,
-      padding: EdgeInsets.all(12.0 * scale),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(4 * scale),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 2 * scale,
-            offset: Offset(0, 1 * scale),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with Logo
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2 * scale),
-                child: Image.asset(
-                  'assets/logo.png',
-                  width: 40 * scale,
-                  height: 40 * scale,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'INVOICE',
-                      style: TextStyle(
-                        fontSize: 16 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                    ),
-                    SizedBox(height: 4 * scale),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Invoice #',
-                                style: TextStyle(
-                                  fontSize: 10 * scale,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                              SizedBox(height: 2 * scale),
-                              Text(
-                                invoice.invoiceNumber,
-                                style: TextStyle(
-                                  fontSize: 12 * scale,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Date',
-                                style: TextStyle(
-                                  fontSize: 10 * scale,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                              SizedBox(height: 2 * scale),
-                              Text(
-                                DateFormat('dd/MM/yyyy').format(invoice.date),
-                                style: TextStyle(
-                                  fontSize: 12 * scale,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16 * scale),
-
-          // Shop Details
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${invoice.shopName}  -> code: ${invoice.shopCode}',
-                style: TextStyle(
-                  fontSize: 12 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
-                ),
-              ),
-              SizedBox(height: 4 * scale),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Owner: ${invoice.ownerName}',
-                      style: TextStyle(
-                        fontSize: 12 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(width: 8 * scale),
-                  Expanded(
-                    child: Text(
-                      'Category: ${invoice.category}',
-                      style: TextStyle(
-                        fontSize: 12 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 16 * scale),
-
-          // Items Table
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(4 * scale),
-            ),
-            child: Column(
-              children: [
-                // Table Header
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildTableHeaderCell('Sr.', 1, align: TextAlign.center),
-                      _buildTableHeaderCell('Description', 4, align: TextAlign.center),
-                      _buildTableHeaderCell('Rate', 2, align: TextAlign.center),
-                      _buildTableHeaderCell('Units', 2, align: TextAlign.center),
-                      _buildTableHeaderCell('Price', 2, align: TextAlign.center),
-                    ],
-                  ),
-                ),
-                // Table Rows
-                ...invoice.items.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final item = entry.value;
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: index.isEven ? Colors.grey.shade50 : Colors.white,
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade300),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildTableCell((index + 1).toString(), 1, align: TextAlign.center),
-                        _buildTableCell(item.description, 4, align: TextAlign.center),
-                        _buildTableCell(item.rate.toStringAsFixed(2), 2, align: TextAlign.center),
-                        _buildTableCell(item.unit.toString(), 2, align: TextAlign.center),
-                        _buildTableCell(item.amount.toStringAsFixed(2), 2, align: TextAlign.center),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-          SizedBox(height: 16 * scale),
-
-          // Totals Section
-          Container(
-            padding: EdgeInsets.all(8 * scale),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(4 * scale),
-            ),
-            child: Column(
-              children: [
-                _buildTotalRow('Subtotal:', invoice.subtotal),
-                SizedBox(height: 4 * scale),
-                _buildTotalRow('Discount:', invoice.discount),
-                SizedBox(height: 4 * scale),
-                Divider(color: Colors.grey.shade300),
-                SizedBox(height: 4 * scale),
-                _buildTotalRow('Total:', invoice.total, isTotal: true),
-              ],
-            ),
-          ),
-          SizedBox(height: 24 * scale),
-
-          // Signature Section
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 20 * scale,
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Colors.grey.shade300),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'Customer Signature',
-                      style: TextStyle(fontSize: 8 * scale),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 16 * scale),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 20 * scale,
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Colors.grey.shade300),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      'Authorized Signature',
-                      style: TextStyle(fontSize: 8 * scale),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-} 
