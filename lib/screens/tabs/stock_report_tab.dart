@@ -64,6 +64,7 @@ class StockReportTab extends StatefulWidget {
 class _StockReportTabState extends State<StockReportTab> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _productIdController = TextEditingController();
+  late TextEditingController _searchController;
   
   // Opening Stock Controllers
   final TextEditingController _openingStockCtnController = TextEditingController();
@@ -96,6 +97,12 @@ class _StockReportTabState extends State<StockReportTab> {
   final TextEditingController _saleValueController = TextEditingController();
 
   Product? _selectedProduct;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
 
   @override
   void dispose() {
@@ -308,7 +315,7 @@ class _StockReportTabState extends State<StockReportTab> {
 
       // Reset the form
       _resetStockFields();
-      _productIdController.clear();
+      _searchController.clear();
       setState(() {
         _selectedProduct = null;
       });
@@ -551,6 +558,9 @@ class _StockReportTabState extends State<StockReportTab> {
                   FocusNode focusNode,
                   VoidCallback onFieldSubmitted,
                 ) {
+                  if (_searchController != controller) {
+                    _searchController = controller;
+                  }
                   return TextFormField(
                     controller: controller,
                     focusNode: focusNode,

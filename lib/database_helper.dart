@@ -33,7 +33,6 @@ class DatabaseHelper {
       
       final dbPath = await getDatabasesPath();
       final path = join(dbPath, 'accounts.db');
-      
       await databaseFactory.deleteDatabase(path);
     } finally {
       _isDeleting = false;
@@ -42,8 +41,7 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     await initialize();
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
+    _database ??= await _initDatabase();
     return _database!;
   }
 
@@ -58,143 +56,83 @@ class DatabaseHelper {
   }
 
   Future<void> _createDB(Database db, int version) async {
-    // Income table
-    await db.execute('''
-      CREATE TABLE income (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT NOT NULL,
-        category TEXT NOT NULL,
-        details TEXT NOT NULL,
-        amount REAL NOT NULL
-      )
-    ''');
-
-    // Expenditure table
-    await db.execute('''
-      CREATE TABLE expenditure (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT NOT NULL,
-        category TEXT NOT NULL,
-        details TEXT NOT NULL,
-        amount REAL NOT NULL
-      )
-    ''');
-
-    // Products table
-    await db.execute('''
-      CREATE TABLE products (
-        id TEXT PRIMARY KEY,
-        company TEXT NOT NULL,
-        brand TEXT NOT NULL,
-        ctnRate REAL NOT NULL,
-        boxRate REAL NOT NULL,
-        salePrice REAL NOT NULL,
-        ctnPacking INTEGER NOT NULL,
-        boxPacking INTEGER NOT NULL,
-        unitsPacking INTEGER NOT NULL
-      )
-    ''');
-
-    // Stock Records table
-    await db.execute('''
-      CREATE TABLE stock_records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_id TEXT NOT NULL,
-        date TEXT NOT NULL,
-        opening_stock_ctn INTEGER NOT NULL,
-        opening_stock_units INTEGER NOT NULL,
-        opening_stock_total REAL NOT NULL,
-        opening_stock_value REAL NOT NULL,
-        received_ctn INTEGER NOT NULL,
-        received_units INTEGER NOT NULL,
-        received_total REAL NOT NULL,
-        received_value REAL NOT NULL,
-        total_stock_ctn INTEGER NOT NULL,
-        total_stock_units INTEGER NOT NULL,
-        total_stock_total REAL NOT NULL,
-        total_stock_value REAL NOT NULL,
-        closing_stock_ctn INTEGER NOT NULL,
-        closing_stock_units INTEGER NOT NULL,
-        closing_stock_total REAL NOT NULL,
-        closing_stock_value REAL NOT NULL,
-        sale_ctn INTEGER NOT NULL,
-        sale_units INTEGER NOT NULL,
-        sale_total REAL NOT NULL,
-        sale_value REAL NOT NULL,
-        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
-      )
-    ''');
-
-    // Shops table
-    await db.execute('''
-      CREATE TABLE shops (
-        code TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        owner_name TEXT NOT NULL,
-        category TEXT NOT NULL,
-        address TEXT,
-        phone TEXT
-      )
-    ''');
-
-    // Invoices table
-    await db.execute('''
-      CREATE TABLE invoices (
-        id TEXT PRIMARY KEY,
-        invoiceNumber TEXT NOT NULL,
-        date TEXT NOT NULL,
-        shopName TEXT NOT NULL,
-        shopCode TEXT NOT NULL,
-        ownerName TEXT NOT NULL,
-        category TEXT NOT NULL,
-        subtotal REAL NOT NULL,
-        discount REAL NOT NULL,
-        total REAL NOT NULL,
-        items TEXT NOT NULL
-      )
-    ''');
-
-    // Create load form table
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS load_form (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        brandName TEXT NOT NULL,
-        units INTEGER NOT NULL,
-        issue INTEGER DEFAULT 0,
-        returnQty INTEGER DEFAULT 0,
-        sale INTEGER DEFAULT 0,
-        saledReturn INTEGER DEFAULT 0
-      )
-    ''');
-
-    // Pick List table
-    await db.execute('''
-      CREATE TABLE IF NOT EXISTS pick_list (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT,
-        shopName TEXT,
-        ownerName TEXT,
-        billAmount REAL DEFAULT 0,
-        paymentType TEXT DEFAULT '',
-        recovery REAL DEFAULT 0
-      )
-    ''');
-  }
-
-  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS shops (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          ownerName TEXT NOT NULL,
-          category TEXT NOT NULL
+    await db.transaction((txn) async {
+      await txn.execute('''
+        CREATE TABLE income (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          category TEXT NOT NULL,
+          details TEXT NOT NULL,
+          amount REAL NOT NULL
         )
       ''');
-    }
-    if (oldVersion < 3) {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS invoices (
+
+      await txn.execute('''
+        CREATE TABLE expenditure (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          category TEXT NOT NULL,
+          details TEXT NOT NULL,
+          amount REAL NOT NULL
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE products (
+          id TEXT PRIMARY KEY,
+          company TEXT NOT NULL,
+          brand TEXT NOT NULL,
+          ctnRate REAL NOT NULL,
+          boxRate REAL NOT NULL,
+          salePrice REAL NOT NULL,
+          ctnPacking INTEGER NOT NULL,
+          boxPacking INTEGER NOT NULL,
+          unitsPacking INTEGER NOT NULL
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE stock_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          product_id TEXT NOT NULL,
+          date TEXT NOT NULL,
+          opening_stock_ctn INTEGER NOT NULL,
+          opening_stock_units INTEGER NOT NULL,
+          opening_stock_total REAL NOT NULL,
+          opening_stock_value REAL NOT NULL,
+          received_ctn INTEGER NOT NULL,
+          received_units INTEGER NOT NULL,
+          received_total REAL NOT NULL,
+          received_value REAL NOT NULL,
+          total_stock_ctn INTEGER NOT NULL,
+          total_stock_units INTEGER NOT NULL,
+          total_stock_total REAL NOT NULL,
+          total_stock_value REAL NOT NULL,
+          closing_stock_ctn INTEGER NOT NULL,
+          closing_stock_units INTEGER NOT NULL,
+          closing_stock_total REAL NOT NULL,
+          closing_stock_value REAL NOT NULL,
+          sale_ctn INTEGER NOT NULL,
+          sale_units INTEGER NOT NULL,
+          sale_total REAL NOT NULL,
+          sale_value REAL NOT NULL,
+          FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE shops (
+          code TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          owner_name TEXT NOT NULL,
+          category TEXT NOT NULL,
+          address TEXT,
+          phone TEXT
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE invoices (
           id TEXT PRIMARY KEY,
           invoiceNumber TEXT NOT NULL,
           date TEXT NOT NULL,
@@ -202,32 +140,15 @@ class DatabaseHelper {
           shopCode TEXT NOT NULL,
           ownerName TEXT NOT NULL,
           category TEXT NOT NULL,
-          items TEXT NOT NULL,
           subtotal REAL NOT NULL,
           discount REAL NOT NULL,
-          total REAL NOT NULL
+          total REAL NOT NULL,
+          items TEXT NOT NULL
         )
       ''');
-    }
-    if (oldVersion < 4) {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS products (
-          id TEXT PRIMARY KEY,
-          company TEXT NOT NULL,
-          brand TEXT NOT NULL,
-          ctnRate REAL NOT NULL,
-          boxRate REAL NOT NULL,
-          ctnPacking INTEGER NOT NULL,
-          boxPacking INTEGER NOT NULL,
-          unitsPacking INTEGER NOT NULL,
-          salePrice REAL NOT NULL
-        )
-      ''');
-    }
-    if (oldVersion < 5) {
-      // Create load form table
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS load_form (
+
+      await txn.execute('''
+        CREATE TABLE load_form (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           brandName TEXT NOT NULL,
           units INTEGER NOT NULL,
@@ -237,10 +158,9 @@ class DatabaseHelper {
           saledReturn INTEGER DEFAULT 0
         )
       ''');
-    }
-    if (oldVersion < 6) {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS pick_list (
+
+      await txn.execute('''
+        CREATE TABLE pick_list (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           code TEXT,
           shopName TEXT,
@@ -250,7 +170,80 @@ class DatabaseHelper {
           recovery REAL DEFAULT 0
         )
       ''');
-    }
+    });
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    await db.transaction((txn) async {
+      if (oldVersion < 2) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS shops (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            ownerName TEXT NOT NULL,
+            category TEXT NOT NULL
+          )
+        ''');
+      }
+      if (oldVersion < 3) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS invoices (
+            id TEXT PRIMARY KEY,
+            invoiceNumber TEXT NOT NULL,
+            date TEXT NOT NULL,
+            shopName TEXT NOT NULL,
+            shopCode TEXT NOT NULL,
+            ownerName TEXT NOT NULL,
+            category TEXT NOT NULL,
+            items TEXT NOT NULL,
+            subtotal REAL NOT NULL,
+            discount REAL NOT NULL,
+            total REAL NOT NULL
+          )
+        ''');
+      }
+      if (oldVersion < 4) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS products (
+            id TEXT PRIMARY KEY,
+            company TEXT NOT NULL,
+            brand TEXT NOT NULL,
+            ctnRate REAL NOT NULL,
+            boxRate REAL NOT NULL,
+            ctnPacking INTEGER NOT NULL,
+            boxPacking INTEGER NOT NULL,
+            unitsPacking INTEGER NOT NULL,
+            salePrice REAL NOT NULL
+          )
+        ''');
+      }
+      if (oldVersion < 5) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS load_form (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            brandName TEXT NOT NULL,
+            units INTEGER NOT NULL,
+            issue INTEGER DEFAULT 0,
+            returnQty INTEGER DEFAULT 0,
+            sale INTEGER DEFAULT 0,
+            saledReturn INTEGER DEFAULT 0
+          )
+        ''');
+      }
+      if (oldVersion < 6) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS pick_list (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT,
+            shopName TEXT,
+            ownerName TEXT,
+            billAmount REAL DEFAULT 0,
+            paymentType TEXT DEFAULT '',
+            recovery REAL DEFAULT 0
+          )
+        ''');
+      }
+    });
   }
 
   // Income operations
