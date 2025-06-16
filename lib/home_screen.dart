@@ -10,6 +10,7 @@ import 'package:records_keeper/screens/tabs/view_products_tab.dart';
 import 'package:records_keeper/screens/tabs/sales/view_invoices_tab.dart';
 import 'package:records_keeper/screens/tabs/sales/load_form.dart';
 import 'package:records_keeper/screens/tabs/sales/pick_list_tab.dart';
+import 'package:records_keeper/screens/dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,13 +27,10 @@ class _HomeScreenState extends State<HomeScreen>
   bool _stockExpanded = false;
   bool _newTabExpanded = false;
   bool _salesExpanded = false;
-  bool _ledgerExpanded = false;
   String? _cashFlowSubTab;
   String? _stockSubTab;
   String? _newTabSubTab;
   String? _salesSubTab;
-  String? _ledgerSubTab;
-  String? _dashSubTab;
   late AnimationController _animationController;
 
   @override
@@ -181,15 +179,39 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ],
         ),
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
-            _buildDashItem(),
-            _buildCashFlowItem(),
-            _buildStockItem(),
-            _buildNewTabItem(),
-            _buildSalesItem(),
-            _buildLedgerItem(),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey.shade200,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Center(
+                child: Image.asset(
+                  'assets/logo.png',
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildDashItem(),
+                  _buildCashFlowItem(),
+                  _buildStockItem(),
+                  _buildNewTabItem(),
+                  _buildSalesItem(),
+                  _buildLedgerItem(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -264,8 +286,18 @@ class _HomeScreenState extends State<HomeScreen>
                 _cashFlowSubTab == 'Expenditure',
                 () {
                   setState(() {
-                    _selectedIndex = 2;
+                    _selectedIndex = 1;
                     _cashFlowSubTab = 'Expenditure';
+                  });
+                },
+              ),
+              _buildSubMenuItem(
+                'B/F',
+                _cashFlowSubTab == 'B/F',
+                () {
+                  setState(() {
+                    _selectedIndex = 1;
+                    _cashFlowSubTab = 'B/F';
                   });
                 },
               ),
@@ -598,104 +630,24 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildLedgerItem() {
-    return Column(
-      children: [
-        ListTile(
-          horizontalTitleGap: 8,
-          minLeadingWidth: 20,
-          leading: SizedBox(
-            width: 24,
-            height: 24,
-            child: Icon(
-              Icons.book_rounded,
-              size: 20,
-              color: (_selectedIndex == 11 && _ledgerSubTab != null)
-                  ? Colors.deepPurple
-                  : Colors.grey.shade700,
-            ),
-          ),
-          title: Row(
-            children: [
-              Text(
-                'Ledger',
-                style: TextStyle(
-                  color: (_selectedIndex == 11 && _ledgerSubTab != null)
-                      ? Colors.deepPurple
-                      : Colors.grey.shade700,
-                  fontWeight: (_selectedIndex == 11 && _ledgerSubTab != null)
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                ),
-              ),
-              const Spacer(),
-              AnimatedRotation(
-                turns: _ledgerExpanded ? 0.5 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Icon(
-                  Icons.expand_more_rounded,
-                  size: 20,
-                  color: (_selectedIndex == 11 && _ledgerSubTab != null)
-                      ? Colors.deepPurple
-                      : Colors.grey.shade700,
-                ),
-              ),
-            ],
-          ),
-          onTap: () {
-            setState(() {
-              _ledgerExpanded = !_ledgerExpanded;
-            });
-          },
+    return ListTile(
+      horizontalTitleGap: 8,
+      minLeadingWidth: 20,
+      leading: SizedBox(
+        width: 24,
+        height: 24,
+        child: Icon(
+          Icons.book_rounded,
+          size: 20,
+          color: _selectedIndex == 11 ? Colors.deepPurple : Colors.grey.shade700,
         ),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: _ledgerExpanded ? 144 : 0,
-          child: SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            child: Column(
-              children: [
-                _buildLedgerSubItem('Add Entry'),
-                _buildLedgerSubItem('View Entries'),
-                _buildLedgerSubItem('Reports'),
-              ],
-            ),
-          ),
+      ),
+      title: Text(
+        'Ledger',
+        style: TextStyle(
+          color: _selectedIndex == 11 ? Colors.deepPurple : Colors.grey.shade700,
+          fontWeight: _selectedIndex == 11 ? FontWeight.bold : FontWeight.normal,
         ),
-      ],
-    );
-  }
-
-  Widget _buildLedgerSubItem(String tabName) {
-    final isSelected = _selectedIndex == 11 && _ledgerSubTab == tabName;
-
-    return Container(
-      padding: const EdgeInsets.only(left: 32.0),
-      child: ListTile(
-        horizontalTitleGap: 8,
-        minLeadingWidth: 20,
-        leading: SizedBox(
-          width: 24,
-          height: 24,
-          child: Icon(
-            Icons.arrow_right_rounded,
-            size: 20,
-            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
-          ),
-        ),
-        title: Text(
-          tabName,
-          style: TextStyle(
-            fontSize: 14,
-            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        onTap: () {
-          setState(() {
-            _selectedIndex = 11;
-            _ledgerSubTab = tabName;
-          });
-        },
       ),
     );
   }
@@ -720,12 +672,6 @@ class _HomeScreenState extends State<HomeScreen>
           fontWeight: _selectedIndex == 12 ? FontWeight.bold : FontWeight.normal,
         ),
       ),
-      onTap: () {
-        setState(() {
-          _selectedIndex = 12;
-          _dashSubTab = null;
-        });
-      },
     );
   }
 
@@ -790,15 +736,9 @@ class _HomeScreenState extends State<HomeScreen>
             return _buildPlaceholder('Sales - $_salesSubTab');
         }
       case 11:
-        if (_ledgerSubTab == null) {
-          return _buildLedgerEmptyState();
-        }
-        return _buildPlaceholder('Ledger - $_ledgerSubTab');
+        return _buildPlaceholder('Ledger');
       case 12:
-        if (_dashSubTab == null) {
-          return _buildDashEmptyState();
-        }
-        return _buildPlaceholder('Dash - $_dashSubTab');
+        return const DashboardScreen();
       default:
         return _buildPlaceholder('Dashboard');
     }
@@ -908,66 +848,6 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(height: 8),
           Text(
             'Choose from Invoice, Load Form, or Pick List',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLedgerEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.book_outlined,
-            size: 64,
-            color: Colors.grey.shade400,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Select a Ledger option',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Choose from Add Entry, View Entries, or Reports',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDashEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.analytics_outlined,
-            size: 64,
-            color: Colors.grey.shade400,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Dashboard',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Welcome to your dashboard',
             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             textAlign: TextAlign.center,
           ),

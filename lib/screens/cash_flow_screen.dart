@@ -23,12 +23,9 @@ class CashFlowScreen extends StatelessWidget {
         return const Center(
           child: Text(
             'Please select an option from the menu',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
         );
     }
   }
-} 
+}

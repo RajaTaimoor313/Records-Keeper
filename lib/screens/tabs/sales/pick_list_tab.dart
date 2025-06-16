@@ -362,7 +362,7 @@ class _PickListTabState extends State<PickListTab> {
                                   ),
                                   icon: const Icon(Icons.check_circle_outline, size: 20),
                                   label: const Text(
-                                    'Proceed',
+                                    'Generate',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,

@@ -189,7 +189,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                           Expanded(flex: 1, child: _buildTableHeaderCell('No.')),
                           Expanded(flex: 3, child: _buildTableHeaderCell('Brand Name')),
                           Expanded(flex: 1, child: _buildTableHeaderCell('Units')),
-                          Expanded(flex: 1, child: _buildTableHeaderCell('Issue')),
                           Expanded(flex: 1, child: _buildTableHeaderCell('Return')),
                           Expanded(flex: 1, child: _buildTableHeaderCell('Sale')),
                           Expanded(flex: 1, child: _buildTableHeaderCell('Saled Return')),
@@ -264,14 +263,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                     item,
                                     item.units.toString(),
                                     'units',
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: _buildEditableCell(
-                                    item,
-                                    '',
-                                    'issue',
                                   ),
                                 ),
                                 Expanded(
@@ -388,7 +379,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                     ),
                                     icon: const Icon(Icons.check_circle_outline, size: 20),
                                     label: const Text(
-                                      'Proceed',
+                                      'Generate',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
@@ -466,7 +457,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                   ),
                                   icon: const Icon(Icons.check_circle_outline, size: 20),
                                   label: const Text(
-                                    'Proceed',
+                                    'Generate',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
