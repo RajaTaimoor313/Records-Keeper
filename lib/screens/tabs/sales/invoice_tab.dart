@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../database_helper.dart';
 import '../../../models/shop.dart';
+import 'view_invoices_tab.dart';
 
 class Product {
   final String id;
@@ -58,7 +59,8 @@ class InvoiceItem {
 }
 
 class InvoiceTab extends StatefulWidget {
-  const InvoiceTab({super.key});
+  final Invoice? invoiceToEdit;
+  const InvoiceTab({super.key, this.invoiceToEdit});
 
   @override
   State<InvoiceTab> createState() => _InvoiceTabState();
@@ -83,15 +85,22 @@ class _InvoiceTabState extends State<InvoiceTab> {
   final TextEditingController _discountController = TextEditingController();
   
   DateTime _selectedDate = DateTime.now();
+  String? _editingInvoiceId;
 
   @override
   void initState() {
     super.initState();
-    _loadShops();
+    _loadShops().then((_) {
+      if (widget.invoiceToEdit != null) {
+        _initializeForEdit(widget.invoiceToEdit!);
+      }
+    });
     _loadProducts();
+    if (widget.invoiceToEdit == null) {
     _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
     _generateInvoiceNumber();
     _discountController.text = '0';
+    }
   }
 
   @override
@@ -154,6 +163,36 @@ class _InvoiceTabState extends State<InvoiceTab> {
     }
   }
 
+  void _initializeForEdit(Invoice invoice) {
+    _editingInvoiceId = invoice.id;
+    _invoiceNumberController.text = invoice.invoiceNumber;
+    _dateController.text = DateFormat('dd/MM/yyyy').format(invoice.date);
+    _selectedDate = invoice.date;
+    _discountController.text = invoice.discount.toString();
+    _items.clear();
+    _items.addAll(invoice.items.map((item) => InvoiceItem(
+      description: item.description,
+      rate: item.rate,
+      unit: item.unit,
+      amount: item.amount,
+    )));
+    // Set selected shop
+    final shop = _shops.firstWhere(
+      (s) => s.code == invoice.shopCode,
+      orElse: () => Shop(
+        code: invoice.shopCode,
+        name: invoice.shopName,
+        ownerName: invoice.ownerName,
+        category: invoice.category,
+        address: invoice.address,
+        area: '',
+        phone: '',
+      ),
+    );
+    setState(() {
+      _selectedShop = shop;
+    });
+  }
 
   Widget _buildShopAutocomplete(double scale) {
     return Autocomplete<Shop>(
@@ -259,13 +298,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
                         color: Colors.black,
                       ),
                     ),
-                    subtitle: Text(
-                      'Code: ${shop.code}',
-                      style: TextStyle(
-                        fontSize: 10 * scale,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
                     onTap: () {
                       onSelected(shop);
                     },
@@ -288,19 +320,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
       children: [
         Expanded(
           child: Text(
-            'Owner: ${_selectedShop!.ownerName}',
-            style: TextStyle(
-                    fontSize: 12 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                  ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        SizedBox(width: 8 * scale),
-        Expanded(
-          child: Text(
-            'Category: ${_selectedShop!.category}',
+            'Address: ${_selectedShop!.address ?? 'N/A'}',
             style: TextStyle(
                     fontSize: 12 * scale,
                     fontWeight: FontWeight.bold,
@@ -916,7 +936,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
                 },
                 child: Text(
                   _selectedShop != null 
-                      ? '${_selectedShop!.name}  -> code: ${_selectedShop!.code}'
+                      ? _selectedShop!.name
                       : 'Add Shop',
                     style: TextStyle(
                       fontSize: 12 * scale,
@@ -1031,13 +1051,14 @@ class _InvoiceTabState extends State<InvoiceTab> {
 
     try {
       final invoice = {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+        'id': _editingInvoiceId ?? DateTime.now().millisecondsSinceEpoch.toString(),
         'invoiceNumber': _invoiceNumberController.text,
         'date': _selectedDate,
         'shopName': _selectedShop!.name,
         'shopCode': _selectedShop!.code,
         'ownerName': _selectedShop!.ownerName,
         'category': _selectedShop!.category,
+        'address': _selectedShop!.address,
         'items': _items.map((item) => {
           'description': item.description,
           'rate': item.rate,
@@ -1047,34 +1068,16 @@ class _InvoiceTabState extends State<InvoiceTab> {
         'subtotal': subtotal,
         'discount': discount,
         'total': total,
+        'generated': widget.invoiceToEdit?.generated ?? 0,
       };
 
-      // Save invoice
+      // Save or update invoice
       await DatabaseHelper.instance.insertInvoice(invoice);
 
-      // Add items to load form
-      for (final item in _items) {
-        await DatabaseHelper.instance.insertLoadFormItem({
-          'brandName': item.description,
-          'units': item.unit,
-        });
-      }
-
-      // Add or update pick list item
-      await DatabaseHelper.instance.insertOrUpdatePickListItem({
-        'code': _selectedShop!.code,
-        'shopName': _selectedShop!.name,
-        'ownerName': _selectedShop!.ownerName,
-        'billAmount': total,
-        'paymentType': '', // Will be editable in pick list
-        'recovery': 0, // Will be editable in pick list
-      });
-
-      // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invoice saved successfully'),
+          SnackBar(
+            content: Text(_editingInvoiceId != null ? 'Invoice updated successfully' : 'Invoice saved successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -1082,6 +1085,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
 
       // Clear form
       _clearForm();
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1143,7 +1149,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
                               _saveInvoice();
                             },
                             icon: const Icon(Icons.print),
-                            label: const Text('Generate Invoice'),
+                            label: const Text('Create Invoice'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple,
                               foregroundColor: Colors.white,

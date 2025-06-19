@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../database_helper.dart';
+import 'package:intl/intl.dart';
 
 class CompanyStockSummary {
   final String company;
@@ -119,14 +120,17 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     }
   }
 
-
+  String _formatIndianNumber(double value) {
+    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    return formatter.format(value).trim();
+  }
 
   String _getTotalValue(List<Map<String, dynamic>> records, String field) {
     final total = records.fold<double>(
       0,
       (sum, record) => sum + (double.tryParse(record[field]?.toString() ?? '0') ?? 0),
     );
-    return total.toStringAsFixed(2);
+    return _formatIndianNumber(total);
   }
 
   Widget _buildMainHeaderCell(String text, int columnSpan) {
@@ -167,7 +171,7 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     );
   }
 
-  Widget _buildDataCell(String text, [bool isBrand = false]) {
+  Widget _buildDataCell(String text, [bool isBrand = false, bool isBold = false]) {
     return Container(
       width: isBrand ? 240.0 : 120.0,
       padding: const EdgeInsets.all(8),
@@ -178,6 +182,7 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
         text,
         style: TextStyle(
           fontSize: 12,
+          fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           overflow: isBrand ? TextOverflow.visible : TextOverflow.ellipsis,
         ),
         textAlign: isBrand ? TextAlign.left : TextAlign.right,
@@ -191,6 +196,15 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
       orElse: () => {field: '0'},
     );
     return record[field]?.toString() ?? '0';
+  }
+
+  double _getColumnTotal(CompanyStockSummary summary, String field) {
+    double total = 0;
+    for (final product in summary.products) {
+      final value = double.tryParse(_getBrandValue(summary.stockRecords, product['id'], field)) ?? 0;
+      total += value;
+    }
+    return total;
   }
 
   @override
@@ -340,27 +354,27 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                                   _buildSubHeaderCell('Units'),
                                   // Opening Stock
                                   _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Units'),
+                                  _buildSubHeaderCell('Box'),
                                   _buildSubHeaderCell('Total'),
                                   _buildSubHeaderCell('Value'),
                                   // Received
                                   _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Units'),
+                                  _buildSubHeaderCell('Box'),
                                   _buildSubHeaderCell('Total'),
                                   _buildSubHeaderCell('Value'),
                                   // Total Stock
                                   _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Units'),
+                                  _buildSubHeaderCell('Box'),
                                   _buildSubHeaderCell('Total'),
                                   _buildSubHeaderCell('Value'),
                                   // Closing Stock
                                   _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Units'),
+                                  _buildSubHeaderCell('Box'),
                                   _buildSubHeaderCell('Total'),
                                   _buildSubHeaderCell('Value'),
                                   // Sale
                                   _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Units'),
+                                  _buildSubHeaderCell('Box'),
                                   _buildSubHeaderCell('Total'),
                                   _buildSubHeaderCell('Value'),
                                 ],
@@ -401,8 +415,8 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                                   // Sale
                                   _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'sale_ctn')),
                                   _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'sale_units')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'sale_total')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'sale_value')),
+                                  _buildDataCell('0.00'),
+                                  _buildDataCell('0.00'),
                                 ],
                               ),
                             )),
@@ -410,39 +424,39 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                             IntrinsicHeight(
                               child: Row(
                                 children: [
-                                  _buildDataCell('Total', true),
+                                  _buildDataCell('Total', true, true),
                                   // Empty cells for Invoice Rate
-                                  _buildDataCell(''),
-                                  _buildDataCell(''),
+                                  _buildDataCell('', false, true),
+                                  _buildDataCell('', false, true),
                                   // Empty cells for Packing
-                                  _buildDataCell(''),
-                                  _buildDataCell(''),
-                                  _buildDataCell(''),
+                                  _buildDataCell('', false, true),
+                                  _buildDataCell('', false, true),
+                                  _buildDataCell('', false, true),
                                   // Opening Stock totals
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'opening_stock_ctn')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'opening_stock_units')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'opening_stock_total')),
-                                  _buildDataCell(summary.openingStockTotal.toStringAsFixed(2)),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'opening_stock_ctn')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'opening_stock_units')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'opening_stock_total')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'opening_stock_value')), false, true),
                                   // Received totals
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'received_ctn')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'received_units')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'received_total')),
-                                  _buildDataCell(summary.receivedTotal.toStringAsFixed(2)),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_ctn')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_units')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_total')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_value')), false, true),
                                   // Total Stock totals
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'total_stock_ctn')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'total_stock_units')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'total_stock_total')),
-                                  _buildDataCell(summary.totalStockTotal.toStringAsFixed(2)),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'total_stock_ctn')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'total_stock_units')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'total_stock_total')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'total_stock_value')), false, true),
                                   // Closing Stock totals
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'closing_stock_ctn')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'closing_stock_units')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'closing_stock_total')),
-                                  _buildDataCell(summary.closingStockTotal.toStringAsFixed(2)),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'closing_stock_ctn')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'closing_stock_units')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'closing_stock_total')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'closing_stock_value')), false, true),
                                   // Sale totals
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'sale_ctn')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'sale_units')),
-                                  _buildDataCell(_getTotalValue(summary.stockRecords, 'sale_total')),
-                                  _buildDataCell(summary.saleTotal.toStringAsFixed(2)),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_ctn')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_units')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_total')), false, true),
+                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_value')), false, true),
                                 ],
                               ),
                             ),

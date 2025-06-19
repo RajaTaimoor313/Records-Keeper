@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../database_helper.dart';
-import '../../../models/shop.dart';
+import '../../../models/supplier.dart';
 
-class ViewShopsTab extends StatefulWidget {
-  const ViewShopsTab({super.key});
+class ViewSuppliersTab extends StatefulWidget {
+  const ViewSuppliersTab({super.key});
 
   @override
-  State<ViewShopsTab> createState() => _ViewShopsTabState();
+  State<ViewSuppliersTab> createState() => _ViewSuppliersTabState();
 }
 
-class _ViewShopsTabState extends State<ViewShopsTab> {
-  List<Shop> _shops = [];
-  List<Shop> _filteredShops = [];
+class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
+  List<Supplier> _suppliers = [];
+  List<Supplier> _filteredSuppliers = [];
   bool _isLoading = true;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -19,7 +19,7 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
   @override
   void initState() {
     super.initState();
-    _loadShops();
+    _loadSuppliers();
   }
 
   @override
@@ -28,28 +28,28 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
     super.dispose();
   }
 
-  void _filterShops(String query) {
+  void _filterSuppliers(String query) {
     setState(() {
       _searchQuery = query.toLowerCase();
-      _filteredShops = _shops.where((shop) {
-        return shop.name.toLowerCase().contains(_searchQuery) ||
-            shop.ownerName.toLowerCase().contains(_searchQuery) ||
-            shop.category.toLowerCase().contains(_searchQuery) ||
-            shop.code.toLowerCase().contains(_searchQuery);
+      _filteredSuppliers = _suppliers.where((supplier) {
+        return supplier.name.toLowerCase().contains(_searchQuery) ||
+            supplier.fatherName.toLowerCase().contains(_searchQuery) ||
+            supplier.address.toLowerCase().contains(_searchQuery) ||
+            supplier.cnic.toLowerCase().contains(_searchQuery) ||
+            supplier.phone.toLowerCase().contains(_searchQuery);
       }).toList();
     });
   }
 
-  Future<void> _loadShops() async {
+  Future<void> _loadSuppliers() async {
     setState(() {
       _isLoading = true;
     });
-
     try {
-      final shopsData = await DatabaseHelper.instance.getShops();
+      final suppliersData = await DatabaseHelper.instance.getSuppliers();
       setState(() {
-        _shops = shopsData.map((data) => Shop.fromMap(data)).toList();
-        _filteredShops = List.from(_shops);
+        _suppliers = suppliersData.map((data) => Supplier.fromMap(data)).toList();
+        _filteredSuppliers = List.from(_suppliers);
       });
     } finally {
       setState(() {
@@ -58,12 +58,12 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
     }
   }
 
-  Future<void> _deleteShop(String code) async {
+  Future<void> _deleteSupplier(int id) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Shop'),
-        content: const Text('Are you sure you want to delete this shop?'),
+        title: const Text('Delete Man Power'),
+        content: const Text('Are you sure you want to delete this man power?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -79,71 +79,52 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
         ],
       ),
     );
-
     if (confirmed != true) return;
-
-    final success = await DatabaseHelper.instance.deleteShop(code);
-
+    await DatabaseHelper.instance.deleteSupplier(id);
     if (!mounted) return;
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Shop deleted successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      _loadShops();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to delete shop'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Man Power deleted successfully'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    _loadSuppliers();
   }
 
-  void _showEditShopDialog(Shop shop) {
-    final nameController = TextEditingController(text: shop.name);
-    final ownerController = TextEditingController(text: shop.ownerName);
-    final categoryController = TextEditingController(text: shop.category);
-    final addressController = TextEditingController(text: shop.address ?? '');
-    final areaController = TextEditingController(text: shop.area ?? '');
-    final phoneController = TextEditingController(text: shop.phone ?? '');
-
+  void _showEditSupplierDialog(Supplier supplier) {
+    final nameController = TextEditingController(text: supplier.name);
+    final fatherNameController = TextEditingController(text: supplier.fatherName);
+    final addressController = TextEditingController(text: supplier.address);
+    final cnicController = TextEditingController(text: supplier.cnic);
+    final phoneController = TextEditingController(text: supplier.phone);
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Edit Shop'),
+          title: const Text('Edit Man Power'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Shop Name'),
+                  decoration: const InputDecoration(labelText: 'Name'),
                 ),
                 TextField(
-                  controller: ownerController,
-                  decoration: const InputDecoration(labelText: 'Owner Name'),
-                ),
-                TextField(
-                  controller: categoryController,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  controller: fatherNameController,
+                  decoration: const InputDecoration(labelText: 'Father Name'),
                 ),
                 TextField(
                   controller: addressController,
                   decoration: const InputDecoration(labelText: 'Address'),
                 ),
                 TextField(
-                  controller: areaController,
-                  decoration: const InputDecoration(labelText: 'Area'),
+                  controller: cnicController,
+                  decoration: const InputDecoration(labelText: 'CNIC'),
                 ),
                 TextField(
                   controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone Number'),
+                  decoration: const InputDecoration(labelText: 'Phone No.'),
                   keyboardType: TextInputType.phone,
                 ),
               ],
@@ -156,18 +137,18 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final updatedShop = Shop(
-                  code: shop.code,
+                final updatedSupplier = Supplier(
+                  id: supplier.id,
                   name: nameController.text.trim(),
-                  ownerName: ownerController.text.trim(),
-                  category: categoryController.text.trim(),
+                  fatherName: fatherNameController.text.trim(),
                   address: addressController.text.trim(),
-                  area: areaController.text.trim(),
+                  cnic: cnicController.text.trim(),
                   phone: phoneController.text.trim(),
+                  type: supplier.type,
                 );
-                await DatabaseHelper.instance.updateShop(updatedShop.toMap());
+                await DatabaseHelper.instance.updateSupplier(updatedSupplier.toMap());
                 Navigator.of(context).pop();
-                _loadShops();
+                _loadSuppliers();
               },
               child: const Text('Save'),
             ),
@@ -186,7 +167,7 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
               ),
             )
-          : _shops.isEmpty
+          : _suppliers.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -198,14 +179,14 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.store_mall_directory_outlined,
+                          Icons.person_outline,
                           size: 64,
                           color: Colors.deepPurple.withOpacity(0.5),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No shops added yet',
+                        'No man powers added yet',
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.grey.shade600,
@@ -214,7 +195,7 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Add your first shop using the Add tab',
+                        'Add your first man power using the Add tab',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade500,
@@ -228,7 +209,6 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
                       Row(
                         children: [
                           Container(
@@ -238,7 +218,7 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
-                              Icons.store_mall_directory_rounded,
+                              Icons.person,
                               color: Colors.deepPurple,
                               size: 32,
                             ),
@@ -248,7 +228,7 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'All Shops',
+                                'All Man Powers',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -257,7 +237,7 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${_shops.length} shops found',
+                                '${_suppliers.length} man powers found',
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
                                   fontSize: 14,
@@ -266,14 +246,13 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                             ],
                           ),
                           const Spacer(),
-                          // Search Field
                           SizedBox(
                             width: 300,
                             child: TextField(
                               controller: _searchController,
-                              onChanged: _filterShops,
+                              onChanged: _filterSuppliers,
                               decoration: InputDecoration(
-                                hintText: 'Search shops...',
+                                hintText: 'Search man powers...',
                                 prefixIcon: const Icon(Icons.search),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -288,8 +267,6 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                         ],
                       ),
                       const SizedBox(height: 24),
-
-                      // Table
                       Expanded(
                         child: Card(
                           elevation: 4,
@@ -319,15 +296,6 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        'Code',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.deepPurple,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Text(
                                         'Name',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
@@ -337,16 +305,7 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        'Owner',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.deepPurple,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Text(
-                                        'Category',
+                                        'Father Name',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.deepPurple,
@@ -364,7 +323,7 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        'Area',
+                                        'CNIC',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.deepPurple,
@@ -373,7 +332,16 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        'Phone',
+                                        'Phone No.',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.deepPurple,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        'Type',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.deepPurple,
@@ -390,54 +358,18 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                                       ),
                                     ),
                                   ],
-                                  rows: _filteredShops.asMap().entries.map((entry) {
+                                  rows: _filteredSuppliers.asMap().entries.map((entry) {
                                     final index = entry.key;
-                                    final shop = entry.value;
+                                    final supplier = entry.value;
                                     return DataRow(
                                       cells: [
                                         DataCell(Text((index + 1).toString())),
-                                        DataCell(
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.deepPurple.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              shop.code,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.deepPurple,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(Text(shop.name)),
-                                        DataCell(Text(shop.ownerName)),
-                                        DataCell(
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.blue.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              shop.category,
-                                              style: TextStyle(
-                                                color: Colors.blue.shade700,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(Text(shop.address ?? '')),
-                                        DataCell(Text(shop.area ?? '')),
-                                        DataCell(Text(shop.phone ?? '')),
+                                        DataCell(Text(supplier.name)),
+                                        DataCell(Text(supplier.fatherName)),
+                                        DataCell(Text(supplier.address)),
+                                        DataCell(Text(supplier.cnic)),
+                                        DataCell(Text(supplier.phone)),
+                                        DataCell(Text(supplier.type)),
                                         DataCell(
                                           Row(
                                             children: [
@@ -446,16 +378,16 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                                                   Icons.edit,
                                                   color: Colors.deepPurple,
                                                 ),
-                                                onPressed: () => _showEditShopDialog(shop),
-                                                tooltip: 'Edit Shop',
+                                                onPressed: () => _showEditSupplierDialog(supplier),
+                                                tooltip: 'Edit Man Power',
                                               ),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () => _deleteShop(shop.code),
-                                            tooltip: 'Delete Shop',
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.red,
+                                                ),
+                                                onPressed: () => _deleteSupplier(supplier.id!),
+                                                tooltip: 'Delete Man Power',
                                               ),
                                             ],
                                           ),

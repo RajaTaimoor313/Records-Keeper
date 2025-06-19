@@ -4,6 +4,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
+import 'package:records_keeper/screens/tabs/sales/invoice_tab.dart';
 import '../../../database_helper.dart';
 
 class ViewInvoicesTab extends StatefulWidget {
@@ -295,7 +296,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
               ),
             ),
             pw.Text(
-              'code: ${invoice.shopCode}',
+              'Address: ${invoice.address ?? 'N/A'}',
               style: pw.TextStyle(
                 fontSize: 9,
                 fontWeight: pw.FontWeight.bold,
@@ -304,31 +305,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
             ),
           ],
         ),
-        pw.SizedBox(height: 4),
-        pw.Row(
-          children: [
-            pw.Expanded(
-              child: pw.Text(
-                'Owner: ${invoice.ownerName}',
-                style: pw.TextStyle(
-                  fontSize: 8,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.deepPurple,
-                ),
-              ),
-            ),
-            pw.Text(
-              'Category: ${invoice.category}',
-              style: pw.TextStyle(
-                fontSize: 8,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.deepPurple,
-              ),
-            ),
-          ],
-        ),
         pw.SizedBox(height: 10),
-
         // Items Table
         pw.Container(
           decoration: pw.BoxDecoration(
@@ -646,7 +623,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'code: ${invoice.shopCode}',
+                                  'Address: ${invoice.address ?? 'N/A'}',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -656,34 +633,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Owner: ${invoice.ownerName}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Category: ${invoice.category}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
+                          const SizedBox(height: 5),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -919,13 +869,17 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Generate some invoices to see them here',
+              'Create some invoices to see them here',
               style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             ),
           ],
         ),
       );
     }
+
+    // Categorize invoices
+    final unGeneratedInvoices = _filteredInvoices.where((inv) => inv.generated != 1).toList();
+    final generatedInvoices = _filteredInvoices.where((inv) => inv.generated == 1).toList();
 
     return Column(
       children: [
@@ -1008,6 +962,30 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                       disabledForegroundColor: Colors.grey.shade400,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: _selectedInvoices.isEmpty || _selectedInvoices.any((id) => _filteredInvoices.firstWhere((inv) => inv.id == id).generated == 1) ? null : _editSelectedInvoice,
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Edit'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange.shade50,
+                      foregroundColor: Colors.orange,
+                      disabledBackgroundColor: Colors.grey.shade100,
+                      disabledForegroundColor: Colors.grey.shade400,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: _selectedInvoices.isEmpty || _selectedInvoices.any((id) => _filteredInvoices.firstWhere((inv) => inv.id == id).generated == 1) ? null : _generateSelectedInvoices,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Generate'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade50,
+                      foregroundColor: Colors.green,
+                      disabledBackgroundColor: Colors.grey.shade100,
+                      disabledForegroundColor: Colors.grey.shade400,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -1041,13 +1019,145 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: _filteredInvoices.length,
+              : Column(
+                  children: [
+                    // Un-Generated Invoices
+                    if (unGeneratedInvoices.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: const [
+                            Text('Un-Generated Invoices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple)),
+                          ],
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: unGeneratedInvoices.length,
                   itemBuilder: (context, index) {
-                    final invoice = _filteredInvoices[index];
+                          final invoice = unGeneratedInvoices[index];
                     final bool isSelected = _selectedInvoices.contains(invoice.id);
-                    
+                          return _buildInvoiceCard(invoice, isSelected, index);
+                        },
+                      ),
+                    ],
+                    // Generated Invoices
+                    if (generatedInvoices.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: const [
+                            Text('Generated Invoices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                          ],
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: generatedInvoices.length,
+                        itemBuilder: (context, index) {
+                          final invoice = generatedInvoices[index];
+                          final bool isSelected = _selectedInvoices.contains(invoice.id);
+                          return _buildInvoiceCard(invoice, isSelected, index);
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  void _editSelectedInvoice() async {
+    if (_selectedInvoices.length == 1) {
+      final invoiceId = _selectedInvoices.first;
+      final invoiceMap = await DatabaseHelper.instance.getInvoice(invoiceId);
+      if (invoiceMap == null) return;
+      final invoice = Invoice.fromMap(invoiceMap);
+      if (invoice.generated == 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Generated invoices cannot be edited.'), backgroundColor: Colors.red),
+        );
+        return;
+      }
+      await showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          child: SizedBox(
+            width: 800,
+            child: InvoiceTab(invoiceToEdit: invoice),
+          ),
+        ),
+      );
+      await _loadInvoices();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a single invoice to edit.')),
+      );
+    }
+  }
+
+  Future<void> _generateSelectedInvoices() async {
+    // Transfer selected invoices to Pick List and Load Form, and mark as generated
+    if (_selectedInvoices.isEmpty) return;
+    // Prevent generating already generated invoices
+    final alreadyGenerated = _selectedInvoices.where((id) => _filteredInvoices.firstWhere((inv) => inv.id == id).generated == 1).toList();
+    if (alreadyGenerated.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Some selected invoices are already generated.'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+    try {
+      for (final invoiceId in _selectedInvoices) {
+        final invoiceMap = await DatabaseHelper.instance.getInvoice(invoiceId);
+        if (invoiceMap == null) continue;
+        final invoice = Invoice.fromMap(invoiceMap);
+        if (invoice.generated == 1) continue; // Skip already generated
+        // Transfer to Load Form
+        for (final item in invoice.items) {
+          await DatabaseHelper.instance.insertLoadFormItem({
+            'brandName': item.description,
+            'units': item.unit,
+          });
+        }
+        // Transfer to Pick List
+        await DatabaseHelper.instance.insertOrUpdatePickListItem({
+          'code': invoice.shopCode,
+          'shopName': invoice.shopName,
+          'ownerName': invoice.ownerName,
+          'billAmount': invoice.total,
+          'recovery': 0,
+          'discount': 0,
+          'return': 0,
+          'cash': 0,
+          'credit': 0,
+          'invoiceNumber': invoice.invoiceNumber,
+        });
+        // Mark as generated
+        await DatabaseHelper.instance.updateInvoiceGenerated(invoiceId, 1);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Selected invoices generated successfully.'), backgroundColor: Colors.green),
+        );
+      }
+      setState(() {
+        _selectedInvoices.clear();
+      });
+      await _loadInvoices();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error generating invoices: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Widget _buildInvoiceCard(Invoice invoice, bool isSelected, int index) {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8.0),
                       child: InkWell(
@@ -1136,11 +1246,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
-        ),
-      ],
     );
   }
 }
@@ -1153,10 +1258,12 @@ class Invoice {
   final String shopCode;
   final String ownerName;
   final String category;
+  final String? address;
   final List<InvoiceItem> items;
   final double subtotal;
   final double discount;
   final double total;
+  final int generated;
 
   Invoice({
     required this.id,
@@ -1166,10 +1273,12 @@ class Invoice {
     required this.shopCode,
     required this.ownerName,
     required this.category,
+    this.address,
     required this.items,
     required this.subtotal,
     required this.discount,
     required this.total,
+    required this.generated,
   });
 
   factory Invoice.fromMap(Map<String, dynamic> map) {
@@ -1181,12 +1290,14 @@ class Invoice {
       shopCode: map['shopCode'],
       ownerName: map['ownerName'],
       category: map['category'],
+      address: map['address'],
       items: (map['items'] as List)
           .map((item) => InvoiceItem.fromMap(item))
           .toList(),
       subtotal: map['subtotal'],
       discount: map['discount'],
       total: map['total'],
+      generated: map['generated'],
     );
   }
 }

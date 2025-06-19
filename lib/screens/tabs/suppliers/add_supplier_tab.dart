@@ -1,80 +1,61 @@
 import 'package:flutter/material.dart';
 import '../../../database_helper.dart';
-import '../../../models/shop.dart';
+import '../../../models/supplier.dart';
 
-class AddShopTab extends StatefulWidget {
-  const AddShopTab({super.key});
+class AddSupplierTab extends StatefulWidget {
+  const AddSupplierTab({super.key});
 
   @override
-  State<AddShopTab> createState() => _AddShopTabState();
+  State<AddSupplierTab> createState() => _AddSupplierTabState();
 }
 
-class _AddShopTabState extends State<AddShopTab> {
+class _AddSupplierTabState extends State<AddSupplierTab> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _ownerNameController = TextEditingController();
-  final TextEditingController _categoryController = TextEditingController();
+  final TextEditingController _fatherNameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _areaController = TextEditingController();
+  final TextEditingController _cnicController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  String _selectedType = 'Supplier';
   bool _isLoading = false;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _ownerNameController.dispose();
-    _categoryController.dispose();
+    _fatherNameController.dispose();
     _addressController.dispose();
-    _areaController.dispose();
+    _cnicController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _saveShop() async {
+  Future<void> _saveSupplier() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _isLoading = true;
     });
-
     try {
-      final code = await DatabaseHelper.instance.generateShopCode();
-      
-      final shop = Shop(
-        code: code,
+      final supplier = Supplier(
         name: _nameController.text.trim(),
-        ownerName: _ownerNameController.text.trim(),
-        category: _categoryController.text.trim(),
+        fatherName: _fatherNameController.text.trim(),
         address: _addressController.text.trim(),
-        area: _areaController.text.trim(),
+        cnic: _cnicController.text.trim(),
         phone: _phoneController.text.trim(),
+        type: _selectedType,
       );
-
-      final success = await DatabaseHelper.instance.insertShop(shop.toMap());
-
+      await DatabaseHelper.instance.insertSupplier(supplier.toMap());
       if (!mounted) return;
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Shop added successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _nameController.clear();
-        _ownerNameController.clear();
-        _categoryController.clear();
-        _addressController.clear();
-        _areaController.clear();
-        _phoneController.clear();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to add shop'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Man Power added successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _nameController.clear();
+      _fatherNameController.clear();
+      _addressController.clear();
+      _cnicController.clear();
+      _phoneController.clear();
     } finally {
       if (mounted) {
         setState(() {
@@ -103,7 +84,6 @@ class _AddShopTabState extends State<AddShopTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
                       Row(
                         children: [
                           Container(
@@ -113,7 +93,7 @@ class _AddShopTabState extends State<AddShopTab> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
-                              Icons.store_mall_directory_rounded,
+                              Icons.person_add_alt_1,
                               color: Colors.deepPurple,
                               size: 32,
                             ),
@@ -123,7 +103,7 @@ class _AddShopTabState extends State<AddShopTab> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Add New Shop',
+                                'Add New Man Power',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -132,7 +112,7 @@ class _AddShopTabState extends State<AddShopTab> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'Enter shop details below',
+                                'Enter Man Power\'s details below',
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: 14,
@@ -143,16 +123,14 @@ class _AddShopTabState extends State<AddShopTab> {
                         ],
                       ),
                       const SizedBox(height: 32),
-
-                      // Form Fields
-                      TextFormField(
-                        controller: _nameController,
+                      DropdownButtonFormField<String>(
+                        value: _selectedType,
                         decoration: InputDecoration(
-                          labelText: 'Shop Name',
+                          labelText: 'Type',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          prefixIcon: const Icon(Icons.store),
+                          prefixIcon: const Icon(Icons.category),
                           filled: true,
                           fillColor: Colors.grey.shade50,
                           contentPadding: const EdgeInsets.symmetric(
@@ -160,18 +138,21 @@ class _AddShopTabState extends State<AddShopTab> {
                             vertical: 16,
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter shop name';
-                          }
-                          return null;
+                        items: const [
+                          DropdownMenuItem(value: 'Supplier', child: Text('Supplier')),
+                          DropdownMenuItem(value: 'Order Booker', child: Text('Order Booker')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedType = value!;
+                          });
                         },
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
-                        controller: _ownerNameController,
+                        controller: _nameController,
                         decoration: InputDecoration(
-                          labelText: 'Owner Name',
+                          labelText: 'Name',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -185,20 +166,20 @@ class _AddShopTabState extends State<AddShopTab> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter owner name';
+                            return 'Please enter name';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
-                        controller: _categoryController,
+                        controller: _fatherNameController,
                         decoration: InputDecoration(
-                          labelText: 'Category',
+                          labelText: 'Father Name',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          prefixIcon: const Icon(Icons.category),
+                          prefixIcon: const Icon(Icons.person_outline),
                           filled: true,
                           fillColor: Colors.grey.shade50,
                           contentPadding: const EdgeInsets.symmetric(
@@ -208,7 +189,7 @@ class _AddShopTabState extends State<AddShopTab> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter category';
+                            return 'Please enter father name';
                           }
                           return null;
                         },
@@ -221,7 +202,7 @@ class _AddShopTabState extends State<AddShopTab> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          prefixIcon: const Icon(Icons.location_on),
+                          prefixIcon: const Icon(Icons.home),
                           filled: true,
                           fillColor: Colors.grey.shade50,
                           contentPadding: const EdgeInsets.symmetric(
@@ -238,13 +219,13 @@ class _AddShopTabState extends State<AddShopTab> {
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
-                        controller: _areaController,
+                        controller: _cnicController,
                         decoration: InputDecoration(
-                          labelText: 'Area',
+                          labelText: 'CNIC',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          prefixIcon: const Icon(Icons.map),
+                          prefixIcon: const Icon(Icons.credit_card),
                           filled: true,
                           fillColor: Colors.grey.shade50,
                           contentPadding: const EdgeInsets.symmetric(
@@ -254,7 +235,7 @@ class _AddShopTabState extends State<AddShopTab> {
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter area';
+                            return 'Please enter CNIC';
                           }
                           return null;
                         },
@@ -263,7 +244,7 @@ class _AddShopTabState extends State<AddShopTab> {
                       TextFormField(
                         controller: _phoneController,
                         decoration: InputDecoration(
-                          labelText: 'Phone Number',
+                          labelText: 'Phone No.',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -284,13 +265,11 @@ class _AddShopTabState extends State<AddShopTab> {
                         },
                       ),
                       const SizedBox(height: 32),
-
-                      // Save Button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _saveShop,
+                          onPressed: _isLoading ? null : _saveSupplier,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurple,
                             foregroundColor: Colors.white,
@@ -316,7 +295,7 @@ class _AddShopTabState extends State<AddShopTab> {
                                     Icon(Icons.save_rounded),
                                     SizedBox(width: 8),
                                     Text(
-                                      'Save Shop',
+                                      'Save Man Power',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,

@@ -11,6 +11,10 @@ import 'package:records_keeper/screens/tabs/sales/view_invoices_tab.dart';
 import 'package:records_keeper/screens/tabs/sales/load_form.dart';
 import 'package:records_keeper/screens/tabs/sales/pick_list_tab.dart';
 import 'package:records_keeper/screens/dashboard_screen.dart';
+import 'screens/tabs/suppliers/add_supplier_tab.dart';
+import 'screens/tabs/suppliers/view_suppliers_tab.dart';
+import 'screens/tabs/sales/realisation_tab.dart';
+import 'screens/tabs/ledger_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,10 +31,14 @@ class _HomeScreenState extends State<HomeScreen>
   bool _stockExpanded = false;
   bool _newTabExpanded = false;
   bool _salesExpanded = false;
+  bool _supplierExpanded = false;
+  bool _creditExpanded = false;
   String? _cashFlowSubTab;
   String? _stockSubTab;
   String? _newTabSubTab;
   String? _salesSubTab;
+  String? _selectedSupplierTab;
+  String? _creditSubTab;
   late AnimationController _animationController;
 
   @override
@@ -207,8 +215,9 @@ class _HomeScreenState extends State<HomeScreen>
                   _buildCashFlowItem(),
                   _buildStockItem(),
                   _buildNewTabItem(),
+                  _buildSupplierItem(),
                   _buildSalesItem(),
-                  _buildLedgerItem(),
+                  _buildCreditItem(),
                 ],
               ),
             ),
@@ -480,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen>
             physics: const NeverScrollableScrollPhysics(),
             child: Column(
               children: [
-                _buildSalesSubItem('Generate Invoice'),
+                _buildSalesSubItem('Create Invoice'),
                 _buildSalesSubItem('View Invoices'),
                 _buildSalesSubItem('Load Form'),
                 _buildSalesSubItem('Pick List'),
@@ -629,25 +638,204 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildLedgerItem() {
-    return ListTile(
+  Widget _buildSupplierItem() {
+    return Column(
+      children: [
+        ListTile(
       horizontalTitleGap: 8,
       minLeadingWidth: 20,
       leading: SizedBox(
         width: 24,
         height: 24,
         child: Icon(
-          Icons.book_rounded,
+              Icons.local_shipping_rounded,
           size: 20,
-          color: _selectedIndex == 11 ? Colors.deepPurple : Colors.grey.shade700,
+              color: (_selectedIndex == 13 && _selectedSupplierTab != null)
+                  ? Colors.deepPurple
+                  : Colors.grey.shade700,
+            ),
+          ),
+          title: Row(
+            children: [
+              Text(
+                'Man Power',
+                style: TextStyle(
+                  color: (_selectedIndex == 13 && _selectedSupplierTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                  fontWeight: (_selectedIndex == 13 && _selectedSupplierTab != null)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              AnimatedRotation(
+                turns: _supplierExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 20,
+                  color: (_selectedIndex == 13 && _selectedSupplierTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          onTap: () {
+            setState(() {
+              _supplierExpanded = !_supplierExpanded;
+            });
+          },
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _supplierExpanded ? 96 : 0,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildSupplierSubItem('Add'),
+                _buildSupplierSubItem('View'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSupplierSubItem(String tabName) {
+    final isSelected = _selectedIndex == 13 && _selectedSupplierTab == tabName;
+    return Container(
+      padding: const EdgeInsets.only(left: 32.0),
+      child: ListTile(
+        horizontalTitleGap: 8,
+        minLeadingWidth: 20,
+        leading: SizedBox(
+          width: 24,
+          height: 24,
+          child: Icon(
+            Icons.arrow_right_rounded,
+            size: 20,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
         ),
       ),
       title: Text(
-        'Ledger',
+          tabName,
         style: TextStyle(
-          color: _selectedIndex == 11 ? Colors.deepPurple : Colors.grey.shade700,
-          fontWeight: _selectedIndex == 11 ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
+        onTap: () {
+          setState(() {
+            _selectedIndex = 13;
+            _selectedSupplierTab = tabName;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildCreditItem() {
+    return Column(
+      children: [
+        ListTile(
+          horizontalTitleGap: 8,
+          minLeadingWidth: 20,
+          leading: SizedBox(
+            width: 24,
+            height: 24,
+            child: Icon(
+              Icons.credit_score_rounded,
+              size: 20,
+              color: (_selectedIndex == 14 && _creditSubTab != null)
+                  ? Colors.deepPurple
+                  : Colors.grey.shade700,
+            ),
+          ),
+          title: Row(
+            children: [
+              Text(
+                'Credit',
+                style: TextStyle(
+                  color: (_selectedIndex == 14 && _creditSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                  fontWeight: (_selectedIndex == 14 && _creditSubTab != null)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              AnimatedRotation(
+                turns: _creditExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 20,
+                  color: (_selectedIndex == 14 && _creditSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          onTap: () {
+            setState(() {
+              _creditExpanded = !_creditExpanded;
+            });
+          },
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _creditExpanded ? 96 : 0,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildCreditSubItem('Ledger'),
+                _buildCreditSubItem('Realisation'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCreditSubItem(String tabName) {
+    final isSelected = _selectedIndex == 14 && _creditSubTab == tabName;
+    return Container(
+      padding: const EdgeInsets.only(left: 32.0),
+      child: ListTile(
+        horizontalTitleGap: 8,
+        minLeadingWidth: 20,
+        leading: SizedBox(
+          width: 24,
+          height: 24,
+          child: Icon(
+            Icons.arrow_right_rounded,
+            size: 20,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+          ),
+        ),
+        title: Text(
+          tabName,
+          style: TextStyle(
+            fontSize: 14,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        ),
+        onTap: () {
+          setState(() {
+            _selectedIndex = 14;
+            _creditSubTab = tabName;
+          });
+        },
       ),
     );
   }
@@ -724,7 +912,7 @@ class _HomeScreenState extends State<HomeScreen>
           return _buildSalesEmptyState();
         }
         switch (_salesSubTab) {
-          case 'Generate Invoice':
+          case 'Create Invoice':
             return const InvoiceTab();
           case 'View Invoices':
             return const ViewInvoicesTab();
@@ -735,10 +923,32 @@ class _HomeScreenState extends State<HomeScreen>
           default:
             return _buildPlaceholder('Sales - $_salesSubTab');
         }
-      case 11:
-        return _buildPlaceholder('Ledger');
       case 12:
         return const DashboardScreen();
+      case 13:
+        if (_selectedSupplierTab == null) {
+          return _buildPlaceholder('Man Power');
+        }
+        switch (_selectedSupplierTab) {
+          case 'Add':
+            return const AddSupplierTab();
+          case 'View':
+            return const ViewSuppliersTab();
+          default:
+            return _buildPlaceholder('Man Power - $_selectedSupplierTab');
+        }
+      case 14:
+        if (_creditSubTab == null) {
+          return _buildPlaceholder('Credit');
+        }
+        switch (_creditSubTab) {
+          case 'Ledger':
+            return const LedgerTab();
+          case 'Realisation':
+            return const RealisationTab();
+          default:
+            return _buildPlaceholder('Credit - $_creditSubTab');
+        }
       default:
         return _buildPlaceholder('Dashboard');
     }

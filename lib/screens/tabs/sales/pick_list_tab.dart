@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../../../database_helper.dart';
+import '../../../models/supplier.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'dart:convert';
 
 class PickListTab extends StatefulWidget {
   const PickListTab({super.key});
@@ -14,17 +19,35 @@ class _PickListTabState extends State<PickListTab> {
   final ScrollController _verticalScrollController = ScrollController();
   bool _isLoading = true;
   List<PickListItem> _items = [];
+  List<Supplier> _suppliers = [];
+  List<Supplier> _selectedManPowers = [];
+  bool _showSupplierSearch = false;
+  final TextEditingController _supplierSearchController = TextEditingController();
+  Map<int, TextEditingController> _noteControllers = {
+    5000: TextEditingController(),
+    1000: TextEditingController(),
+    500: TextEditingController(),
+    100: TextEditingController(),
+    50: TextEditingController(),
+    20: TextEditingController(),
+    10: TextEditingController(),
+  };
+  String? _noteError;
+  bool _noteDialogOkEnabled = false;
+  List<Map<String, dynamic>> _pendingReturns = [];
 
   @override
   void initState() {
     super.initState();
     _loadItems();
+    _loadSuppliers();
   }
 
   @override
   void dispose() {
     _horizontalScrollController.dispose();
     _verticalScrollController.dispose();
+    _supplierSearchController.dispose();
     super.dispose();
   }
 
@@ -66,6 +89,13 @@ class _PickListTabState extends State<PickListTab> {
     }
   }
 
+  Future<void> _loadSuppliers() async {
+    final supplierData = await DatabaseHelper.instance.getSuppliers();
+    setState(() {
+      _suppliers = supplierData.map((data) => Supplier.fromMap(data)).toList();
+    });
+  }
+
   Widget _buildTableHeaderCell(String text, {TextAlign align = TextAlign.center}) {
     return Container(
       height: 60,
@@ -98,6 +128,7 @@ class _PickListTabState extends State<PickListTab> {
     bool isEditable = false,
     bool isPaymentType = false,
     Function(String)? onChanged,
+    Function(String)? onFieldSubmitted,
     String? hintText}
   ) {
     // For Recovery field, show empty string if value is "0.00"
@@ -188,6 +219,7 @@ class _PickListTabState extends State<PickListTab> {
                   fontSize: 13,
                 ),
                 onChanged: onChanged,
+                onFieldSubmitted: onFieldSubmitted,
               )
             : Text(
                 displayValue,
@@ -246,6 +278,7 @@ class _PickListTabState extends State<PickListTab> {
             )
           : Padding(
               padding: const EdgeInsets.all(24.0),
+              child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -351,7 +384,33 @@ class _PickListTabState extends State<PickListTab> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 ElevatedButton.icon(
-                                  onPressed: () {},
+                                    onPressed: () async {
+                                      // Update Load Form for all pending returns
+                                      for (final ret in _pendingReturns) {
+                                        await DatabaseHelper.instance.updateLoadFormItemReturn(
+                                          ret['brandName'] as String,
+                                          ret['units'] as int,
+                                        );
+                                      }
+                                      _pendingReturns.clear();
+
+                                      // Insert ledger records for credit
+                                      for (final item in _items) {
+                                        if ((item.credit ?? 0) > 0) {
+                                          await DatabaseHelper.instance.insertLedger({
+                                            'shopName': item.shopName,
+                                            'shopCode': item.code,
+                                            'date': DateTime.now().toIso8601String().split('T')[0],
+                                            'details': '',
+                                            'debit': item.credit, // Credit value from Pick List goes to Debit in Ledger
+                                            'credit': 0,
+                                            'balance': null,
+                                          });
+                                        }
+                                      }
+
+                                      _showNoteDialog();
+                                    },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.deepPurple,
                                     foregroundColor: Colors.white,
@@ -403,11 +462,94 @@ class _PickListTabState extends State<PickListTab> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Table
+                    SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _showSupplierSearch = !_showSupplierSearch;
+                          _supplierSearchController.clear();
+                        });
+                      },
+                      icon: const Icon(Icons.person_add_alt_1),
+                      label: const Text('Add Man Power'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                    if (_showSupplierSearch && _selectedManPowers.length < _suppliers.length)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
+                          Autocomplete<Supplier>(
+                            optionsBuilder: (TextEditingValue textEditingValue) {
+                              if (textEditingValue.text.isEmpty) {
+                                return _suppliers;
+                              }
+                              return _suppliers.where((Supplier s) =>
+                                s.name.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
+                                s.phone.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
+                                s.address.toLowerCase().contains(textEditingValue.text.toLowerCase())
+                              );
+                            },
+                            displayStringForOption: (Supplier s) => s.name,
+                            fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                              _supplierSearchController.text = controller.text;
+                              return TextField(
+                                controller: controller,
+                                focusNode: focusNode,
+                                decoration: InputDecoration(
+                                  labelText: 'Search Man Power',
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  prefixIcon: const Icon(Icons.search),
+                                ),
+                              );
+                            },
+                            onSelected: (Supplier s) {
+                              setState(() {
+                                if (!_selectedManPowers.any((mp) => mp.id == s.id)) {
+                                  _selectedManPowers.add(s);
+                                }
+                                _showSupplierSearch = false;
+                                _supplierSearchController.clear();
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    if (_selectedManPowers.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12.0, bottom: 12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: _selectedManPowers.map((mp) => Row(
+                            children: [
                   Expanded(
-                    child: _buildTable(),
-                  ),
-                ],
+                                child: Text(
+                                  '${mp.type}: ${mp.name}, Date: ${DateTime.now().toString().split(' ')[0]}, Day: ${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][DateTime.now().weekday-1]}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, color: Colors.red),
+                                tooltip: 'Remove',
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedManPowers.removeWhere((x) => x.id == mp.id);
+                                  });
+                                },
+                              ),
+                            ],
+                          )).toList(),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    // Table
+                    _buildTable(),
+                  ],
+                ),
               ),
             ),
     );
@@ -441,13 +583,13 @@ class _PickListTabState extends State<PickListTab> {
                     // Header Row
                     Row(
                       children: [
-                        Expanded(flex: 1, child: _buildTableHeaderCell('No.')),
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Code', align: TextAlign.left)),
-                        Expanded(flex: 3, child: _buildTableHeaderCell('Shop', align: TextAlign.left)),
-                        Expanded(flex: 3, child: _buildTableHeaderCell('Owner Name', align: TextAlign.left)),
+                        Expanded(flex: 2, child: _buildTableHeaderCell('Invoice No.', align: TextAlign.left)),
+                        Expanded(flex: 2, child: _buildTableHeaderCell('Shop', align: TextAlign.left)),
                         Expanded(flex: 2, child: _buildTableHeaderCell('Bill Amount')),
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Cash/Credit')),
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Recovery')),
+                        Expanded(flex: 2, child: _buildTableHeaderCell('Cash')),
+                        Expanded(flex: 2, child: _buildTableHeaderCell('Credit')),
+                        Expanded(flex: 2, child: _buildTableHeaderCell('Discount')),
+                        Expanded(flex: 2, child: _buildTableHeaderCell('Return')),
                       ],
                     ),
                     // Table Body
@@ -488,82 +630,115 @@ class _PickListTabState extends State<PickListTab> {
                         ),
                       )
                     else
-                      Expanded(
-                        child: ListView.builder(
-                          controller: _verticalScrollController,
-                          itemCount: _items.length,
-                          itemBuilder: (context, index) {
-                            final item = _items[index];
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: index.isEven ? Colors.white : Colors.grey.shade50,
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 1,
-                                    child: _buildTableCell(
-                                      (index + 1).toString(),
-                                      isNumeric: true,
-                                    ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _items.length,
+                        itemBuilder: (context, index) {
+                          final item = _items[index];
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: index.isEven ? Colors.white : Colors.grey.shade50,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildTableCell(
+                                    item.invoiceNumber ?? '',
+                                    align: TextAlign.left,
                                   ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: _buildTableCell(
-                                      item.code,
-                                      align: TextAlign.left,
-                                    ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildTableCell(
+                                    item.shopName,
+                                    align: TextAlign.left,
                                   ),
-                                  Expanded(
-                                    flex: 3,
-                                    child: _buildTableCell(
-                                      item.shopName,
-                                      align: TextAlign.left,
-                                    ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildTableCell(
+                                    item.billAmount.toStringAsFixed(2),
+                                    isNumeric: true,
                                   ),
-                                  Expanded(
-                                    flex: 3,
-                                    child: _buildTableCell(
-                                      item.ownerName,
-                                      align: TextAlign.left,
-                                    ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildTableCell(
+                                    item.cash.toStringAsFixed(2),
+                                    isNumeric: true,
+                                    isEditable: true,
+                                    onChanged: (value) {
+                                      final cash = double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(cash: cash);
+                                      _updateItem(updatedItem);
+                                    },
                                   ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: _buildTableCell(
-                                      item.billAmount.toStringAsFixed(2),
-                                      isNumeric: true,
-                                    ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildTableCell(
+                                    item.credit.toStringAsFixed(2),
+                                    isNumeric: true,
+                                    isEditable: true,
+                                    onChanged: (value) {
+                                      final credit = double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(credit: credit);
+                                      _updateItem(updatedItem);
+                                    },
                                   ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: _buildTableCell(
-                                      item.paymentType,
-                                      isEditable: true,
-                                      isPaymentType: true,
-                                      onChanged: (value) {
-                                        final updatedItem = item.copyWith(paymentType: value);
-                                        _updateItem(updatedItem);
-                                      },
-                                    ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildTableCell(
+                                    (item.discount ?? 0.0).toStringAsFixed(2),
+                                    isNumeric: true,
+                                    isEditable: true,
+                                    onChanged: (value) {
+                                      final discount = double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(discount: discount);
+                                      _updateItem(updatedItem);
+                                    },
                                   ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: _buildTableCell(
-                                      item.recovery.toStringAsFixed(2),
-                                      isNumeric: true,
-                                      isEditable: true,
-                                      onChanged: (value) {
-                                        final recovery = double.tryParse(value) ?? 0.0;
-                                        final updatedItem = item.copyWith(recovery: recovery);
-                                        _updateItem(updatedItem);
-                                      },
-                                    ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildTableCell(
+                                    (item.return_ ?? 0.0).toStringAsFixed(2),
+                                    isNumeric: true,
+                                    isEditable: true,
+                                    onChanged: (value) {
+                                      final returnValue = double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(return_: returnValue);
+                                      _updateItem(updatedItem);
+                                    },
+                                    onFieldSubmitted: (value) {
+                                      final returnValue = double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(return_: returnValue);
+                                      _updateItem(updatedItem);
+                                      _handleReturn(updatedItem, returnValue);
+                                    },
                                   ),
-                                ],
-                              ),
-                            );
-                          },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    if (_items.isNotEmpty)
+                      Container(
+                        color: Colors.deepPurple.shade50,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            const Expanded(flex: 4, child: Align(alignment: Alignment.centerRight, child: Text('Total:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)))),
+                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.billAmount)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.cash)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.credit)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.discount ?? 0.0)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.return_ ?? 0.0)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                          ],
                         ),
                       ),
                   ],
@@ -571,6 +746,463 @@ class _PickListTabState extends State<PickListTab> {
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _showNoteDialog() {
+    _noteError = null;
+    _noteDialogOkEnabled = false;
+    _noteControllers.forEach((key, controller) => controller.text = '');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            double total = 0;
+            _noteControllers.forEach((denom, controller) {
+              final count = int.tryParse(controller.text) ?? 0;
+              total += denom * count;
+            });
+            final cashSum = _items.fold(0.0, (sum, item) => sum + (item.cash));
+            final matched = total == cashSum;
+            _noteDialogOkEnabled = matched;
+            return AlertDialog(
+              title: const Text('Enter Notes Count'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ..._noteControllers.entries.map((entry) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: TextField(
+                      controller: entry.value,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Notes of ${entry.key}',
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (_) {
+                        setState(() {
+                          double t = 0;
+                          _noteControllers.forEach((denom, c) {
+                            final count = int.tryParse(c.text) ?? 0;
+                            t += denom * count;
+                          });
+                          if (t != cashSum) {
+                            _noteError = 'Values are not Matched';
+                          } else {
+                            _noteError = null;
+                          }
+                        });
+                      },
+                    ),
+                  )),
+                  const SizedBox(height: 8),
+                  Text('Total: Rs. ${total.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Pick List Cash: Rs. ${cashSum.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  if (_noteError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(_noteError!, style: const TextStyle(color: Colors.red)),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: matched ? () async {
+                    Navigator.of(context).pop();
+                    // Insert income record
+                    await DatabaseHelper.instance.insertIncome({
+                      'date': DateTime.now().toIso8601String().split('T')[0],
+                      'category': 'Sales & Recovery',
+                      'details': 'Sale',
+                      'amount': cashSum,
+                    });
+                    await _showPickListPrintPreview();
+                  } : null,
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showPickListPrintPreview() async {
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Pick List', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 8),
+              if (_selectedManPowers.isNotEmpty)
+                ..._selectedManPowers.map((mp) => pw.Text('${mp.type}: ${mp.name}')),
+              pw.SizedBox(height: 16),
+              pw.Table(
+                border: pw.TableBorder.all(),
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Text('Invoice No.', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Shop', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Bill Amount', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Cash', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Credit', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Discount', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Return', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    ],
+                  ),
+                  ..._items.map((item) => pw.TableRow(
+                    children: [
+                      pw.Text(item.invoiceNumber ?? ''),
+                      pw.Text(item.shopName),
+                      pw.Text(item.billAmount.toStringAsFixed(2)),
+                      pw.Text(item.cash.toStringAsFixed(2)),
+                      pw.Text(item.credit.toStringAsFixed(2)),
+                      pw.Text((item.discount ?? 0.0).toStringAsFixed(2)),
+                      pw.Text((item.return_ ?? 0.0).toStringAsFixed(2)),
+                    ],
+                  )),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: 'PickList_${DateTime.now().millisecondsSinceEpoch}.pdf',
+    );
+  }
+
+  Future<void> _handleReturn(PickListItem item, double returnValue) async {
+    if (returnValue <= 0) return;
+
+    // Get the invoice details
+    final invoice = await DatabaseHelper.instance.getInvoiceByNumber(item.invoiceNumber ?? '');
+    if (invoice == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invoice not found'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final List<Map<String, dynamic>> invoiceItems = List<Map<String, dynamic>>.from(
+        (jsonDecode(invoice['items'] as String) as List).map((item) => {
+          'brandName': item['description'] as String,
+          'units': item['unit'] as int,
+          'rate': item['rate'] as double,
+        }).toList(),
+      );
+
+      final total = invoice['total'] as double;
+
+      if ((returnValue - total).abs() < 0.01) {  // Using abs() to handle floating point comparison
+        // Full return - store all products as pending returns
+        for (final invoiceItem in invoiceItems) {
+          _pendingReturns.add({
+            'brandName': invoiceItem['brandName'],
+            'units': invoiceItem['units'],
+          });
+        }
+        // Show the invoice
+        if (mounted) {
+          final returnedProducts = invoiceItems.map((item) => {
+            ...item,
+            'units': item['units'],
+          }).toList();
+          _showInvoiceDialog(invoice, isFullReturn: true, returnedProducts: returnedProducts);
+        }
+      } else {
+        // Partial return - show product selection dialog
+        if (mounted) {
+          await _showReturnProductDialog(invoice, returnValue);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error processing return: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showReturnProductDialog(Map<String, dynamic> invoice, double returnValue) async {
+    final List<Map<String, dynamic>> invoiceItems = List<Map<String, dynamic>>.from(
+      (jsonDecode(invoice['items'] as String) as List).map((item) => {
+        'brandName': item['description'] as String,
+        'units': item['unit'] as int,
+        'rate': item['rate'] as double,
+        'maxUnits': item['unit'] as int,  // Store original units as max limit
+      }).toList(),
+    );
+
+    final selectedProducts = <Map<String, dynamic>>[];
+    final unitControllers = <int, TextEditingController>{};
+    double remainingReturnValue = returnValue;
+
+    for (var i = 0; i < invoiceItems.length; i++) {
+      unitControllers[i] = TextEditingController();
+    }
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Products to Return'),
+              content: SizedBox(
+                width: 800,  // Increased width for better visibility
+                height: 600,  // Fixed height for better visibility
+                child: Column(
+                  children: [
+                    Text(
+                      'Return Amount: Rs. ${returnValue.toStringAsFixed(2)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Remaining: Rs. ${remainingReturnValue.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: remainingReturnValue < 0 ? Colors.red : Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        columns: const [
+                          DataColumn(label: Text('Select')),
+                          DataColumn(label: Text('Product')),
+                          DataColumn(label: Text('Original Units')),
+                          DataColumn(label: Text('Rate')),
+                          DataColumn(label: Text('Return Units')),
+                          DataColumn(label: Text('Return Value')),
+                          DataColumn(label: Text('Max Return Value')),
+                        ],
+                        rows: List<DataRow>.generate(
+                          invoiceItems.length,
+                          (index) {
+                            final item = invoiceItems[index];
+                            final controller = unitControllers[index]!;
+                            final isSelected = selectedProducts.contains(item);
+                            final returnUnits = int.tryParse(controller.text) ?? 0;
+                            final returnValue = returnUnits * (item['rate'] as double);
+                            final maxReturnValue = (item['maxUnits'] as int) * (item['rate'] as double);
+
+                            return DataRow(
+                              cells: [
+                                DataCell(
+                                  Checkbox(
+                                    value: isSelected,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          selectedProducts.add(item);
+                                        } else {
+                                          selectedProducts.remove(item);
+                                          controller.clear();
+                                          _recalculateRemainingValue(
+                                            returnValue,
+                                            selectedProducts,
+                                            unitControllers,
+                                            invoiceItems,
+                                            (value) => remainingReturnValue = value,
+                                          );
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                                DataCell(Text(item['brandName'] as String)),
+                                DataCell(Text((item['maxUnits'] as int).toString())),
+                                DataCell(Text((item['rate'] as double).toString())),
+                                DataCell(
+                                  isSelected
+                                      ? TextField(
+                                          controller: controller,
+                                          keyboardType: TextInputType.number,
+                                          decoration: const InputDecoration(
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                                          ),
+                                          onChanged: (value) {
+                                            final units = int.tryParse(value) ?? 0;
+                                            if (units > (item['maxUnits'] as int)) {
+                                              controller.text = item['maxUnits'].toString();
+                                            }
+                                            setState(() {
+                                              _recalculateRemainingValue(
+                                                returnValue,
+                                                selectedProducts,
+                                                unitControllers,
+                                                invoiceItems,
+                                                (value) => remainingReturnValue = value,
+                                              );
+                                            });
+                                          },
+                                        )
+                                      : const Text('')
+                                ),
+                                DataCell(
+                                  Text(
+                                    isSelected && returnUnits > 0
+                                        ? returnValue.toStringAsFixed(2)
+                                        : '',
+                                  ),
+                                ),
+                                DataCell(Text(maxReturnValue.toStringAsFixed(2))),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: selectedProducts.isNotEmpty && selectedProducts.any((item) {
+                    final idx = invoiceItems.indexOf(item);
+                    final units = int.tryParse(unitControllers[idx]!.text) ?? 0;
+                    return units > 0;
+                  })
+                      ? () async {
+                          // Store selected products as pending returns
+                          for (var i = 0; i < invoiceItems.length; i++) {
+                            final item = invoiceItems[i];
+                            if (selectedProducts.contains(item)) {
+                              final returnUnits = int.tryParse(unitControllers[i]!.text) ?? 0;
+                              if (returnUnits > 0) {
+                                _pendingReturns.add({
+                                  'brandName': item['brandName'],
+                                  'units': returnUnits,
+                                });
+                              }
+                            }
+                          }
+                          if (mounted) {
+                            // Build returnedProducts list
+                            final returnedProducts = <Map<String, dynamic>>[];
+                            for (var i = 0; i < invoiceItems.length; i++) {
+                              if (selectedProducts.contains(invoiceItems[i])) {
+                                final returnUnits = int.tryParse(unitControllers[i]!.text) ?? 0;
+                                if (returnUnits > 0) {
+                                  returnedProducts.add({
+                                    ...invoiceItems[i],
+                                    'units': returnUnits,
+                                  });
+                                }
+                              }
+                            }
+                            Navigator.of(context).pop();
+                            _showInvoiceDialog(invoice, isFullReturn: false, returnedProducts: returnedProducts);
+                          }
+                        }
+                      : null,
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _recalculateRemainingValue(
+    double totalReturnValue,
+    List<Map<String, dynamic>> selectedProducts,
+    Map<int, TextEditingController> unitControllers,
+    List<Map<String, dynamic>> invoiceItems,
+    Function(double) updateRemaining,
+  ) {
+    double currentTotal = 0;
+    for (var i = 0; i < invoiceItems.length; i++) {
+      if (selectedProducts.contains(invoiceItems[i])) {
+        final returnUnits = int.tryParse(unitControllers[i]!.text) ?? 0;
+        currentTotal += returnUnits * (invoiceItems[i]['rate'] as double);
+      }
+    }
+    updateRemaining(totalReturnValue - currentTotal);
+  }
+
+  Future<void> _showInvoiceDialog(
+    Map<String, dynamic> invoice, {
+    required bool isFullReturn,
+    List<Map<String, dynamic>>? returnedProducts,
+  }) async {
+    if (!mounted) return;
+    
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(isFullReturn ? 'Full Return - Invoice Details' : 'Partial Return - Invoice Details'),
+          content: SizedBox(
+            width: 500,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Invoice #: ${invoice['invoiceNumber']}'),
+                  Text('Shop: ${invoice['shopName']}'),
+                  Text('Date: ${invoice['date']}'),
+                  const SizedBox(height: 16),
+                  const Text('Products:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  ...((returnedProducts ?? List<Map<String, dynamic>>.from(jsonDecode(invoice['items'] as String)))
+                      .map((item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              '${item['brandName']} - ${item['units']} units @ Rs.${item['rate']}',
+                            ),
+                          ))),
+                  const SizedBox(height: 16),
+                  Text('Total: Rs.${invoice['total']}'),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
         );
       },
     );
@@ -583,8 +1215,12 @@ class PickListItem {
   final String shopName;
   final String ownerName;
   final double billAmount;
-  final String paymentType;
   final double recovery;
+  final double discount;
+  final double return_;
+  final double cash;
+  final double credit;
+  final String? invoiceNumber;
 
   PickListItem({
     this.id,
@@ -592,19 +1228,27 @@ class PickListItem {
     required this.shopName,
     required this.ownerName,
     required this.billAmount,
-    required this.paymentType,
     required this.recovery,
+    required this.discount,
+    required this.return_,
+    required this.cash,
+    required this.credit,
+    this.invoiceNumber,
   });
 
   factory PickListItem.fromMap(Map<String, dynamic> map) {
     return PickListItem(
       id: map['id'] as int?,
-      code: map['code'] as String,
-      shopName: map['shopName'] as String,
-      ownerName: map['ownerName'] as String,
-      billAmount: map['billAmount'] as double,
-      paymentType: map['paymentType'] as String? ?? '',
-      recovery: map['recovery'] as double? ?? 0.0,
+      code: map['code'] as String? ?? '',
+      shopName: map['shopName'] as String? ?? '',
+      ownerName: map['ownerName'] as String? ?? '',
+      billAmount: (map['billAmount'] as num?)?.toDouble() ?? 0.0,
+      recovery: (map['recovery'] as num?)?.toDouble() ?? 0.0,
+      discount: (map['discount'] as num?)?.toDouble() ?? 0.0,
+      return_: (map['return'] as num?)?.toDouble() ?? 0.0,
+      cash: (map['cash'] as num?)?.toDouble() ?? 0.0,
+      credit: (map['credit'] as num?)?.toDouble() ?? 0.0,
+      invoiceNumber: map['invoiceNumber'] as String?,
     );
   }
 
@@ -615,8 +1259,12 @@ class PickListItem {
       'shopName': shopName,
       'ownerName': ownerName,
       'billAmount': billAmount,
-      'paymentType': paymentType,
       'recovery': recovery,
+      'discount': discount,
+      'return': return_,
+      'cash': cash,
+      'credit': credit,
+      'invoiceNumber': invoiceNumber,
     };
   }
 
@@ -626,8 +1274,12 @@ class PickListItem {
     String? shopName,
     String? ownerName,
     double? billAmount,
-    String? paymentType,
     double? recovery,
+    double? discount,
+    double? return_,
+    double? cash,
+    double? credit,
+    String? invoiceNumber,
   }) {
     return PickListItem(
       id: id ?? this.id,
@@ -635,8 +1287,12 @@ class PickListItem {
       shopName: shopName ?? this.shopName,
       ownerName: ownerName ?? this.ownerName,
       billAmount: billAmount ?? this.billAmount,
-      paymentType: paymentType ?? this.paymentType,
       recovery: recovery ?? this.recovery,
+      discount: discount ?? this.discount,
+      return_: return_ ?? this.return_,
+      cash: cash ?? this.cash,
+      credit: credit ?? this.credit,
+      invoiceNumber: invoiceNumber ?? this.invoiceNumber,
     );
   }
 } 

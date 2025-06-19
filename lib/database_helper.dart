@@ -49,7 +49,7 @@ class DatabaseHelper {
     final String path = join(await getDatabasesPath(), 'records_keeper.db');
     return await openDatabase(
       path,
-      version: 5,
+      version: 14,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -127,6 +127,7 @@ class DatabaseHelper {
           owner_name TEXT NOT NULL,
           category TEXT NOT NULL,
           address TEXT,
+          area TEXT,
           phone TEXT
         )
       ''');
@@ -140,10 +141,12 @@ class DatabaseHelper {
           shopCode TEXT NOT NULL,
           ownerName TEXT NOT NULL,
           category TEXT NOT NULL,
+          address TEXT,
           subtotal REAL NOT NULL,
           discount REAL NOT NULL,
           total REAL NOT NULL,
-          items TEXT NOT NULL
+          items TEXT NOT NULL,
+          generated INTEGER NOT NULL DEFAULT 0
         )
       ''');
 
@@ -166,8 +169,37 @@ class DatabaseHelper {
           shopName TEXT,
           ownerName TEXT,
           billAmount REAL DEFAULT 0,
-          paymentType TEXT DEFAULT '',
-          recovery REAL DEFAULT 0
+          recovery REAL DEFAULT 0,
+          discount REAL DEFAULT 0,
+          return REAL DEFAULT 0,
+          cash REAL DEFAULT 0,
+          credit REAL DEFAULT 0,
+          invoiceNumber TEXT
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE IF NOT EXISTS suppliers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          fatherName TEXT NOT NULL,
+          address TEXT NOT NULL,
+          cnic TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          type TEXT NOT NULL DEFAULT 'Supplier'
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE ledger (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          shopName TEXT,
+          shopCode TEXT,
+          date TEXT,
+          details TEXT,
+          debit REAL,
+          credit REAL,
+          balance REAL
         )
       ''');
     });
@@ -238,8 +270,63 @@ class DatabaseHelper {
             shopName TEXT,
             ownerName TEXT,
             billAmount REAL DEFAULT 0,
-            paymentType TEXT DEFAULT '',
-            recovery REAL DEFAULT 0
+            recovery REAL DEFAULT 0,
+            discount REAL DEFAULT 0,
+            return REAL DEFAULT 0,
+            cash REAL DEFAULT 0,
+            credit REAL DEFAULT 0
+          )
+        ''');
+        await txn.execute('''
+          ALTER TABLE pick_list ADD COLUMN cash REAL DEFAULT 0
+        ''');
+        await txn.execute('''
+          ALTER TABLE pick_list ADD COLUMN credit REAL DEFAULT 0
+        ''');
+      }
+      if (oldVersion < 7) {
+        await txn.execute("ALTER TABLE shops ADD COLUMN address TEXT");
+        await txn.execute("ALTER TABLE shops ADD COLUMN area TEXT");
+        await txn.execute("ALTER TABLE shops ADD COLUMN phone TEXT");
+      }
+      if (oldVersion < 8) {
+        await txn.execute("ALTER TABLE invoices ADD COLUMN address TEXT");
+      }
+      if (oldVersion < 9) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS suppliers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            fatherName TEXT NOT NULL,
+            address TEXT NOT NULL,
+            cnic TEXT NOT NULL,
+            phone TEXT NOT NULL
+          )
+        ''');
+      }
+      if (oldVersion < 10) {
+        await txn.execute("ALTER TABLE suppliers ADD COLUMN type TEXT NOT NULL DEFAULT 'Supplier'");
+      }
+      if (oldVersion < 11) {
+        await txn.execute("ALTER TABLE invoices ADD COLUMN address TEXT");
+      }
+      if (oldVersion < 12) {
+        await txn.execute("ALTER TABLE pick_list ADD COLUMN invoiceNumber TEXT");
+      }
+      if (oldVersion < 13) {
+        await txn.execute("ALTER TABLE invoices ADD COLUMN generated INTEGER NOT NULL DEFAULT 0");
+      }
+      if (oldVersion < 14) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS ledger (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shopName TEXT,
+            shopCode TEXT,
+            date TEXT,
+            details TEXT,
+            debit REAL,
+            credit REAL,
+            balance REAL
           )
         ''');
       }
@@ -345,6 +432,16 @@ class DatabaseHelper {
     );
   }
 
+  Future<int> updateProduct(Map<String, dynamic> product) async {
+    final db = await instance.database;
+    return await db.update(
+      'products',
+      product,
+      where: 'id = ?',
+      whereArgs: [product['id']],
+    );
+  }
+
   // Shop operations
   Future<String> generateShopCode() async {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -419,6 +516,16 @@ class DatabaseHelper {
     }
   }
 
+  Future<int> updateShop(Map<String, dynamic> shop) async {
+    final db = await instance.database;
+    return await db.update(
+      'shops',
+      shop,
+      where: 'code = ?',
+      whereArgs: [shop['code']],
+    );
+  }
+
   // Invoice methods
   Future<void> insertInvoice(Map<String, dynamic> invoice) async {
     final Database db = await database;
@@ -469,6 +576,26 @@ class DatabaseHelper {
     };
   }
 
+  Future<void> updateInvoiceGenerated(String id, int generated) async {
+    final db = await database;
+    await db.update(
+      'invoices',
+      {'generated': generated},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<Map<String, dynamic>?> getInvoiceByNumber(String invoiceNumber) async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.query(
+      'invoices',
+      where: 'invoiceNumber = ?',
+      whereArgs: [invoiceNumber],
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
   // Load Form Methods
   Future<int> insertLoadFormItem(Map<String, dynamic> row) async {
     final db = await instance.database;
@@ -513,6 +640,30 @@ class DatabaseHelper {
     );
   }
 
+  Future<void> updateLoadFormItemReturn(String brandName, int returnUnits) async {
+    final db = await database;
+    
+    // Get current return quantity
+    final List<Map<String, dynamic>> result = await db.query(
+      'load_form',
+      columns: ['id', 'returnQty'],
+      where: 'brandName = ?',
+      whereArgs: [brandName],
+    );
+
+    if (result.isNotEmpty) {
+      final currentReturnQty = result.first['returnQty'] as int? ?? 0;
+      final newReturnQty = currentReturnQty + returnUnits;
+
+      await db.update(
+        'load_form',
+        {'returnQty': newReturnQty},
+        where: 'brandName = ?',
+        whereArgs: [brandName],
+      );
+    }
+  }
+
   // Pick List operations
   Future<void> insertOrUpdatePickListItem(Map<String, dynamic> item) async {
     final db = await database;
@@ -554,6 +705,33 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [item['id']],
     );
+  }
+
+  // Supplier operations
+  Future<List<Map<String, dynamic>>> getSuppliers() async {
+    final db = await instance.database;
+    return await db.query('suppliers', orderBy: 'name ASC');
+  }
+
+  Future<int> insertSupplier(Map<String, dynamic> supplier) async {
+    final db = await instance.database;
+    return await db.insert('suppliers', supplier);
+  }
+
+  Future<int> updateSupplier(Map<String, dynamic> supplier) async {
+    final db = await instance.database;
+    return await db.update('suppliers', supplier, where: 'id = ?', whereArgs: [supplier['id']]);
+  }
+
+  Future<int> deleteSupplier(int id) async {
+    final db = await instance.database;
+    return await db.delete('suppliers', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Ledger operations
+  Future<int> insertLedger(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('ledger', row);
   }
 
   // Close database

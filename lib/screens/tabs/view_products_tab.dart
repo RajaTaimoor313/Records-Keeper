@@ -76,6 +76,96 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
     });
   }
 
+  void _showEditProductDialog(Product product) {
+    final companyController = TextEditingController(text: product.company);
+    final brandController = TextEditingController(text: product.brand);
+    final ctnRateController = TextEditingController(text: product.ctnRate.toString());
+    final boxRateController = TextEditingController(text: product.boxRate.toString());
+    final salePriceController = TextEditingController(text: product.salePrice.toString());
+    final ctnPackingController = TextEditingController(text: product.ctnPacking.toString());
+    final boxPackingController = TextEditingController(text: product.boxPacking.toString());
+    final unitsPackingController = TextEditingController(text: product.unitsPacking.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Product'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: companyController,
+                  decoration: const InputDecoration(labelText: 'Company'),
+                ),
+                TextField(
+                  controller: brandController,
+                  decoration: const InputDecoration(labelText: 'Brand'),
+                ),
+                TextField(
+                  controller: ctnRateController,
+                  decoration: const InputDecoration(labelText: 'CTN Rate'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: boxRateController,
+                  decoration: const InputDecoration(labelText: 'Box Rate'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: salePriceController,
+                  decoration: const InputDecoration(labelText: 'Sale Price'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: ctnPackingController,
+                  decoration: const InputDecoration(labelText: 'CTN Packing'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: boxPackingController,
+                  decoration: const InputDecoration(labelText: 'Box Packing'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: unitsPackingController,
+                  decoration: const InputDecoration(labelText: 'Units Packing'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final updatedProduct = Product(
+                  id: product.id,
+                  company: companyController.text.trim(),
+                  brand: brandController.text.trim(),
+                  ctnRate: double.tryParse(ctnRateController.text) ?? 0.0,
+                  boxRate: double.tryParse(boxRateController.text) ?? 0.0,
+                  salePrice: double.tryParse(salePriceController.text) ?? 0.0,
+                  ctnPacking: int.tryParse(ctnPackingController.text) ?? 0,
+                  boxPacking: int.tryParse(boxPackingController.text) ?? 0,
+                  unitsPacking: int.tryParse(unitsPackingController.text) ?? 0,
+                );
+                await DatabaseHelper.instance.updateProduct(updatedProduct.toMap());
+                Navigator.of(context).pop();
+                _loadProducts();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -360,6 +450,9 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                 ),
                               ),
                             ),
+                            const DataColumn(
+                              label: Icon(Icons.edit, color: Colors.deepPurple),
+                            ),
                           ],
                           rows: filteredRecords.asMap().entries.map((entry) {
                             final index = entry.key;
@@ -447,6 +540,13 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                         ),
                                       ),
                                     ],
+                                  ),
+                                ),
+                                DataCell(
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                                    tooltip: 'Edit Product',
+                                    onPressed: () => _showEditProductDialog(product),
                                   ),
                                 ),
                               ],

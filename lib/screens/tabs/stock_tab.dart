@@ -68,6 +68,8 @@ class _StockTabState extends State<StockTab> {
   final TextEditingController _unitsPackingController = TextEditingController();
   final TextEditingController _salePriceController = TextEditingController();
 
+  Product? _editingProduct;
+
   @override
   void initState() {
     super.initState();
@@ -168,6 +170,21 @@ class _StockTabState extends State<StockTab> {
     return id;
   }
 
+  void _populateForm(Product product) {
+    _companyController.text = product.company;
+    _brandController.text = product.brand;
+    _ctnRateController.text = product.ctnRate.toString();
+    _boxRateController.text = product.boxRate.toString();
+    _salePriceController.text = product.salePrice.toString();
+    _ctnPackingController.text = product.ctnPacking.toString();
+    _boxPackingController.text = product.boxPacking.toString();
+    _unitsPackingController.text = product.unitsPacking.toString();
+    _editingProduct = product;
+    setState(() {
+      showForm = true;
+    });
+  }
+
   Future<void> _saveProduct() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
@@ -207,6 +224,42 @@ class _StockTabState extends State<StockTab> {
     }
   }
 
+  Future<void> _updateProduct() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      try {
+        _calculateBoxRate();
+        final updatedProduct = Product(
+          id: _editingProduct!.id,
+          company: _companyController.text.trim(),
+          brand: _brandController.text.trim(),
+          ctnRate: double.parse(_ctnRateController.text),
+          boxRate: double.parse(_boxRateController.text),
+          salePrice: double.parse(_salePriceController.text),
+          ctnPacking: int.parse(_ctnPackingController.text),
+          boxPacking: int.parse(_boxPackingController.text),
+          unitsPacking: int.parse(_unitsPackingController.text),
+        );
+        await DatabaseHelper.instance.updateProduct(updatedProduct.toMap());
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _resetForm();
+        _editingProduct = null;
+        _loadProducts();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating product: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -234,13 +287,34 @@ class _StockTabState extends State<StockTab> {
                     ),
                   ),
         ),
-        Expanded(
-          child: _buildAddForm(),
-        ),
+        if (!showForm) _buildProductList(),
+        if (showForm) Expanded(child: _buildAddForm()),
       ],
     );
   }
 
+  Widget _buildProductList() {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: filteredRecords.length,
+        itemBuilder: (context, index) {
+          final product = filteredRecords[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            child: ListTile(
+              title: Text('${product.company} - ${product.brand}'),
+              subtitle: Text('CTN Rate: Rs. ${product.ctnRate.toStringAsFixed(2)} | Box Rate: Rs. ${product.boxRate.toStringAsFixed(2)} | Sale Price: Rs. ${product.salePrice.toStringAsFixed(2)}'),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                onPressed: () => _populateForm(product),
+                tooltip: 'Edit Product',
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildAddForm() {
     return SingleChildScrollView(
@@ -622,10 +696,10 @@ class _StockTabState extends State<StockTab> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _saveProduct,
-                    icon: const Icon(Icons.save, color: Colors.white),
-                    label: const Text(
-                      'Save Product',
+                    onPressed: _editingProduct == null ? _saveProduct : _updateProduct,
+                    icon: Icon(_editingProduct == null ? Icons.save : Icons.edit, color: Colors.white),
+                    label: Text(
+                      _editingProduct == null ? 'Save Product' : 'Update Product',
                       style: TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
