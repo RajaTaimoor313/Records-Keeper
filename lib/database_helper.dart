@@ -656,7 +656,7 @@ class DatabaseHelper {
       
       // Validate that return quantity doesn't exceed total units
       if (newReturnQty > totalUnits) {
-        throw Exception('Return quantity (${newReturnQty}) cannot exceed total units (${totalUnits}) for brand: ${brandName}');
+        throw Exception('Return quantity ($newReturnQty) cannot exceed total units ($totalUnits) for brand: $brandName');
       }
 
       // Calculate new sale value
@@ -794,8 +794,6 @@ class DatabaseHelper {
           final saledReturnTotal = newSaledReturnUnits.toDouble(); // Total boxes returned
           
           // Calculate closing stock values
-          final totalStockCtn = latestRecord['total_stock_ctn'] as int;
-          final totalStockUnits = latestRecord['total_stock_units'] as int;
           final totalStockTotal = latestRecord['total_stock_total'] as double;
           final totalStockValue = latestRecord['total_stock_value'] as double;
           

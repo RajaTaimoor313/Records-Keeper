@@ -21,10 +21,10 @@ class _PickListTabState extends State<PickListTab> {
   bool _isLoading = true;
   List<PickListItem> _items = [];
   List<Supplier> _suppliers = [];
-  List<Supplier> _selectedManPowers = [];
+  final List<Supplier> _selectedManPowers = [];
   bool _showSupplierSearch = false;
   final TextEditingController _supplierSearchController = TextEditingController();
-  Map<int, TextEditingController> _noteControllers = {
+  final Map<int, TextEditingController> _noteControllers = {
     5000: TextEditingController(),
     1000: TextEditingController(),
     500: TextEditingController(),
@@ -34,8 +34,7 @@ class _PickListTabState extends State<PickListTab> {
     10: TextEditingController(),
   };
   String? _noteError;
-  bool _noteDialogOkEnabled = false;
-  List<Map<String, dynamic>> _pendingReturns = [];
+  final List<Map<String, dynamic>> _pendingReturns = [];
 
   @override
   void initState() {
@@ -414,7 +413,7 @@ class _PickListTabState extends State<PickListTab> {
 
                                         // Insert ledger records for credit
                                         for (final item in _items) {
-                                          if ((item.credit ?? 0) > 0) {
+                                          if ((item.credit) > 0) {
                                             await DatabaseHelper.instance.insertLedger({
                                               'shopName': item.shopName,
                                               'shopCode': item.code,
@@ -729,7 +728,7 @@ class _PickListTabState extends State<PickListTab> {
                                 Expanded(
                                   flex: 2,
                                   child: _buildTableCell(
-                                    (item.discount ?? 0.0).toStringAsFixed(2),
+                                    (item.discount).toStringAsFixed(2),
                                     isNumeric: true,
                                     isEditable: true,
                                     onChanged: (value) {
@@ -742,7 +741,7 @@ class _PickListTabState extends State<PickListTab> {
                                 Expanded(
                                   flex: 2,
                                   child: _buildTableCell(
-                                    (item.return_ ?? 0.0).toStringAsFixed(2),
+                                    (item.return_).toStringAsFixed(2),
                                     isNumeric: true,
                                     isEditable: true,
                                     onChanged: (value) {
@@ -773,8 +772,8 @@ class _PickListTabState extends State<PickListTab> {
                             Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.billAmount)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
                             Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.cash)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
                             Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.credit)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.discount ?? 0.0)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.return_ ?? 0.0)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.discount)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.return_)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
                           ],
                         ),
                       ),
@@ -790,7 +789,6 @@ class _PickListTabState extends State<PickListTab> {
 
   void _showNoteDialog() {
     _noteError = null;
-    _noteDialogOkEnabled = false;
     _noteControllers.forEach((key, controller) => controller.text = '');
     showDialog(
       context: context,
@@ -805,7 +803,6 @@ class _PickListTabState extends State<PickListTab> {
             });
             final cashSum = _items.fold(0.0, (sum, item) => sum + (item.cash));
             final matched = total == cashSum;
-            _noteDialogOkEnabled = matched;
             return AlertDialog(
               title: const Text('Enter Notes Count'),
               content: Column(
@@ -908,8 +905,8 @@ class _PickListTabState extends State<PickListTab> {
                       pw.Text(item.billAmount.toStringAsFixed(2)),
                       pw.Text(item.cash.toStringAsFixed(2)),
                       pw.Text(item.credit.toStringAsFixed(2)),
-                      pw.Text((item.discount ?? 0.0).toStringAsFixed(2)),
-                      pw.Text((item.return_ ?? 0.0).toStringAsFixed(2)),
+                      pw.Text((item.discount).toStringAsFixed(2)),
+                      pw.Text((item.return_).toStringAsFixed(2)),
                     ],
                   )),
                 ],

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../models/shop.dart';
-import '../../../database_helper.dart';
 import 'dart:math' as math;
 
 class RealisationTab extends StatefulWidget {
@@ -30,7 +28,6 @@ class _RealisationTabState extends State<RealisationTab> {
   }
 
   Future<void> _loadItems() async {
-    // TODO: Load items from the database
     setState(() {
       _items = [];
       _isLoading = false;
@@ -38,7 +35,6 @@ class _RealisationTabState extends State<RealisationTab> {
   }
 
   Future<void> _updateItem(RealisationItem item) async {
-    // TODO: Update item in DB
     setState(() {
       final idx = _items.indexWhere((e) => e.shopCode == item.shopCode);
       if (idx != -1) _items[idx] = item;

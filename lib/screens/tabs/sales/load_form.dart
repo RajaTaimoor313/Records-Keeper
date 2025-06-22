@@ -53,16 +53,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
     }
   }
 
-  Future<void> _recalculateAllSales() async {
-    // Use the database helper method to recalculate all sales
-    await DatabaseHelper.instance.recalculateAllLoadFormSales();
-    
-    // Reload items to reflect the updated values
-    final items = await DatabaseHelper.instance.getLoadFormItems();
-    setState(() {
-      _items = items.map((item) => LoadFormItem.fromMap(item)).toList();
-    });
-  }
 
   Future<void> _updateItem(LoadFormItem item) async {
     try {

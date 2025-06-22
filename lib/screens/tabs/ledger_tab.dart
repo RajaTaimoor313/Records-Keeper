@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../../database_helper.dart';
 
 class LedgerTab extends StatefulWidget {
-  const LedgerTab({Key? key}) : super(key: key);
+  const LedgerTab({super.key});
 
   @override
   State<LedgerTab> createState() => _LedgerTabState();
@@ -11,8 +11,8 @@ class LedgerTab extends StatefulWidget {
 
 class _LedgerTabState extends State<LedgerTab> {
   List<Map<String, dynamic>> _shopBalances = [];
-  Map<String, List<Map<String, dynamic>>> _shopTransactions = {};
-  Map<String, bool> _expandedShops = {};
+  final Map<String, List<Map<String, dynamic>>> _shopTransactions = {};
+  final Map<String, bool> _expandedShops = {};
   bool _isLoading = true;
 
   @override

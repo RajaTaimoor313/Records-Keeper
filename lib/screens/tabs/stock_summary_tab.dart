@@ -124,13 +124,6 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     return formatter.format(value).trim();
   }
 
-  String _getTotalValue(List<Map<String, dynamic>> records, String field) {
-    final total = records.fold<double>(
-      0,
-      (sum, record) => sum + (double.tryParse(record[field]?.toString() ?? '0') ?? 0),
-    );
-    return _formatIndianNumber(total);
-  }
 
   Widget _buildMainHeaderCell(String text, int columnSpan) {
     return Container(
@@ -514,14 +507,14 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                               final totalStockValue = getVal('opening_stock_value') + getVal('received_value');
 
                               // Get Sale values
-                              final saleCtn = getVal('sale_ctn');
-                              final saleUnits = getVal('sale_units');
+                              getVal('sale_ctn');
+                              getVal('sale_units');
                               final saleTotal = getVal('sale_total');
                               final saleValue = getVal('sale_value');
 
                               // Get Saled Return values
-                              final saledReturnCtn = getVal('saled_return_ctn');
-                              final saledReturnUnits = getVal('saled_return_units');
+                              getVal('saled_return_ctn');
+                              getVal('saled_return_units');
                               final saledReturnTotal = getVal('saled_return_total');
                               final saledReturnValue = getVal('saled_return_value');
 
@@ -541,22 +534,16 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                               }
 
                               // Calculate proper CTN and Box for Saled Return based on packing strategy
-                              int calculatedSaledReturnCtn;
-                              int calculatedSaledReturnBox;
                               
                               if (saledReturnTotal <= boxPacking) {
                                 // If total is less than or equal to box packing, no CTN needed
-                                calculatedSaledReturnCtn = 0;
-                                calculatedSaledReturnBox = saledReturnTotal.toInt();
                               } else {
                                 // If total exceeds box packing, calculate CTN and Box
-                                calculatedSaledReturnCtn = saledReturnTotal ~/ boxPacking; // Integer division for CTN
-                                calculatedSaledReturnBox = saledReturnTotal.toInt() % boxPacking; // Remainder for Box
+// Integer division for CTN
+// Remainder for Box
                               }
 
                               // Calculate Closing Stock (Total Stock - Sale + Saled Return)
-                              final closingStockCtn = totalStockCtn - calculatedSaleCtn + calculatedSaledReturnCtn;
-                              final closingStockUnits = totalStockUnits - calculatedSaleBox + calculatedSaledReturnBox;
                               final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
                               final closingStockValue = totalStockValue - saleValue + saledReturnValue;
 
