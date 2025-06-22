@@ -44,12 +44,14 @@ class Product {
 
 class InvoiceItem {
   String description;
+  String company;
   double rate;
   int unit;
   double amount;
 
   InvoiceItem({
     required this.description,
+    required this.company,
     required this.rate,
     required this.unit,
     this.amount = 0,
@@ -172,6 +174,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
     _items.clear();
     _items.addAll(invoice.items.map((item) => InvoiceItem(
       description: item.description,
+      company: item.company,
       rate: item.rate,
       unit: item.unit,
       amount: item.amount,
@@ -349,8 +352,12 @@ class _InvoiceTabState extends State<InvoiceTab> {
       onSelected: (Product product) {
         setState(() {
           _isSearchingProduct = false;
-          // Check if product already exists in items
-          final existingItemIndex = _items.indexWhere((item) => item.description == product.brand);
+          // Check if product already exists in items (match by brand, company, and rate)
+          final existingItemIndex = _items.indexWhere((item) =>
+            item.description == product.brand &&
+            item.company == product.company &&
+            item.rate == product.salePrice
+          );
           if (existingItemIndex != -1) {
             // Increment unit if product already exists
             _items[existingItemIndex].unit++;
@@ -359,6 +366,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
             // Add new item if product doesn't exist
             _items.add(InvoiceItem(
               description: product.brand,
+              company: product.company,
               rate: product.salePrice, // Use sale price instead of ctn rate
               unit: 1,
             ));

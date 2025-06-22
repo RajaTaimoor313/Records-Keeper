@@ -1019,51 +1019,53 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                     ],
                   ),
                 )
-              : Column(
-                  children: [
-                    // Un-Generated Invoices
-                    if (unGeneratedInvoices.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: const [
-                            Text('Un-Generated Invoices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple)),
-                          ],
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Un-Generated Invoices
+                      if (unGeneratedInvoices.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            children: const [
+                              Text('Un-Generated Invoices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple)),
+                            ],
+                          ),
                         ),
-                      ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: unGeneratedInvoices.length,
-                  itemBuilder: (context, index) {
-                          final invoice = unGeneratedInvoices[index];
-                    final bool isSelected = _selectedInvoices.contains(invoice.id);
-                          return _buildInvoiceCard(invoice, isSelected, index);
-                        },
-                      ),
-                    ],
-                    // Generated Invoices
-                    if (generatedInvoices.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: const [
-                            Text('Generated Invoices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
-                          ],
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: unGeneratedInvoices.length,
+                          itemBuilder: (context, index) {
+                            final invoice = unGeneratedInvoices[index];
+                            final bool isSelected = _selectedInvoices.contains(invoice.id);
+                            return _buildInvoiceCard(invoice, isSelected, index);
+                          },
                         ),
-                      ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: generatedInvoices.length,
-                        itemBuilder: (context, index) {
-                          final invoice = generatedInvoices[index];
-                          final bool isSelected = _selectedInvoices.contains(invoice.id);
-                          return _buildInvoiceCard(invoice, isSelected, index);
-                        },
-                      ),
+                      ],
+                      // Generated Invoices
+                      if (generatedInvoices.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            children: const [
+                              Text('Generated Invoices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                            ],
+                          ),
+                        ),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: generatedInvoices.length,
+                          itemBuilder: (context, index) {
+                            final invoice = generatedInvoices[index];
+                            final bool isSelected = _selectedInvoices.contains(invoice.id);
+                            return _buildInvoiceCard(invoice, isSelected, index);
+                          },
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
         ),
       ],
@@ -1158,94 +1160,94 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
   }
 
   Widget _buildInvoiceCard(Invoice invoice, bool isSelected, int index) {
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8.0),
-                      child: InkWell(
-                        onTap: () => _showCompleteInvoice(context, invoice),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Row(
-                            children: [
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      if (isSelected) {
-                                        _selectedInvoices.remove(invoice.id);
-                                      } else {
-                                        _selectedInvoices.add(invoice.id);
-                                      }
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? Colors.deepPurple : Colors.white,
-                                      border: Border.all(
-                                        color: isSelected ? Colors.deepPurple : Colors.grey.shade400,
-                                      ),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Icon(
-                                      isSelected ? Icons.check_box : Icons.check_box_outline_blank,
-                                      size: 20,
-                                      color: isSelected ? Colors.white : Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                width: 40,
-                                alignment: Alignment.center,
-                                child: Text(
-                                  '${index + 1}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Invoice #${invoice.invoiceNumber}',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.deepPurple,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      invoice.shopName,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black87,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                'Rs. ${invoice.total.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8.0),
+      child: InkWell(
+        onTap: () => _showCompleteInvoice(context, invoice),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedInvoices.remove(invoice.id);
+                      } else {
+                        _selectedInvoices.add(invoice.id);
+                      }
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(4),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.deepPurple : Colors.white,
+                      border: Border.all(
+                        color: isSelected ? Colors.deepPurple : Colors.grey.shade400,
                       ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Icon(
+                      isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                      size: 20,
+                      color: isSelected ? Colors.white : Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 40,
+                alignment: Alignment.center,
+                child: Text(
+                  '${index + 1}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Invoice #${invoice.invoiceNumber}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      invoice.shopName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                'Rs. ${invoice.total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1304,12 +1306,14 @@ class Invoice {
 
 class InvoiceItem {
   final String description;
+  final String company;
   final double rate;
   final int unit;
   final double amount;
 
   InvoiceItem({
     required this.description,
+    required this.company,
     required this.rate,
     required this.unit,
     required this.amount,
@@ -1318,6 +1322,7 @@ class InvoiceItem {
   factory InvoiceItem.fromMap(Map<String, dynamic> map) {
     return InvoiceItem(
       description: map['description'],
+      company: map['company'] ?? '',
       rate: map['rate'],
       unit: map['unit'],
       amount: map['amount'],

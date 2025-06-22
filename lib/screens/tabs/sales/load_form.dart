@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../../../database_helper.dart';
 import 'dart:math' as math;
 
@@ -50,10 +53,20 @@ class _LoadFormTabState extends State<LoadFormTab> {
     }
   }
 
+  Future<void> _recalculateAllSales() async {
+    // Use the database helper method to recalculate all sales
+    await DatabaseHelper.instance.recalculateAllLoadFormSales();
+    
+    // Reload items to reflect the updated values
+    final items = await DatabaseHelper.instance.getLoadFormItems();
+    setState(() {
+      _items = items.map((item) => LoadFormItem.fromMap(item)).toList();
+    });
+  }
+
   Future<void> _updateItem(LoadFormItem item) async {
     try {
       await DatabaseHelper.instance.updateLoadFormItem(item.toMap());
-      await _loadItems(); // Reload to ensure data consistency
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -64,6 +77,78 @@ class _LoadFormTabState extends State<LoadFormTab> {
         );
       }
     }
+  }
+
+  Future<void> _calculateSale(LoadFormItem item, String returnQty) async {
+    final returnVal = int.tryParse(returnQty) ?? 0;
+    final saleVal = item.units - returnVal;
+
+    final updatedItem = item.copyWith(
+      returnQty: returnVal,
+      sale: saleVal,
+    );
+    
+    // Update state to show immediate change
+    setState(() {
+      final index = _items.indexWhere((i) => i.id == item.id);
+      if (index != -1) {
+        _items[index] = updatedItem;
+      }
+    });
+
+    // Persist changes to the database
+    await _updateItem(updatedItem);
+  }
+
+  Future<void> _showLoadFormPrintPreview() async {
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Load Form', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 16),
+              pw.Table(
+                border: pw.TableBorder.all(),
+                children: [
+                  pw.TableRow(
+                    children: [
+                      pw.Text('No.', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Brand Name', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Units', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Return', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Sale', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      pw.Text('Saled Return', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    ],
+                  ),
+                  ..._items.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    return pw.TableRow(
+                      children: [
+                        pw.Text((index + 1).toString()),
+                        pw.Text(item.brandName),
+                        pw.Text(item.units.toString()),
+                        pw.Text(item.returnQty.toString()),
+                        pw.Text(item.sale.toString()),
+                        pw.Text(item.saledReturn.toString()),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: 'LoadForm_${DateTime.now().millisecondsSinceEpoch}.pdf',
+    );
   }
 
   Widget _buildTableHeaderCell(String text, {TextAlign align = TextAlign.center}) {
@@ -97,7 +182,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
     String field,
     {TextAlign align = TextAlign.center}
   ) {
-    final bool isEditable = !['no', 'brandName', 'units'].contains(field);
+    final bool isEditable = !['no', 'brandName', 'units', 'sale'].contains(field);
     final displayValue = isEditable ? item.getDisplayValue(field) : value;
 
     return Container(
@@ -128,24 +213,26 @@ class _LoadFormTabState extends State<LoadFormTab> {
                   fontSize: 13,
                 ),
                 onChanged: (newValue) {
-                  final updatedItem = item.copyWith(
-                    issue: field == 'issue' ? int.tryParse(newValue) ?? 0 : item.issue,
-                    returnQty: field == 'returnQty' ? int.tryParse(newValue) ?? 0 : item.returnQty,
-                    sale: field == 'sale' ? int.tryParse(newValue) ?? 0 : item.sale,
-                    saledReturn: field == 'saledReturn' ? int.tryParse(newValue) ?? 0 : item.saledReturn,
-                  );
-                  _updateItem(updatedItem);
+                  if (field == 'returnQty') {
+                    _calculateSale(item, newValue);
+                  } else {
+                    final updatedItem = item.copyWith(
+                      issue: field == 'issue' ? int.tryParse(newValue) ?? 0 : item.issue,
+                      saledReturn: field == 'saledReturn' ? int.tryParse(newValue) ?? 0 : item.saledReturn,
+                    );
+                    _updateItem(updatedItem);
+                  }
                 },
               ),
             )
           : Center(
               child: Text(
-                displayValue,
+                field == 'sale' ? item.sale.toString() : displayValue,
                 textAlign: align,
                 style: TextStyle(
-                  color: Colors.black87,
+                  color: field == 'sale' ? Colors.deepPurple.shade700 : Colors.black87,
                   fontSize: 13,
-                  fontWeight: field == 'brandName' ? FontWeight.w500 : FontWeight.normal,
+                  fontWeight: field == 'brandName' || field == 'sale' ? FontWeight.w500 : FontWeight.normal,
                 ),
               ),
             ),
@@ -368,7 +455,65 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   ElevatedButton.icon(
-                                    onPressed: () {},
+                                    onPressed: () async {
+                                      // First recalculate all sales in the database
+                                      await DatabaseHelper.instance.recalculateAllLoadFormSales();
+                                      // Then refresh the data
+                                      await _loadItems();
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Load Form refreshed and sales recalculated'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.deepPurple,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.refresh, size: 20),
+                                    label: const Text(
+                                      'Refresh',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      try {
+                                        // Update stock records with sale data from Load Form
+                                        await DatabaseHelper.instance.updateStockRecordsFromLoadForm();
+                                        
+                                        // New functionality: show print preview
+                                        await _showLoadFormPrintPreview();
+
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Stock Summary has been updated successfully.'),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error updating Stock Summary: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.deepPurple,
                                       foregroundColor: Colors.white,
@@ -446,7 +591,66 @@ class _LoadFormTabState extends State<LoadFormTab> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 ElevatedButton.icon(
-                                  onPressed: () {},
+                                  onPressed: () async {
+                                    // First recalculate all sales in the database
+                                    await DatabaseHelper.instance.recalculateAllLoadFormSales();
+                                    // Then refresh the data
+                                    await _loadItems();
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Load Form refreshed and sales recalculated'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepPurple,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.refresh, size: 20),
+                                  label: const Text(
+                                    'Refresh',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    try {
+                                      // Update stock records with sale data from Load Form
+                                      await DatabaseHelper.instance.updateStockRecordsFromLoadForm();
+                                      
+                                      // New functionality: show print preview
+                                      await _showLoadFormPrintPreview();
+
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Stock Summary has been updated successfully.'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error updating Stock Summary: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.deepPurple,
                                     foregroundColor: Colors.white,
@@ -510,7 +714,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
 }
 
 class LoadFormItem {
-  final int? id;
+  final int id;
   final String brandName;
   final int units;
   final int issue;
@@ -519,30 +723,34 @@ class LoadFormItem {
   final int saledReturn;
 
   LoadFormItem({
-    this.id,
+    required this.id,
     required this.brandName,
     required this.units,
-    this.issue = 0,
-    this.returnQty = 0,
-    this.sale = 0,
-    this.saledReturn = 0,
+    required this.issue,
+    required this.returnQty,
+    required this.sale,
+    required this.saledReturn,
   });
 
   factory LoadFormItem.fromMap(Map<String, dynamic> map) {
+    final units = map['units'] ?? 0;
+    final returnQty = map['returnQty'] ?? 0;
+    final calculatedSale = units - returnQty;
+    
     return LoadFormItem(
-      id: map['id'] as int?,
-      brandName: map['brandName'] as String,
-      units: map['units'] as int,
-      issue: map['issue'] as int? ?? 0,
-      returnQty: map['returnQty'] as int? ?? 0,
-      sale: map['sale'] as int? ?? 0,
-      saledReturn: map['saledReturn'] as int? ?? 0,
+      id: map['id'],
+      brandName: map['brandName'],
+      units: units,
+      issue: map['issue'] ?? 0,
+      returnQty: returnQty,
+      sale: calculatedSale, // Auto-calculate sale as units - returnQty
+      saledReturn: map['saledReturn'] ?? 0,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      if (id != null) 'id': id,
+      'id': id,
       'brandName': brandName,
       'units': units,
       'issue': issue,
@@ -575,13 +783,13 @@ class LoadFormItem {
   String getDisplayValue(String field) {
     switch (field) {
       case 'issue':
-        return issue == 0 ? '' : issue.toString();
+        return issue.toString();
       case 'returnQty':
-        return returnQty == 0 ? '' : returnQty.toString();
+        return returnQty.toString();
       case 'sale':
-        return sale == 0 ? '' : sale.toString();
+        return sale.toString();
       case 'saledReturn':
-        return saledReturn == 0 ? '' : saledReturn.toString();
+        return saledReturn.toString();
       default:
         return '';
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:intl/intl.dart';
 import '../../../database_helper.dart';
 import '../../../models/supplier.dart';
 import 'package:printing/printing.dart';
@@ -131,8 +132,21 @@ class _PickListTabState extends State<PickListTab> {
     Function(String)? onFieldSubmitted,
     String? hintText}
   ) {
-    // For Recovery field, show empty string if value is "0.00"
-    final displayValue = (isNumeric && double.tryParse(value) == 0) ? '' : value;
+    String displayValue = value;
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 0,
+    );
+
+    if (isNumeric) {
+      final number = double.tryParse(value) ?? 0.0;
+      if (number == 0) {
+        displayValue = '';
+      } else {
+        displayValue = formatter.format(number);
+      }
+    }
 
     if (isPaymentType) {
       return Container(
@@ -385,31 +399,54 @@ class _PickListTabState extends State<PickListTab> {
                               children: [
                                 ElevatedButton.icon(
                                     onPressed: () async {
-                                      // Update Load Form for all pending returns
-                                      for (final ret in _pendingReturns) {
-                                        await DatabaseHelper.instance.updateLoadFormItemReturn(
-                                          ret['brandName'] as String,
-                                          ret['units'] as int,
-                                        );
-                                      }
-                                      _pendingReturns.clear();
+                                      try {
+                                        // Update Load Form for all pending returns
+                                        for (final ret in _pendingReturns) {
+                                          await DatabaseHelper.instance.updateLoadFormItemReturn(
+                                            ret['brandName'] as String,
+                                            ret['units'] as int,
+                                          );
+                                        }
+                                        _pendingReturns.clear();
 
-                                      // Insert ledger records for credit
-                                      for (final item in _items) {
-                                        if ((item.credit ?? 0) > 0) {
-                                          await DatabaseHelper.instance.insertLedger({
-                                            'shopName': item.shopName,
-                                            'shopCode': item.code,
-                                            'date': DateTime.now().toIso8601String().split('T')[0],
-                                            'details': '',
-                                            'debit': item.credit, // Credit value from Pick List goes to Debit in Ledger
-                                            'credit': 0,
-                                            'balance': null,
-                                          });
+                                        // Recalculate all sales in Load Form to ensure consistency
+                                        await DatabaseHelper.instance.recalculateAllLoadFormSales();
+
+                                        // Insert ledger records for credit
+                                        for (final item in _items) {
+                                          if ((item.credit ?? 0) > 0) {
+                                            await DatabaseHelper.instance.insertLedger({
+                                              'shopName': item.shopName,
+                                              'shopCode': item.code,
+                                              'date': DateTime.now().toIso8601String().split('T')[0],
+                                              'details': '',
+                                              'debit': item.credit, // Credit value from Pick List goes to Debit in Ledger
+                                              'credit': 0,
+                                              'balance': null,
+                                            });
+                                          }
+                                        }
+
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Returns processed successfully and Load Form updated'),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+
+                                        _showNoteDialog();
+                                      } catch (e) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error processing returns: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
                                         }
                                       }
-
-                                      _showNoteDialog();
                                     },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.deepPurple,

@@ -24,10 +24,9 @@ class CompanyStockSummary {
     for (final record in stockRecords) {
       openingStockTotal += (record['opening_stock_value'] as num).toDouble();
       receivedTotal += (record['received_value'] as num).toDouble();
-      totalStockTotal += (record['total_stock_value'] as num).toDouble();
-      closingStockTotal += (record['closing_stock_value'] as num).toDouble();
-      saleTotal += (record['sale_value'] as num).toDouble();
     }
+    totalStockTotal = openingStockTotal + receivedTotal;
+    closingStockTotal = totalStockTotal - saleTotal; // saleTotal is 0 by default
   }
 }
 
@@ -193,17 +192,108 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
   String _getBrandValue(List<Map<String, dynamic>> records, dynamic productId, String field) {
     final record = records.firstWhere(
       (r) => r['product_id'].toString() == productId.toString(),
-      orElse: () => {field: '0'},
+      orElse: () => {},
     );
     return record[field]?.toString() ?? '0';
   }
 
   double _getColumnTotal(CompanyStockSummary summary, String field) {
     double total = 0;
+    
     for (final product in summary.products) {
-      final value = double.tryParse(_getBrandValue(summary.stockRecords, product['id'], field)) ?? 0;
-      total += value;
+      // Helper to parse values safely
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      
+      final boxPacking = product['boxPacking'] as int;
+      
+      if (field.startsWith('opening_stock_')) {
+        final type = field.substring('opening_stock_'.length);
+        if (type == 'ctn') {
+          total += getVal('opening_stock_ctn');
+        } else if (type == 'units') {
+          total += getVal('opening_stock_units');
+        } else if (type == 'total') {
+          total += getVal('opening_stock_total');
+        } else if (type == 'value') {
+          total += getVal('opening_stock_value');
+        }
+      } else if (field.startsWith('received_')) {
+        final type = field.substring('received_'.length);
+        if (type == 'ctn') {
+          total += getVal('received_ctn');
+        } else if (type == 'units') {
+          total += getVal('received_units');
+        } else if (type == 'total') {
+          total += getVal('received_total');
+        } else if (type == 'value') {
+          total += getVal('received_value');
+        }
+      } else if (field.startsWith('total_stock_')) {
+        final type = field.substring('total_stock_'.length);
+        if (type == 'ctn') {
+          total += getVal('opening_stock_ctn') + getVal('received_ctn');
+        } else if (type == 'units') {
+          total += getVal('opening_stock_units') + getVal('received_units');
+        } else if (type == 'total') {
+          total += getVal('opening_stock_total') + getVal('received_total');
+        } else if (type == 'value') {
+          total += getVal('opening_stock_value') + getVal('received_value');
+        }
+      } else if (field.startsWith('sale_')) {
+        final type = field.substring('sale_'.length);
+        if (type == 'ctn') {
+          final saleTotal = getVal('sale_total');
+          if (saleTotal <= boxPacking) {
+            total += 0; // No CTN if total <= box packing
+          } else {
+            total += saleTotal ~/ boxPacking; // Integer division for CTN
+          }
+        } else if (type == 'units') {
+          final saleTotal = getVal('sale_total');
+          if (saleTotal <= boxPacking) {
+            total += saleTotal; // All boxes if total <= box packing
+          } else {
+            total += saleTotal % boxPacking; // Remainder for boxes
+          }
+        } else if (type == 'total') {
+          total += getVal('sale_total');
+        } else if (type == 'value') {
+          total += getVal('sale_value');
+        }
+      } else if (field.startsWith('closing_stock_')) {
+        final type = field.substring('closing_stock_'.length);
+        if (type == 'ctn') {
+          final totalStockCtn = getVal('opening_stock_ctn') + getVal('received_ctn');
+          final saleTotal = getVal('sale_total');
+          final saleCtn = saleTotal <= boxPacking ? 0 : saleTotal ~/ boxPacking;
+          final saledReturnTotal = getVal('saled_return_total');
+          final saledReturnCtn = saledReturnTotal <= boxPacking ? 0 : saledReturnTotal ~/ boxPacking;
+          final closingStockCtn = totalStockCtn - saleCtn + saledReturnCtn;
+          total += closingStockCtn;
+        } else if (type == 'units') {
+          final totalStockUnits = getVal('opening_stock_units') + getVal('received_units');
+          final saleTotal = getVal('sale_total');
+          final saleBox = saleTotal <= boxPacking ? saleTotal : saleTotal % boxPacking;
+          final saledReturnTotal = getVal('saled_return_total');
+          final saledReturnBox = saledReturnTotal <= boxPacking ? saledReturnTotal : saledReturnTotal % boxPacking;
+          final closingStockBox = totalStockUnits - saleBox + saledReturnBox;
+          total += closingStockBox;
+        } else if (type == 'total') {
+          final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+          final saleTotal = getVal('sale_total');
+          final saledReturnTotal = getVal('saled_return_total');
+          total += totalStockTotal - saleTotal + saledReturnTotal;
+        } else if (type == 'value') {
+          final totalStockValue = getVal('opening_stock_value') + getVal('received_value');
+          final saleValue = getVal('sale_value');
+          final saledReturnValue = getVal('saled_return_value');
+          total += totalStockValue - saleValue + saledReturnValue;
+        }
+      }
     }
+    
     return total;
   }
 
@@ -229,6 +319,7 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
           Container(
             margin: const EdgeInsets.only(bottom: 24),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -255,6 +346,35 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await _loadData();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Stock Summary refreshed'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.refresh, size: 20),
+                  label: const Text(
+                    'Refresh',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
@@ -381,45 +501,119 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                               ),
                             ),
                             // Data Rows
-                            ...summary.products.map((product) => IntrinsicHeight(
-                              child: Row(
-                                children: [
-                                  _buildDataCell(product['brand'], true),
-                                  // Invoice Rate
-                                  _buildDataCell(product['ctnRate'].toString()),
-                                  _buildDataCell(product['boxRate'].toString()),
-                                  // Packing
-                                  _buildDataCell(product['ctnPacking'].toString()),
-                                  _buildDataCell(product['boxPacking'].toString()),
-                                  _buildDataCell(product['unitsPacking'].toString()),
-                                  // Opening Stock
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_ctn')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_units')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_total')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_value')),
-                                  // Received
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_ctn')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_units')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_total')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_value')),
-                                  // Total Stock
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'total_stock_ctn')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'total_stock_units')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'total_stock_total')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'total_stock_value')),
-                                  // Closing Stock
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'closing_stock_ctn')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'closing_stock_units')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'closing_stock_total')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'closing_stock_value')),
-                                  // Sale
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'sale_ctn')),
-                                  _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'sale_units')),
-                                  _buildDataCell('0.00'),
-                                  _buildDataCell('0.00'),
-                                ],
-                              ),
-                            )),
+                            ...summary.products.map((product) {
+                              // Helper to parse values safely
+                              double getVal(String field) {
+                                return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], field)) ?? 0.0;
+                              }
+
+                              // Calculate Total Stock values
+                              final totalStockCtn = getVal('opening_stock_ctn') + getVal('received_ctn');
+                              final totalStockUnits = getVal('opening_stock_units') + getVal('received_units');
+                              final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+                              final totalStockValue = getVal('opening_stock_value') + getVal('received_value');
+
+                              // Get Sale values
+                              final saleCtn = getVal('sale_ctn');
+                              final saleUnits = getVal('sale_units');
+                              final saleTotal = getVal('sale_total');
+                              final saleValue = getVal('sale_value');
+
+                              // Get Saled Return values
+                              final saledReturnCtn = getVal('saled_return_ctn');
+                              final saledReturnUnits = getVal('saled_return_units');
+                              final saledReturnTotal = getVal('saled_return_total');
+                              final saledReturnValue = getVal('saled_return_value');
+
+                              // Calculate proper CTN and Box for Sale based on packing strategy
+                              final boxPacking = product['boxPacking'] as int;
+                              int calculatedSaleCtn;
+                              int calculatedSaleBox;
+                              
+                              if (saleTotal <= boxPacking) {
+                                // If total is less than or equal to box packing, no CTN needed
+                                calculatedSaleCtn = 0;
+                                calculatedSaleBox = saleTotal.toInt();
+                              } else {
+                                // If total exceeds box packing, calculate CTN and Box
+                                calculatedSaleCtn = saleTotal ~/ boxPacking; // Integer division for CTN
+                                calculatedSaleBox = saleTotal.toInt() % boxPacking; // Remainder for Box
+                              }
+
+                              // Calculate proper CTN and Box for Saled Return based on packing strategy
+                              int calculatedSaledReturnCtn;
+                              int calculatedSaledReturnBox;
+                              
+                              if (saledReturnTotal <= boxPacking) {
+                                // If total is less than or equal to box packing, no CTN needed
+                                calculatedSaledReturnCtn = 0;
+                                calculatedSaledReturnBox = saledReturnTotal.toInt();
+                              } else {
+                                // If total exceeds box packing, calculate CTN and Box
+                                calculatedSaledReturnCtn = saledReturnTotal ~/ boxPacking; // Integer division for CTN
+                                calculatedSaledReturnBox = saledReturnTotal.toInt() % boxPacking; // Remainder for Box
+                              }
+
+                              // Calculate Closing Stock (Total Stock - Sale + Saled Return)
+                              final closingStockCtn = totalStockCtn - calculatedSaleCtn + calculatedSaledReturnCtn;
+                              final closingStockUnits = totalStockUnits - calculatedSaleBox + calculatedSaledReturnBox;
+                              final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
+                              final closingStockValue = totalStockValue - saleValue + saledReturnValue;
+
+                              // Calculate proper CTN and Box for Closing Stock based on packing strategy
+                              int calculatedClosingStockCtn;
+                              int calculatedClosingStockBox;
+                              
+                              if (closingStockTotal <= boxPacking) {
+                                // If total is less than or equal to box packing, no CTN needed
+                                calculatedClosingStockCtn = 0;
+                                calculatedClosingStockBox = closingStockTotal.toInt();
+                              } else {
+                                // If total exceeds box packing, calculate CTN and Box
+                                calculatedClosingStockCtn = closingStockTotal ~/ boxPacking; // Integer division for CTN
+                                calculatedClosingStockBox = closingStockTotal.toInt() % boxPacking; // Remainder for Box
+                              }
+
+                              return IntrinsicHeight(
+                                child: Row(
+                                  children: [
+                                    _buildDataCell(product['brand'], true),
+                                    // Invoice Rate
+                                    _buildDataCell(product['ctnRate'].toString()),
+                                    _buildDataCell(product['boxRate'].toString()),
+                                    // Packing
+                                    _buildDataCell(product['ctnPacking'].toString()),
+                                    _buildDataCell(product['boxPacking'].toString()),
+                                    _buildDataCell(product['unitsPacking'].toString()),
+                                    // Opening Stock
+                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_ctn')),
+                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_units')),
+                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_total')),
+                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_value')),
+                                    // Received
+                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_ctn')),
+                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_units')),
+                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_total')),
+                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_value')),
+                                    // Total Stock
+                                    _buildDataCell(totalStockCtn.toStringAsFixed(0)),
+                                    _buildDataCell(totalStockUnits.toStringAsFixed(0)),
+                                    _buildDataCell(_formatIndianNumber(totalStockTotal)),
+                                    _buildDataCell(_formatIndianNumber(totalStockValue)),
+                                    // Closing Stock
+                                    _buildDataCell(calculatedClosingStockCtn.toStringAsFixed(0)),
+                                    _buildDataCell(calculatedClosingStockBox.toStringAsFixed(0)),
+                                    _buildDataCell(_formatIndianNumber(closingStockTotal)),
+                                    _buildDataCell(_formatIndianNumber(closingStockValue)),
+                                    // Sale
+                                    _buildDataCell(calculatedSaleCtn.toStringAsFixed(0)),
+                                    _buildDataCell(calculatedSaleBox.toStringAsFixed(0)),
+                                    _buildDataCell(_formatIndianNumber(saleTotal)),
+                                    _buildDataCell(_formatIndianNumber(saleValue)),
+                                  ],
+                                ),
+                              );
+                            }),
                             // Total Row
                             IntrinsicHeight(
                               child: Row(

@@ -116,6 +116,10 @@ class DatabaseHelper {
           sale_units INTEGER NOT NULL,
           sale_total REAL NOT NULL,
           sale_value REAL NOT NULL,
+          saled_return_ctn INTEGER NOT NULL DEFAULT 0,
+          saled_return_units INTEGER NOT NULL DEFAULT 0,
+          saled_return_total REAL NOT NULL DEFAULT 0,
+          saled_return_value REAL NOT NULL DEFAULT 0,
           FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE
         )
       ''');
@@ -293,30 +297,18 @@ class DatabaseHelper {
         await txn.execute("ALTER TABLE invoices ADD COLUMN address TEXT");
       }
       if (oldVersion < 9) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS suppliers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            fatherName TEXT NOT NULL,
-            address TEXT NOT NULL,
-            cnic TEXT NOT NULL,
-            phone TEXT NOT NULL
-          )
-        ''');
-      }
-      if (oldVersion < 10) {
         await txn.execute("ALTER TABLE suppliers ADD COLUMN type TEXT NOT NULL DEFAULT 'Supplier'");
       }
-      if (oldVersion < 11) {
+      if (oldVersion < 10) {
         await txn.execute("ALTER TABLE invoices ADD COLUMN address TEXT");
       }
-      if (oldVersion < 12) {
+      if (oldVersion < 11) {
         await txn.execute("ALTER TABLE pick_list ADD COLUMN invoiceNumber TEXT");
       }
-      if (oldVersion < 13) {
+      if (oldVersion < 12) {
         await txn.execute("ALTER TABLE invoices ADD COLUMN generated INTEGER NOT NULL DEFAULT 0");
       }
-      if (oldVersion < 14) {
+      if (oldVersion < 13) {
         await txn.execute('''
           CREATE TABLE IF NOT EXISTS ledger (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -329,6 +321,12 @@ class DatabaseHelper {
             balance REAL
           )
         ''');
+      }
+      if (oldVersion < 14) {
+        await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_ctn INTEGER NOT NULL DEFAULT 0");
+        await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_units INTEGER NOT NULL DEFAULT 0");
+        await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_total REAL NOT NULL DEFAULT 0");
+        await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_value REAL NOT NULL DEFAULT 0");
       }
     });
   }
@@ -646,21 +644,278 @@ class DatabaseHelper {
     // Get current return quantity
     final List<Map<String, dynamic>> result = await db.query(
       'load_form',
-      columns: ['id', 'returnQty'],
+      columns: ['id', 'returnQty', 'units'],
       where: 'brandName = ?',
       whereArgs: [brandName],
     );
 
     if (result.isNotEmpty) {
       final currentReturnQty = result.first['returnQty'] as int? ?? 0;
+      final totalUnits = result.first['units'] as int? ?? 0;
       final newReturnQty = currentReturnQty + returnUnits;
+      
+      // Validate that return quantity doesn't exceed total units
+      if (newReturnQty > totalUnits) {
+        throw Exception('Return quantity (${newReturnQty}) cannot exceed total units (${totalUnits}) for brand: ${brandName}');
+      }
+
+      // Calculate new sale value
+      final newSale = totalUnits - newReturnQty;
 
       await db.update(
         'load_form',
-        {'returnQty': newReturnQty},
+        {
+          'returnQty': newReturnQty,
+          'sale': newSale, // Update sale field with calculated value
+        },
         where: 'brandName = ?',
         whereArgs: [brandName],
       );
+    } else {
+      // If brand doesn't exist in load_form, create a new entry with return quantity
+      await db.insert('load_form', {
+        'brandName': brandName,
+        'units': 0, // No original units since this is a return-only entry
+        'issue': 0,
+        'returnQty': returnUnits,
+        'sale': 0 - returnUnits, // Sale will be negative for return-only entries
+        'saledReturn': 0,
+      });
+    }
+  }
+
+  Future<void> recalculateAllLoadFormSales() async {
+    final db = await database;
+    
+    // Get all items from load_form
+    final List<Map<String, dynamic>> items = await db.query('load_form');
+    
+    for (final item in items) {
+      final units = item['units'] as int? ?? 0;
+      final returnQty = item['returnQty'] as int? ?? 0;
+      final calculatedSale = units - returnQty;
+      
+      // Update the sale field if it's different from calculated value
+      if (item['sale'] != calculatedSale) {
+        await db.update(
+          'load_form',
+          {'sale': calculatedSale},
+          where: 'id = ?',
+          whereArgs: [item['id']],
+        );
+      }
+    }
+  }
+
+  Future<void> updateStockRecordsFromLoadForm() async {
+    final db = await database;
+    
+    // Get all items from load_form with sale > 0 or saledReturn > 0
+    final List<Map<String, dynamic>> loadFormItems = await db.query(
+      'load_form',
+      where: 'sale > 0 OR saledReturn > 0',
+    );
+    
+    for (final loadFormItem in loadFormItems) {
+      final brandName = loadFormItem['brandName'] as String;
+      final saleQuantity = loadFormItem['sale'] as int;
+      final saledReturnQuantity = loadFormItem['saledReturn'] as int;
+      
+      // Find the product by brand name
+      final List<Map<String, dynamic>> products = await db.query(
+        'products',
+        where: 'brand = ?',
+        whereArgs: [brandName],
+      );
+      
+      if (products.isNotEmpty) {
+        final product = products.first;
+        final productId = product['id'] as String;
+        final tradeRate = product['salePrice'] as double;
+        final boxPacking = product['boxPacking'] as int;
+        
+        // Calculate sale values
+        final saleValue = saleQuantity * tradeRate;
+        final saledReturnValue = saledReturnQuantity * tradeRate;
+        
+        // Get the latest stock record for this product
+        final List<Map<String, dynamic>> stockRecords = await db.query(
+          'stock_records',
+          where: 'product_id = ?',
+          whereArgs: [productId],
+          orderBy: 'date DESC',
+          limit: 1,
+        );
+        
+        if (stockRecords.isNotEmpty) {
+          // Update the latest stock record with sale and saled return data
+          final latestRecord = stockRecords.first;
+          final currentSaleUnits = latestRecord['sale_units'] as int? ?? 0;
+          final currentSaleValue = latestRecord['sale_value'] as double? ?? 0.0;
+          final currentSaledReturnUnits = latestRecord['saled_return_units'] as int? ?? 0;
+          final currentSaledReturnValue = latestRecord['saled_return_value'] as double? ?? 0.0;
+          
+          // Add the new sale and saled return to existing data
+          final newSaleUnits = currentSaleUnits + saleQuantity;
+          final newSaleValue = currentSaleValue + saleValue;
+          final newSaledReturnUnits = currentSaledReturnUnits + saledReturnQuantity;
+          final newSaledReturnValue = currentSaledReturnValue + saledReturnValue;
+          
+          // Calculate sale CTN and Box based on packing strategy
+          int saleCtn;
+          int saleBox;
+          
+          if (newSaleUnits <= boxPacking) {
+            // If total is less than or equal to box packing, no CTN needed
+            saleCtn = 0;
+            saleBox = newSaleUnits;
+          } else {
+            // If total exceeds box packing, calculate CTN and Box
+            saleCtn = newSaleUnits ~/ boxPacking; // Integer division for CTN
+            saleBox = newSaleUnits % boxPacking; // Remainder for Box
+          }
+          
+          final saleTotal = newSaleUnits.toDouble(); // Total boxes sold
+          
+          // Calculate saled return CTN and Box based on packing strategy
+          int saledReturnCtn;
+          int saledReturnBox;
+          
+          if (newSaledReturnUnits <= boxPacking) {
+            // If total is less than or equal to box packing, no CTN needed
+            saledReturnCtn = 0;
+            saledReturnBox = newSaledReturnUnits;
+          } else {
+            // If total exceeds box packing, calculate CTN and Box
+            saledReturnCtn = newSaledReturnUnits ~/ boxPacking; // Integer division for CTN
+            saledReturnBox = newSaledReturnUnits % boxPacking; // Remainder for Box
+          }
+          
+          final saledReturnTotal = newSaledReturnUnits.toDouble(); // Total boxes returned
+          
+          // Calculate closing stock values
+          final totalStockCtn = latestRecord['total_stock_ctn'] as int;
+          final totalStockUnits = latestRecord['total_stock_units'] as int;
+          final totalStockTotal = latestRecord['total_stock_total'] as double;
+          final totalStockValue = latestRecord['total_stock_value'] as double;
+          
+          // Updated formula: Closing Stock = Total Stock - Sale + Saled Return
+          final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
+          final closingStockValue = totalStockValue - newSaleValue + newSaledReturnValue;
+          
+          // Calculate proper CTN and Box for Closing Stock based on packing strategy
+          int closingStockCtn;
+          int closingStockBox;
+          
+          if (closingStockTotal <= boxPacking) {
+            // If total is less than or equal to box packing, no CTN needed
+            closingStockCtn = 0;
+            closingStockBox = closingStockTotal.toInt();
+          } else {
+            // If total exceeds box packing, calculate CTN and Box
+            closingStockCtn = closingStockTotal ~/ boxPacking; // Integer division for CTN
+            closingStockBox = closingStockTotal.toInt() % boxPacking; // Remainder for Box
+          }
+          
+          await db.update(
+            'stock_records',
+            {
+              'sale_ctn': saleCtn,
+              'sale_units': saleBox,
+              'sale_total': saleTotal,
+              'sale_value': newSaleValue,
+              'saled_return_ctn': saledReturnCtn,
+              'saled_return_units': saledReturnBox,
+              'saled_return_total': saledReturnTotal,
+              'saled_return_value': newSaledReturnValue,
+              // Update closing stock with new formula
+              'closing_stock_ctn': closingStockCtn,
+              'closing_stock_units': closingStockBox,
+              'closing_stock_total': closingStockTotal,
+              'closing_stock_value': closingStockValue,
+            },
+            where: 'id = ?',
+            whereArgs: [latestRecord['id']],
+          );
+        } else {
+          // Create a new stock record if none exists
+          
+          // Calculate sale CTN and Box based on packing strategy
+          int saleCtn;
+          int saleBox;
+          
+          if (saleQuantity <= boxPacking) {
+            // If total is less than or equal to box packing, no CTN needed
+            saleCtn = 0;
+            saleBox = saleQuantity;
+          } else {
+            // If total exceeds box packing, calculate CTN and Box
+            saleCtn = saleQuantity ~/ boxPacking; // Integer division for CTN
+            saleBox = saleQuantity % boxPacking; // Remainder for Box
+          }
+          
+          // Calculate saled return CTN and Box based on packing strategy
+          int saledReturnCtn;
+          int saledReturnBox;
+          
+          if (saledReturnQuantity <= boxPacking) {
+            // If total is less than or equal to box packing, no CTN needed
+            saledReturnCtn = 0;
+            saledReturnBox = saledReturnQuantity;
+          } else {
+            // If total exceeds box packing, calculate CTN and Box
+            saledReturnCtn = saledReturnQuantity ~/ boxPacking; // Integer division for CTN
+            saledReturnBox = saledReturnQuantity % boxPacking; // Remainder for Box
+          }
+          
+          // For new records, closing stock will be: 0 - Sale + Saled Return
+          final closingStockTotal = 0.0 - saleQuantity + saledReturnQuantity;
+          final closingStockValue = 0.0 - saleValue + saledReturnValue;
+          
+          // Calculate proper CTN and Box for Closing Stock (will be based on saled return for new records)
+          int closingStockCtn = 0;
+          int closingStockBox = 0;
+          
+          if (closingStockTotal > 0) {
+            if (closingStockTotal <= boxPacking) {
+              closingStockCtn = 0;
+              closingStockBox = closingStockTotal.toInt();
+            } else {
+              closingStockCtn = closingStockTotal ~/ boxPacking;
+              closingStockBox = closingStockTotal.toInt() % boxPacking;
+            }
+          }
+          
+          await db.insert('stock_records', {
+            'product_id': productId,
+            'date': DateTime.now().toIso8601String().split('T')[0],
+            'opening_stock_ctn': 0,
+            'opening_stock_units': 0,
+            'opening_stock_total': 0.0,
+            'opening_stock_value': 0.0,
+            'received_ctn': 0,
+            'received_units': 0,
+            'received_total': 0.0,
+            'received_value': 0.0,
+            'total_stock_ctn': 0,
+            'total_stock_units': 0,
+            'total_stock_total': 0.0,
+            'total_stock_value': 0.0,
+            'closing_stock_ctn': closingStockCtn,
+            'closing_stock_units': closingStockBox,
+            'closing_stock_total': closingStockTotal,
+            'closing_stock_value': closingStockValue,
+            'sale_ctn': saleCtn,
+            'sale_units': saleBox,
+            'sale_total': saleQuantity.toDouble(),
+            'sale_value': saleValue,
+            'saled_return_ctn': saledReturnCtn,
+            'saled_return_units': saledReturnBox,
+            'saled_return_total': saledReturnQuantity.toDouble(),
+            'saled_return_value': saledReturnValue,
+          });
+        }
+      }
     }
   }
 

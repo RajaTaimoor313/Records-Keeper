@@ -148,10 +148,10 @@ class _StockReportTabState extends State<StockReportTab> {
     _closingStockUnitsController.clear();
     _closingStockTotalController.clear();
     _closingStockValueController.clear();
-    _saleCtnController.clear();
-    _saleUnitsController.clear();
-    _saleTotalController.clear();
-    _saleValueController.clear();
+    _saleCtnController.text = '0';
+    _saleUnitsController.text = '0';
+    _saleTotalController.text = '0.00';
+    _saleValueController.text = '0.00';
   }
 
   void _calculateOpeningStock() {
@@ -160,7 +160,7 @@ class _StockReportTabState extends State<StockReportTab> {
     final ctn = int.tryParse(_openingStockCtnController.text) ?? 0;
     final units = int.tryParse(_openingStockUnitsController.text) ?? 0;
     
-    // Calculate total units
+    // Calculate total boxes
     final totalUnits = (ctn * _selectedProduct!.boxPacking) + units;
     _openingStockTotalController.text = totalUnits.toString();
     
@@ -178,7 +178,7 @@ class _StockReportTabState extends State<StockReportTab> {
     final ctn = int.tryParse(_receivedStockCtnController.text) ?? 0;
     final units = int.tryParse(_receivedStockUnitsController.text) ?? 0;
     
-    // Calculate total units
+    // Calculate total boxes
     final totalUnits = (ctn * _selectedProduct!.boxPacking) + units;
     _receivedStockTotalController.text = totalUnits.toString();
     
@@ -196,76 +196,59 @@ class _StockReportTabState extends State<StockReportTab> {
     // Get opening stock values
     final openingCtn = int.tryParse(_openingStockCtnController.text) ?? 0;
     final openingUnits = int.tryParse(_openingStockUnitsController.text) ?? 0;
+    final openingStockTotal = double.tryParse(_openingStockTotalController.text) ?? 0;
+    final openingStockValue = double.tryParse(_openingStockValueController.text) ?? 0;
 
     // Get received stock values
     final receivedCtn = int.tryParse(_receivedStockCtnController.text) ?? 0;
     final receivedUnits = int.tryParse(_receivedStockUnitsController.text) ?? 0;
+    final receivedStockTotal = double.tryParse(_receivedStockTotalController.text) ?? 0;
+    final receivedStockValue = double.tryParse(_receivedStockValueController.text) ?? 0;
 
-    // Calculate total CTN and Units
+    // Calculate total CTN and Boxes
     final totalCtn = openingCtn + receivedCtn;
     final totalUnits = openingUnits + receivedUnits;
 
-    // Update CTN and Units fields
+    // Calculate total and value
+    final totalStockTotal = openingStockTotal + receivedStockTotal;
+    final totalStockValue = openingStockValue + receivedStockValue;
+
+    // Update CTN and Boxes fields
     _totalStockCtnController.text = totalCtn.toString();
     _totalStockUnitsController.text = totalUnits.toString();
 
-    // Calculate total in terms of units
-    final totalInUnits = totalCtn + (totalUnits / _selectedProduct!.boxPacking);
-    _totalStockTotalController.text = totalInUnits.toStringAsFixed(2);
-
-    // Calculate value using CTN rate
-    final value = totalInUnits * _selectedProduct!.ctnRate;
-    _totalStockValueController.text = value.toStringAsFixed(2);
+    // Update Total and Value fields
+    _totalStockTotalController.text = totalStockTotal.toStringAsFixed(2);
+    _totalStockValueController.text = totalStockValue.toStringAsFixed(2);
 
     // Recalculate sale when total stock changes
-    _calculateSale();
+    _onSaleChanged();
   }
 
-  void _calculateClosingStock() {
+  void _onSaleChanged() {
     if (_selectedProduct == null) return;
 
-    final ctn = int.tryParse(_closingStockCtnController.text) ?? 0;
-    final units = int.tryParse(_closingStockUnitsController.text) ?? 0;
-    
-    // Calculate total
-    final totalInUnits = ctn + (units / _selectedProduct!.boxPacking);
-    _closingStockTotalController.text = totalInUnits.toStringAsFixed(2);
-    
-    // Calculate value using CTN rate
-    final value = totalInUnits * _selectedProduct!.ctnRate;
-    _closingStockValueController.text = value.toStringAsFixed(2);
-
-    // Recalculate sale when closing stock changes
-    _calculateSale();
-  }
-
-  void _calculateSale() {
-    if (_selectedProduct == null) return;
-
-    // Get total stock and closing stock values
+    // Get Total Stock values
+    final totalStockCtn = int.tryParse(_totalStockCtnController.text) ?? 0;
+    final totalStockUnits = int.tryParse(_totalStockUnitsController.text) ?? 0;
     final totalStockTotal = double.tryParse(_totalStockTotalController.text) ?? 0;
-    final closingStockTotal = double.tryParse(_closingStockTotalController.text) ?? 0;
-    
-    // Calculate total (Total Stock - Closing Stock)
-    final saleTotal = totalStockTotal - closingStockTotal;
+    final totalStockValue = double.tryParse(_totalStockValueController.text) ?? 0;
+
+    // Get Sale CTN and Boxes from user input
+    final saleCtn = int.tryParse(_saleCtnController.text) ?? 0;
+    final saleUnits = int.tryParse(_saleUnitsController.text) ?? 0;
+
+    // Calculate Sale Total and Value
+    final saleTotal = (saleCtn * _selectedProduct!.boxPacking) + saleUnits;
     _saleTotalController.text = saleTotal.toStringAsFixed(2);
-    
-    // Calculate value (Total * CTN Rate)
-    final value = saleTotal * _selectedProduct!.ctnRate;
-    _saleValueController.text = value.toStringAsFixed(2);
-  }
+    final saleValue = saleTotal * _selectedProduct!.boxRate;
+    _saleValueController.text = saleValue.toStringAsFixed(2);
 
-  void _updateSaleCtnUnits() {
-    if (_selectedProduct == null) return;
-
-    // This function only updates CTN and Units without affecting Total and Value
-    // It's called when user manually edits CTN or Units fields
-    final ctn = int.tryParse(_saleCtnController.text) ?? 0;
-    final units = int.tryParse(_saleUnitsController.text) ?? 0;
-    
-    // Just update the fields without any calculations
-    _saleCtnController.text = ctn.toString();
-    _saleUnitsController.text = units.toString();
+    // Calculate Closing Stock
+    _closingStockCtnController.text = (totalStockCtn - saleCtn).toString();
+    _closingStockUnitsController.text = (totalStockUnits - saleUnits).toString();
+    _closingStockTotalController.text = (totalStockTotal - saleTotal).toStringAsFixed(2);
+    _closingStockValueController.text = (totalStockValue - saleValue).toStringAsFixed(2);
   }
 
   Future<void> _saveStockRecord() async {
@@ -368,15 +351,14 @@ class _StockReportTabState extends State<StockReportTab> {
         unitsController = _closingStockUnitsController;
         totalController = _closingStockTotalController;
         valueController = _closingStockValueController;
-        onChanged = _calculateClosingStock;
-        isEditable = true;
+        isEditable = false;
         break;
       case 'Sale':
         ctnController = _saleCtnController;
         unitsController = _saleUnitsController;
         totalController = _saleTotalController;
         valueController = _saleValueController;
-        onChanged = _updateSaleCtnUnits;
+        onChanged = _onSaleChanged;
         isEditable = true;
         break;
       default:
@@ -436,7 +418,7 @@ class _StockReportTabState extends State<StockReportTab> {
                     controller: unitsController,
                     enabled: isEditable && _selectedProduct != null,
                     decoration: InputDecoration(
-                      labelText: 'Units',
+                      labelText: 'Box',
                       labelStyle: const TextStyle(color: Colors.black87),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -705,7 +687,7 @@ class _StockReportTabState extends State<StockReportTab> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Units: ${_selectedProduct!.unitsPacking}',
+                                    'Box: ${_selectedProduct!.unitsPacking}',
                                   ),
                                 ],
                               ),
