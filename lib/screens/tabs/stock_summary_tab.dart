@@ -45,7 +45,67 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _rolloverIfNeededAndLoadData();
+  }
+
+  Future<void> _rolloverIfNeededAndLoadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    final dbHelper = DatabaseHelper.instance;
+    await dbHelper.ensureAppMetadataTable();
+    final today = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(today);
+    final lastRollover = await dbHelper.getAppMetadata('last_rollover_date');
+    if (lastRollover != todayStr) {
+      // Perform rollover for all products
+      final db = await dbHelper.database;
+      final products = await db.query('products');
+      for (final product in products) {
+        // Get latest stock record for this product
+        final records = await db.query(
+          'stock_records',
+          where: 'product_id = ?',
+          whereArgs: [product['id']],
+          orderBy: 'date DESC',
+          limit: 1,
+        );
+        if (records.isNotEmpty) {
+          final latest = records.first;
+          // Insert new record for today with opening = closing, others zero
+          await db.insert('stock_records', {
+            'product_id': product['id'],
+            'date': todayStr,
+            'opening_stock_ctn': latest['closing_stock_ctn'],
+            'opening_stock_units': latest['closing_stock_units'],
+            'opening_stock_total': latest['closing_stock_total'],
+            'opening_stock_value': latest['closing_stock_value'],
+            'received_ctn': 0,
+            'received_units': 0,
+            'received_total': 0,
+            'received_value': 0,
+            'total_stock_ctn': 0,
+            'total_stock_units': 0,
+            'total_stock_total': 0,
+            'total_stock_value': 0,
+            'sale_ctn': 0,
+            'sale_units': 0,
+            'sale_total': 0,
+            'sale_value': 0,
+            'saled_return_ctn': 0,
+            'saled_return_units': 0,
+            'saled_return_total': 0,
+            'saled_return_value': 0,
+            'closing_stock_ctn': 0,
+            'closing_stock_units': 0,
+            'closing_stock_total': 0,
+            'closing_stock_value': 0,
+          });
+        }
+      }
+      await dbHelper.setAppMetadata('last_rollover_date', todayStr);
+    }
+    await _loadData();
   }
 
   Future<void> _loadData() async {

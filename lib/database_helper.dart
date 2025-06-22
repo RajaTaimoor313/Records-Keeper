@@ -206,6 +206,13 @@ class DatabaseHelper {
           balance REAL
         )
       ''');
+
+      await txn.execute('''
+        CREATE TABLE IF NOT EXISTS app_metadata (
+          key TEXT PRIMARY KEY,
+          value TEXT
+        )
+      ''');
     });
   }
 
@@ -329,6 +336,16 @@ class DatabaseHelper {
         await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_value REAL NOT NULL DEFAULT 0");
       }
     });
+  }
+
+  Future<void> ensureAppMetadataTable() async {
+    final db = await database;
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS app_metadata (
+        key TEXT PRIMARY KEY,
+        value TEXT
+      )
+    ''');
   }
 
   // Income operations
@@ -991,5 +1008,23 @@ class DatabaseHelper {
   Future<void> close() async {
     final db = await instance.database;
     db.close();
+  }
+
+  Future<String?> getAppMetadata(String key) async {
+    final db = await database;
+    final result = await db.query('app_metadata', where: 'key = ?', whereArgs: [key]);
+    if (result.isNotEmpty) {
+      return result.first['value'] as String?;
+    }
+    return null;
+  }
+
+  Future<void> setAppMetadata(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'app_metadata',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 } 
