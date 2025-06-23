@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
-import '../../database_helper.dart';
+import 'package:records_keeper/database_helper.dart';
 
 class BFData {
   final String date;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../database_helper.dart';
-import '../../../models/shop.dart';
+import 'package:records_keeper/database_helper.dart';
+import 'package:records_keeper/tabs/shops/shop.dart';
 
 class AddShopTab extends StatefulWidget {
   const AddShopTab({super.key});

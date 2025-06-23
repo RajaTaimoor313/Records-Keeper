@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../../database_helper.dart';
-import '../../../models/supplier.dart';
+import 'package:records_keeper/database_helper.dart';
+import 'package:records_keeper/tabs/shops/shop.dart';
 
-class ViewSuppliersTab extends StatefulWidget {
-  const ViewSuppliersTab({super.key});
+class ViewShopsTab extends StatefulWidget {
+  const ViewShopsTab({super.key});
 
   @override
-  State<ViewSuppliersTab> createState() => _ViewSuppliersTabState();
+  State<ViewShopsTab> createState() => _ViewShopsTabState();
 }
 
-class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
-  List<Supplier> _suppliers = [];
-  List<Supplier> _filteredSuppliers = [];
+class _ViewShopsTabState extends State<ViewShopsTab> {
+  List<Shop> _shops = [];
+  List<Shop> _filteredShops = [];
   bool _isLoading = true;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -19,7 +19,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
   @override
   void initState() {
     super.initState();
-    _loadSuppliers();
+    _loadShops();
   }
 
   @override
@@ -28,28 +28,28 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
     super.dispose();
   }
 
-  void _filterSuppliers(String query) {
+  void _filterShops(String query) {
     setState(() {
       _searchQuery = query.toLowerCase();
-      _filteredSuppliers = _suppliers.where((supplier) {
-        return supplier.name.toLowerCase().contains(_searchQuery) ||
-            supplier.fatherName.toLowerCase().contains(_searchQuery) ||
-            supplier.address.toLowerCase().contains(_searchQuery) ||
-            supplier.cnic.toLowerCase().contains(_searchQuery) ||
-            supplier.phone.toLowerCase().contains(_searchQuery);
+      _filteredShops = _shops.where((shop) {
+        return shop.name.toLowerCase().contains(_searchQuery) ||
+            shop.ownerName.toLowerCase().contains(_searchQuery) ||
+            shop.category.toLowerCase().contains(_searchQuery) ||
+            shop.code.toLowerCase().contains(_searchQuery);
       }).toList();
     });
   }
 
-  Future<void> _loadSuppliers() async {
+  Future<void> _loadShops() async {
     setState(() {
       _isLoading = true;
     });
+
     try {
-      final suppliersData = await DatabaseHelper.instance.getSuppliers();
+      final shopsData = await DatabaseHelper.instance.getShops();
       setState(() {
-        _suppliers = suppliersData.map((data) => Supplier.fromMap(data)).toList();
-        _filteredSuppliers = List.from(_suppliers);
+        _shops = shopsData.map((data) => Shop.fromMap(data)).toList();
+        _filteredShops = List.from(_shops);
       });
     } finally {
       setState(() {
@@ -58,12 +58,12 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
     }
   }
 
-  Future<void> _deleteSupplier(int id) async {
+  Future<void> _deleteShop(String code) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Man Power'),
-        content: const Text('Are you sure you want to delete this man power?'),
+        title: const Text('Delete Shop'),
+        content: const Text('Are you sure you want to delete this shop?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -79,52 +79,71 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
         ],
       ),
     );
+
     if (confirmed != true) return;
-    await DatabaseHelper.instance.deleteSupplier(id);
+
+    final success = await DatabaseHelper.instance.deleteShop(code);
+
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Man Power deleted successfully'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    _loadSuppliers();
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Shop deleted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _loadShops();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete shop'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
-  void _showEditSupplierDialog(Supplier supplier) {
-    final nameController = TextEditingController(text: supplier.name);
-    final fatherNameController = TextEditingController(text: supplier.fatherName);
-    final addressController = TextEditingController(text: supplier.address);
-    final cnicController = TextEditingController(text: supplier.cnic);
-    final phoneController = TextEditingController(text: supplier.phone);
+  void _showEditShopDialog(Shop shop) {
+    final nameController = TextEditingController(text: shop.name);
+    final ownerController = TextEditingController(text: shop.ownerName);
+    final categoryController = TextEditingController(text: shop.category);
+    final addressController = TextEditingController(text: shop.address ?? '');
+    final areaController = TextEditingController(text: shop.area ?? '');
+    final phoneController = TextEditingController(text: shop.phone ?? '');
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Edit Man Power'),
+          title: const Text('Edit Shop'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: const InputDecoration(labelText: 'Shop Name'),
                 ),
                 TextField(
-                  controller: fatherNameController,
-                  decoration: const InputDecoration(labelText: 'Father Name'),
+                  controller: ownerController,
+                  decoration: const InputDecoration(labelText: 'Owner Name'),
+                ),
+                TextField(
+                  controller: categoryController,
+                  decoration: const InputDecoration(labelText: 'Category'),
                 ),
                 TextField(
                   controller: addressController,
                   decoration: const InputDecoration(labelText: 'Address'),
                 ),
                 TextField(
-                  controller: cnicController,
-                  decoration: const InputDecoration(labelText: 'CNIC'),
+                  controller: areaController,
+                  decoration: const InputDecoration(labelText: 'Area'),
                 ),
                 TextField(
                   controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone No.'),
+                  decoration: const InputDecoration(labelText: 'Phone Number'),
                   keyboardType: TextInputType.phone,
                 ),
               ],
@@ -137,18 +156,18 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final updatedSupplier = Supplier(
-                  id: supplier.id,
+                final updatedShop = Shop(
+                  code: shop.code,
                   name: nameController.text.trim(),
-                  fatherName: fatherNameController.text.trim(),
+                  ownerName: ownerController.text.trim(),
+                  category: categoryController.text.trim(),
                   address: addressController.text.trim(),
-                  cnic: cnicController.text.trim(),
+                  area: areaController.text.trim(),
                   phone: phoneController.text.trim(),
-                  type: supplier.type,
                 );
-                await DatabaseHelper.instance.updateSupplier(updatedSupplier.toMap());
+                await DatabaseHelper.instance.updateShop(updatedShop.toMap());
                 Navigator.of(context).pop();
-                _loadSuppliers();
+                _loadShops();
               },
               child: const Text('Save'),
             ),
@@ -167,7 +186,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
               ),
             )
-          : _suppliers.isEmpty
+          : _shops.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -179,14 +198,14 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.person_outline,
+                          Icons.store_mall_directory_outlined,
                           size: 64,
                           color: Colors.deepPurple.withOpacity(0.5),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No man powers added yet',
+                        'No shops added yet',
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.grey.shade600,
@@ -195,7 +214,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Add your first man power using the Add tab',
+                        'Add your first shop using the Add tab',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade500,
@@ -209,6 +228,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Header
                       Row(
                         children: [
                           Container(
@@ -218,7 +238,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
-                              Icons.person,
+                              Icons.store_mall_directory_rounded,
                               color: Colors.deepPurple,
                               size: 32,
                             ),
@@ -228,7 +248,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'All Man Powers',
+                                'All Shops',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -237,7 +257,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${_suppliers.length} man powers found',
+                                '${_shops.length} shops found',
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
                                   fontSize: 14,
@@ -246,13 +266,14 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                             ],
                           ),
                           const Spacer(),
+                          // Search Field
                           SizedBox(
                             width: 300,
                             child: TextField(
                               controller: _searchController,
-                              onChanged: _filterSuppliers,
+                              onChanged: _filterShops,
                               decoration: InputDecoration(
-                                hintText: 'Search man powers...',
+                                hintText: 'Search shops...',
                                 prefixIcon: const Icon(Icons.search),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -267,6 +288,8 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                         ],
                       ),
                       const SizedBox(height: 24),
+
+                      // Table
                       Expanded(
                         child: Card(
                           elevation: 4,
@@ -296,6 +319,15 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                                     ),
                                     DataColumn(
                                       label: Text(
+                                        'Code',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.deepPurple,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
                                         'Name',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
@@ -305,7 +337,16 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        'Father Name',
+                                        'Owner',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.deepPurple,
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        'Category',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.deepPurple,
@@ -323,7 +364,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        'CNIC',
+                                        'Area',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.deepPurple,
@@ -332,16 +373,7 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                                     ),
                                     DataColumn(
                                       label: Text(
-                                        'Phone No.',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.deepPurple,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Text(
-                                        'Type',
+                                        'Phone',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.deepPurple,
@@ -358,18 +390,54 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                                       ),
                                     ),
                                   ],
-                                  rows: _filteredSuppliers.asMap().entries.map((entry) {
+                                  rows: _filteredShops.asMap().entries.map((entry) {
                                     final index = entry.key;
-                                    final supplier = entry.value;
+                                    final shop = entry.value;
                                     return DataRow(
                                       cells: [
                                         DataCell(Text((index + 1).toString())),
-                                        DataCell(Text(supplier.name)),
-                                        DataCell(Text(supplier.fatherName)),
-                                        DataCell(Text(supplier.address)),
-                                        DataCell(Text(supplier.cnic)),
-                                        DataCell(Text(supplier.phone)),
-                                        DataCell(Text(supplier.type)),
+                                        DataCell(
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.deepPurple.withOpacity(0.1),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              shop.code,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.deepPurple,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(Text(shop.name)),
+                                        DataCell(Text(shop.ownerName)),
+                                        DataCell(
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue.withOpacity(0.1),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              shop.category,
+                                              style: TextStyle(
+                                                color: Colors.blue.shade700,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(Text(shop.address ?? '')),
+                                        DataCell(Text(shop.area ?? '')),
+                                        DataCell(Text(shop.phone ?? '')),
                                         DataCell(
                                           Row(
                                             children: [
@@ -378,16 +446,16 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
                                                   Icons.edit,
                                                   color: Colors.deepPurple,
                                                 ),
-                                                onPressed: () => _showEditSupplierDialog(supplier),
-                                                tooltip: 'Edit Man Power',
+                                                onPressed: () => _showEditShopDialog(shop),
+                                                tooltip: 'Edit Shop',
                                               ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                  Icons.delete_outline,
-                                                  color: Colors.red,
-                                                ),
-                                                onPressed: () => _deleteSupplier(supplier.id!),
-                                                tooltip: 'Delete Man Power',
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                              color: Colors.red,
+                                            ),
+                                            onPressed: () => _deleteShop(shop.code),
+                                            tooltip: 'Delete Shop',
                                               ),
                                             ],
                                           ),

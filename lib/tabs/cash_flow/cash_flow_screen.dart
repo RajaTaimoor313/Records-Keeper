@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'tabs/income_tab.dart';
-import 'tabs/expenditure_tab.dart';
-import 'tabs/bf_tab.dart';
+import 'package:records_keeper/tabs/cash_flow/bf_tab.dart';
+import 'package:records_keeper/tabs/cash_flow/expenditure_tab.dart';
+import 'package:records_keeper/tabs/cash_flow/income_tab.dart';
 
 class CashFlowScreen extends StatelessWidget {
   final String? initialTab;

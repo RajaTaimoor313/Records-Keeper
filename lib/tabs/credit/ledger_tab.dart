@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../database_helper.dart';
+import 'package:records_keeper/database_helper.dart';
 
 class LedgerTab extends StatefulWidget {
   const LedgerTab({super.key});
@@ -256,7 +256,7 @@ class _LedgerTabState extends State<LedgerTab> {
   Widget _buildTransactionList(List<Map<String, dynamic>> transactions) {
     final formatCurrency = NumberFormat.currency(
       locale: 'en_IN',
-      symbol: 'Rs. ',
+      symbol: '',
       decimalDigits: 2,
     );
 

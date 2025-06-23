@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:intl/intl.dart';
-import '../../../database_helper.dart';
-import '../../../models/supplier.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:records_keeper/database_helper.dart';
 import 'dart:convert';
+
+import 'package:records_keeper/tabs/suppliers/supplier.dart';
 
 class PickListTab extends StatefulWidget {
   const PickListTab({super.key});
@@ -769,11 +770,11 @@ class _PickListTabState extends State<PickListTab> {
                         child: Row(
                           children: [
                             const Expanded(flex: 4, child: Align(alignment: Alignment.centerRight, child: Text('Total:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)))),
-                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.billAmount)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.cash)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.credit)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.discount)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(_items.fold(0.0, (sum, item) => sum + (item.return_)).toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.billAmount))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.cash))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.credit))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.discount))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.return_))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
                           ],
                         ),
                       ),

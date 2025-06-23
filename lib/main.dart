@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:records_keeper/database_config.dart';
 import 'package:records_keeper/home_screen.dart';
-import 'database/database_config.dart';
 import 'database_helper.dart';
 
 void main() async {

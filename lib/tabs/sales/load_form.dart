@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../../../database_helper.dart';
 import 'dart:math' as math;
+
+import 'package:records_keeper/database_helper.dart';
 
 class LoadFormTab extends StatefulWidget {
   const LoadFormTab({super.key});

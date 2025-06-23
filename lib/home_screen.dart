@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/screens/cash_flow_screen.dart';
-import 'package:records_keeper/screens/tabs/stock_tab.dart';
-import 'package:records_keeper/screens/tabs/stock_report_tab.dart';
-import 'package:records_keeper/screens/tabs/stock_summary_tab.dart';
-import 'package:records_keeper/screens/tabs/shops/add_shop_tab.dart';
-import 'package:records_keeper/screens/tabs/shops/view_shops_tab.dart';
-import 'package:records_keeper/screens/tabs/sales/invoice_tab.dart';
-import 'package:records_keeper/screens/tabs/view_products_tab.dart';
-import 'package:records_keeper/screens/tabs/sales/view_invoices_tab.dart';
-import 'package:records_keeper/screens/tabs/sales/load_form.dart';
-import 'package:records_keeper/screens/tabs/sales/pick_list_tab.dart';
-import 'package:records_keeper/screens/dashboard_screen.dart';
-import 'screens/tabs/suppliers/add_supplier_tab.dart';
-import 'screens/tabs/suppliers/view_suppliers_tab.dart';
-import 'screens/tabs/sales/realisation_tab.dart';
-import 'screens/tabs/ledger_tab.dart';
+import 'package:records_keeper/tabs/cash_flow/cash_flow_screen.dart';
+import 'package:records_keeper/tabs/credit/ledger_tab.dart';
+import 'package:records_keeper/tabs/credit/realisation_tab.dart';
+import 'package:records_keeper/tabs/dashboard_screen.dart';
+import 'package:records_keeper/tabs/sales/invoice_tab.dart';
+import 'package:records_keeper/tabs/sales/load_form.dart';
+import 'package:records_keeper/tabs/sales/pick_list_tab.dart';
+import 'package:records_keeper/tabs/sales/view_invoices_tab.dart';
+import 'package:records_keeper/tabs/shops/add_shop_tab.dart';
+import 'package:records_keeper/tabs/shops/view_shops_tab.dart';
+import 'package:records_keeper/tabs/stock/stock_report_tab.dart';
+import 'package:records_keeper/tabs/stock/stock_summary_tab.dart';
+import 'package:records_keeper/tabs/stock/stock_tab.dart';
+import 'package:records_keeper/tabs/stock/view_products_tab.dart';
+import 'package:records_keeper/tabs/suppliers/add_supplier_tab.dart';
+import 'package:records_keeper/tabs/suppliers/view_suppliers_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

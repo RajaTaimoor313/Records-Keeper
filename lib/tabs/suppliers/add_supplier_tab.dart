@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../database_helper.dart';
-import '../../../models/supplier.dart';
+import 'package:records_keeper/database_helper.dart';
+import 'package:records_keeper/tabs/suppliers/supplier.dart';
 
 class AddSupplierTab extends StatefulWidget {
   const AddSupplierTab({super.key});

@@ -4,8 +4,8 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
-import 'package:records_keeper/screens/tabs/sales/invoice_tab.dart';
-import '../../../database_helper.dart';
+import 'package:records_keeper/database_helper.dart';
+import 'package:records_keeper/tabs/sales/invoice_tab.dart';
 
 class ViewInvoicesTab extends StatefulWidget {
   const ViewInvoicesTab({super.key});
@@ -223,6 +223,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
   }
 
   pw.Widget _buildPdfInvoice(Invoice invoice, pw.ImageProvider? logoImage) {
+    final indianFormat = NumberFormat.decimalPattern('en_IN');
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       mainAxisSize: pw.MainAxisSize.min,
@@ -353,9 +354,9 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                     children: [
                       _buildPdfTableCell((index + 1).toString(), 1),
                       _buildPdfTableCell(item.description, 4),
-                      _buildPdfTableCell(item.rate.toStringAsFixed(2), 2),
+                      _buildPdfTableCell(indianFormat.format(item.rate), 2),
                       _buildPdfTableCell(item.unit.toString(), 1),
-                      _buildPdfTableCell(item.amount.toStringAsFixed(2), 2),
+                      _buildPdfTableCell(indianFormat.format(item.amount), 2),
                     ],
                   ),
                 );
@@ -375,11 +376,11 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           ),
           child: pw.Column(
             children: [
-              _buildPdfTotalRow('Subtotal:', invoice.subtotal),
+              _buildPdfTotalRow('Subtotal:', invoice.subtotal, indianFormat),
               pw.SizedBox(height: 3),
-              _buildPdfTotalRow('Discount:', invoice.discount),
+              _buildPdfTotalRow('Discount:', invoice.discount, indianFormat),
               pw.Divider(color: PdfColors.grey300, height: 4),
-              _buildPdfTotalRow('Total:', invoice.total, isTotal: true),
+              _buildPdfTotalRow('Total:', invoice.total, indianFormat, isTotal: true),
             ],
           ),
         ),
@@ -475,9 +476,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
 
   pw.Widget _buildPdfTotalRow(
     String label,
-    double amount, {
-    bool isTotal = false,
-  }) {
+    double amount,
+    NumberFormat? indianFormat,
+    {bool isTotal = false,}
+  ) {
     final textStyle = pw.TextStyle(
       fontSize: 8,
       fontWeight: isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
@@ -488,7 +490,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
         pw.Text(label, style: textStyle),
-        pw.Text(amount.toStringAsFixed(2), style: textStyle),
+        pw.Text(indianFormat != null ? indianFormat.format(amount) : amount.toStringAsFixed(2), style: textStyle),
       ],
     );
   }

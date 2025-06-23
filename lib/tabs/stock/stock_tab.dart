@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
-import '../../database_helper.dart';
+
+import 'package:records_keeper/database_helper.dart';
 
 class Product {
   final String id;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../database_helper.dart';
+import 'package:records_keeper/database_helper.dart';
 
 class Product {
   final String id;
@@ -152,6 +152,66 @@ class _StockReportTabState extends State<StockReportTab> {
     _saleUnitsController.text = '0';
     _saleTotalController.text = '0.00';
     _saleValueController.text = '0.00';
+  }
+
+  Future<void> _loadLatestStockRecord(String productId) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final records = await db.query(
+        'stock_records',
+        where: 'product_id = ?',
+        whereArgs: [productId],
+        orderBy: 'date DESC',
+        limit: 1,
+      );
+
+      if (records.isNotEmpty) {
+        final record = records.first;
+        setState(() {
+          // Load Opening Stock
+          _openingStockCtnController.text = record['opening_stock_ctn'].toString();
+          _openingStockUnitsController.text = record['opening_stock_units'].toString();
+          _openingStockTotalController.text = record['opening_stock_total'].toString();
+          _openingStockValueController.text = record['opening_stock_value'].toString();
+
+          // Load Received Stock
+          _receivedStockCtnController.text = record['received_ctn'].toString();
+          _receivedStockUnitsController.text = record['received_units'].toString();
+          _receivedStockTotalController.text = record['received_total'].toString();
+          _receivedStockValueController.text = record['received_value'].toString();
+
+          // Load Total Stock
+          _totalStockCtnController.text = record['total_stock_ctn'].toString();
+          _totalStockUnitsController.text = record['total_stock_units'].toString();
+          _totalStockTotalController.text = record['total_stock_total'].toString();
+          _totalStockValueController.text = record['total_stock_value'].toString();
+
+          // Load Closing Stock
+          _closingStockCtnController.text = record['closing_stock_ctn'].toString();
+          _closingStockUnitsController.text = record['closing_stock_units'].toString();
+          _closingStockTotalController.text = record['closing_stock_total'].toString();
+          _closingStockValueController.text = record['closing_stock_value'].toString();
+
+          // Load Sale
+          _saleCtnController.text = record['sale_ctn'].toString();
+          _saleUnitsController.text = record['sale_units'].toString();
+          _saleTotalController.text = record['sale_total'].toString();
+          _saleValueController.text = record['sale_value'].toString();
+        });
+      } else {
+        _resetStockFields();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading stock record: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      _resetStockFields();
+    }
   }
 
   void _calculateOpeningStock() {
@@ -313,6 +373,14 @@ class _StockReportTabState extends State<StockReportTab> {
         );
       }
     }
+  }
+
+  void _onProductSelected(Product product) {
+    setState(() {
+      _selectedProduct = product;
+      _productIdController.text = product.id;
+    });
+    _loadLatestStockRecord(product.id);
   }
 
   Widget _buildStockCategory(String title, {bool isEditable = false}) {
@@ -556,12 +624,7 @@ class _StockReportTabState extends State<StockReportTab> {
                     textCapitalization: TextCapitalization.characters,
                   );
                 },
-                onSelected: (Product product) {
-                  setState(() {
-                    _selectedProduct = product;
-                    _resetStockFields();
-                  });
-                },
+                onSelected: _onProductSelected,
                 optionsViewBuilder: (
                   BuildContext context,
                   AutocompleteOnSelected<Product> onSelected,

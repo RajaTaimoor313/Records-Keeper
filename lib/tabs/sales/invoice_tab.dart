@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../database_helper.dart';
-import '../../../models/shop.dart';
+import 'package:records_keeper/database_helper.dart';
+import 'package:records_keeper/tabs/shops/shop.dart';
 import 'view_invoices_tab.dart';
 
 class Product {
@@ -508,7 +508,16 @@ class _InvoiceTabState extends State<InvoiceTab> {
     required double scale,
     bool isLast = false,
     TextAlign align = TextAlign.left,
+    bool isNumeric = false,
   }) {
+    final indianFormat = NumberFormat.decimalPattern('en_IN');
+    String displayText = text;
+    if (isNumeric) {
+      final number = double.tryParse(text.replaceAll(',', ''));
+      if (number != null) {
+        displayText = indianFormat.format(number);
+      }
+    }
     return Expanded(
       flex: flex,
       child: Container(
@@ -522,7 +531,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
           ),
         ),
         child: Text(
-          text,
+          displayText,
           textAlign: align,
           style: TextStyle(
             fontSize: 12 * scale,
@@ -564,6 +573,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
             flex: 2,
             scale: scale,
             align: TextAlign.right,
+            isNumeric: true,
           ),
           _buildEditableCell(
             text: item.unit.toString(),
@@ -577,6 +587,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
             flex: 2,
             scale: scale,
             align: TextAlign.right,
+            isNumeric: true,
           ),
           Expanded(
             child: IconButton(
@@ -725,6 +736,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
   }
 
   Widget _buildTotalsSection(double scale) {
+    final indianFormat = NumberFormat.decimalPattern('en_IN');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -740,7 +752,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
             ),
             SizedBox(width: 12 * scale),
             Text(
-              subtotal.toStringAsFixed(2),
+              indianFormat.format(subtotal),
               style: TextStyle(
                 fontSize: 10 * scale,
                 color: Colors.grey.shade800,
@@ -806,7 +818,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
             ),
             SizedBox(width: 12 * scale),
             Text(
-              total.toStringAsFixed(2),
+              indianFormat.format(total),
               style: TextStyle(
                 fontSize: 11 * scale,
                 fontWeight: FontWeight.w600,

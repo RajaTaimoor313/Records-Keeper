@@ -1,7 +1,7 @@
 // ignore_for_file: use_build_context_synchronously, avoid_print
 
 import 'package:flutter/material.dart';
-import '../../database_helper.dart';
+import 'package:records_keeper/database_helper.dart';
 
 class IncomeData {
   final String date;

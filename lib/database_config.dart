@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import '../database_helper.dart';
+import 'package:records_keeper/database_helper.dart';
 
 class DatabaseConfig {
   static Future<void> initialize() async {

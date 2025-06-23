@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../database_helper.dart';
 import 'package:intl/intl.dart';
+import 'package:records_keeper/database_helper.dart';
 
 class CompanyStockSummary {
   final String company;
@@ -561,8 +561,6 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                               }
 
                               // Calculate Total Stock values
-                              final totalStockCtn = getVal('opening_stock_ctn') + getVal('received_ctn');
-                              final totalStockUnits = getVal('opening_stock_units') + getVal('received_units');
                               final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
                               final totalStockValue = getVal('opening_stock_value') + getVal('received_value');
 
@@ -576,49 +574,62 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                               getVal('saled_return_ctn');
                               getVal('saled_return_units');
                               final saledReturnTotal = getVal('saled_return_total');
-                              final saledReturnValue = getVal('saled_return_value');
+                              getVal('saled_return_value');
 
                               // Calculate proper CTN and Box for Sale based on packing strategy
-                              final boxPacking = product['boxPacking'] as int;
+                              final boxPacking = (product['boxPacking'] is int) ? product['boxPacking'] as int : int.tryParse(product['boxPacking'].toString()) ?? 0;
                               int calculatedSaleCtn;
                               int calculatedSaleBox;
                               
-                              if (saleTotal <= boxPacking) {
-                                // If total is less than or equal to box packing, no CTN needed
+                              if (boxPacking > 0) {
+                                if (saleTotal < boxPacking) {
+                                  calculatedSaleCtn = 0;
+                                  calculatedSaleBox = saleTotal.toInt();
+                                } else {
+                                  calculatedSaleCtn = saleTotal ~/ boxPacking;
+                                  calculatedSaleBox = saleTotal.toInt() % boxPacking;
+                                }
+                              } else {
                                 calculatedSaleCtn = 0;
                                 calculatedSaleBox = saleTotal.toInt();
+                              }
+
+                              // Calculate proper CTN and Box for Total Stock based on packing strategy
+                              int calculatedTotalStockCtn;
+                              int calculatedTotalStockBox;
+                              if (boxPacking > 0) {
+                                if (totalStockTotal < boxPacking) {
+                                  calculatedTotalStockCtn = 0;
+                                  calculatedTotalStockBox = totalStockTotal.toInt();
+                                } else {
+                                  calculatedTotalStockCtn = totalStockTotal ~/ boxPacking;
+                                  calculatedTotalStockBox = totalStockTotal.toInt() % boxPacking;
+                                }
                               } else {
-                                // If total exceeds box packing, calculate CTN and Box
-                                calculatedSaleCtn = saleTotal ~/ boxPacking; // Integer division for CTN
-                                calculatedSaleBox = saleTotal.toInt() % boxPacking; // Remainder for Box
+                                calculatedTotalStockCtn = 0;
+                                calculatedTotalStockBox = totalStockTotal.toInt();
                               }
 
                               // Calculate proper CTN and Box for Saled Return based on packing strategy
-                              
-                              if (saledReturnTotal <= boxPacking) {
-                                // If total is less than or equal to box packing, no CTN needed
-                              } else {
-                                // If total exceeds box packing, calculate CTN and Box
-// Integer division for CTN
-// Remainder for Box
-                              }
-
+                              // ... existing code ...
                               // Calculate Closing Stock (Total Stock - Sale + Saled Return)
                               final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
-                              final closingStockValue = totalStockValue - saleValue + saledReturnValue;
+                              final closingStockValue = closingStockTotal * (product['boxRate'] is num ? (product['boxRate'] as num).toDouble() : double.tryParse(product['boxRate'].toString()) ?? 0.0);
 
                               // Calculate proper CTN and Box for Closing Stock based on packing strategy
                               int calculatedClosingStockCtn;
                               int calculatedClosingStockBox;
-                              
-                              if (closingStockTotal <= boxPacking) {
-                                // If total is less than or equal to box packing, no CTN needed
+                              if (boxPacking > 0) {
+                                if (closingStockTotal < boxPacking) {
+                                  calculatedClosingStockCtn = 0;
+                                  calculatedClosingStockBox = closingStockTotal.toInt();
+                                } else {
+                                  calculatedClosingStockCtn = closingStockTotal ~/ boxPacking;
+                                  calculatedClosingStockBox = closingStockTotal.toInt() % boxPacking;
+                                }
+                              } else {
                                 calculatedClosingStockCtn = 0;
                                 calculatedClosingStockBox = closingStockTotal.toInt();
-                              } else {
-                                // If total exceeds box packing, calculate CTN and Box
-                                calculatedClosingStockCtn = closingStockTotal ~/ boxPacking; // Integer division for CTN
-                                calculatedClosingStockBox = closingStockTotal.toInt() % boxPacking; // Remainder for Box
                               }
 
                               return IntrinsicHeight(
@@ -642,9 +653,9 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                                     _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_units')),
                                     _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_total')),
                                     _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_value')),
-                                    // Total Stock
-                                    _buildDataCell(totalStockCtn.toStringAsFixed(0)),
-                                    _buildDataCell(totalStockUnits.toStringAsFixed(0)),
+                                    // Total Stock (updated logic)
+                                    _buildDataCell(calculatedTotalStockCtn.toString()),
+                                    _buildDataCell(calculatedTotalStockBox.toString()),
                                     _buildDataCell(_formatIndianNumber(totalStockTotal)),
                                     _buildDataCell(_formatIndianNumber(totalStockValue)),
                                     // Closing Stock
