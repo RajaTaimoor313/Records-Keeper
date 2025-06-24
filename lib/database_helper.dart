@@ -49,7 +49,7 @@ class DatabaseHelper {
     final String path = join(await getDatabasesPath(), 'records_keeper.db');
     return await openDatabase(
       path,
-      version: 14,
+      version: 17,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -213,6 +213,33 @@ class DatabaseHelper {
           value TEXT
         )
       ''');
+
+      await txn.execute('''
+        CREATE TABLE IF NOT EXISTS bf_summary (
+          date TEXT PRIMARY KEY,
+          sales_recovery REAL NOT NULL,
+          other_income REAL NOT NULL,
+          total_income REAL NOT NULL,
+          total_expenditure REAL NOT NULL,
+          net_balance REAL NOT NULL
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE IF NOT EXISTS pick_list_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          data TEXT NOT NULL
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE IF NOT EXISTS load_form_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          data TEXT NOT NULL
+        )
+      ''');
     });
   }
 
@@ -238,29 +265,27 @@ class DatabaseHelper {
             shopCode TEXT NOT NULL,
             ownerName TEXT NOT NULL,
             category TEXT NOT NULL,
-            items TEXT NOT NULL,
+            address TEXT,
             subtotal REAL NOT NULL,
             discount REAL NOT NULL,
-            total REAL NOT NULL
+            total REAL NOT NULL,
+            items TEXT NOT NULL
           )
         ''');
       }
       if (oldVersion < 4) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS products (
-            id TEXT PRIMARY KEY,
-            company TEXT NOT NULL,
-            brand TEXT NOT NULL,
-            ctnRate REAL NOT NULL,
-            boxRate REAL NOT NULL,
-            ctnPacking INTEGER NOT NULL,
-            boxPacking INTEGER NOT NULL,
-            unitsPacking INTEGER NOT NULL,
-            salePrice REAL NOT NULL
-          )
-        ''');
+        await txn.execute('ALTER TABLE shops ADD COLUMN address TEXT');
+        await txn.execute('ALTER TABLE shops ADD COLUMN area TEXT');
+        await txn.execute('ALTER TABLE shops ADD COLUMN phone TEXT');
+        await txn.execute('ALTER TABLE shops RENAME COLUMN id TO code');
       }
       if (oldVersion < 5) {
+        await txn.execute('ALTER TABLE shops RENAME COLUMN ownerName TO owner_name');
+      }
+      if (oldVersion < 6) {
+        // No-op, just for version bump
+      }
+      if (oldVersion < 7) {
         await txn.execute('''
           CREATE TABLE IF NOT EXISTS load_form (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -268,12 +293,11 @@ class DatabaseHelper {
             units INTEGER NOT NULL,
             issue INTEGER DEFAULT 0,
             returnQty INTEGER DEFAULT 0,
-            sale INTEGER DEFAULT 0,
-            saledReturn INTEGER DEFAULT 0
+            sale INTEGER DEFAULT 0
           )
         ''');
       }
-      if (oldVersion < 6) {
+      if (oldVersion < 8) {
         await txn.execute('''
           CREATE TABLE IF NOT EXISTS pick_list (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -285,39 +309,27 @@ class DatabaseHelper {
             discount REAL DEFAULT 0,
             return REAL DEFAULT 0,
             cash REAL DEFAULT 0,
-            credit REAL DEFAULT 0
+            credit REAL DEFAULT 0,
+            invoiceNumber TEXT
           )
         ''');
-        await txn.execute('''
-          ALTER TABLE pick_list ADD COLUMN cash REAL DEFAULT 0
-        ''');
-        await txn.execute('''
-          ALTER TABLE pick_list ADD COLUMN credit REAL DEFAULT 0
-        ''');
-      }
-      if (oldVersion < 7) {
-        await txn.execute("ALTER TABLE shops ADD COLUMN address TEXT");
-        await txn.execute("ALTER TABLE shops ADD COLUMN area TEXT");
-        await txn.execute("ALTER TABLE shops ADD COLUMN phone TEXT");
-      }
-      if (oldVersion < 8) {
-        await txn.execute("ALTER TABLE invoices ADD COLUMN address TEXT");
       }
       if (oldVersion < 9) {
-        await txn.execute("ALTER TABLE suppliers ADD COLUMN type TEXT NOT NULL DEFAULT 'Supplier'");
+        await txn.execute('''
+        CREATE TABLE IF NOT EXISTS suppliers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          fatherName TEXT NOT NULL,
+          address TEXT NOT NULL,
+          cnic TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          type TEXT NOT NULL DEFAULT 'Supplier'
+        )
+      ''');
       }
       if (oldVersion < 10) {
-        await txn.execute("ALTER TABLE invoices ADD COLUMN address TEXT");
-      }
-      if (oldVersion < 11) {
-        await txn.execute("ALTER TABLE pick_list ADD COLUMN invoiceNumber TEXT");
-      }
-      if (oldVersion < 12) {
-        await txn.execute("ALTER TABLE invoices ADD COLUMN generated INTEGER NOT NULL DEFAULT 0");
-      }
-      if (oldVersion < 13) {
         await txn.execute('''
-          CREATE TABLE IF NOT EXISTS ledger (
+          CREATE TABLE ledger (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             shopName TEXT,
             shopCode TEXT,
@@ -329,11 +341,56 @@ class DatabaseHelper {
           )
         ''');
       }
-      if (oldVersion < 14) {
+      if (oldVersion < 11) {
+        await txn.execute('ALTER TABLE invoices ADD COLUMN generated INTEGER NOT NULL DEFAULT 0');
+      }
+      if (oldVersion < 12) {
+        await txn.execute('ALTER TABLE load_form ADD COLUMN saledReturn INTEGER DEFAULT 0');
+      }
+      if (oldVersion < 13) {
         await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_ctn INTEGER NOT NULL DEFAULT 0");
         await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_units INTEGER NOT NULL DEFAULT 0");
         await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_total REAL NOT NULL DEFAULT 0");
         await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_value REAL NOT NULL DEFAULT 0");
+      }
+      if (oldVersion < 14) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS app_metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT
+          )
+        ''');
+
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS bf_summary (
+            date TEXT PRIMARY KEY,
+            sales_recovery REAL NOT NULL,
+            other_income REAL NOT NULL,
+            total_income REAL NOT NULL
+          )
+        ''');
+      }
+      if (oldVersion < 15) {
+        await txn.execute('ALTER TABLE bf_summary ADD COLUMN total_expenditure REAL NOT NULL DEFAULT 0');
+        await txn.execute('ALTER TABLE bf_summary ADD COLUMN net_balance REAL NOT NULL DEFAULT 0');
+      }
+      if (oldVersion < 16) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS pick_list_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            data TEXT NOT NULL
+          )
+        ''');
+      }
+      if (oldVersion < 17) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS load_form_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            data TEXT NOT NULL
+          )
+        ''');
       }
     });
   }
@@ -1026,5 +1083,93 @@ class DatabaseHelper {
       {'key': key, 'value': value},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  // B/F summary operations
+  Future<void> upsertBFSummary({
+    required String date,
+    required double salesRecovery,
+    required double otherIncome,
+    required double totalIncome,
+    required double totalExpenditure,
+    required double netBalance,
+  }) async {
+    final db = await instance.database;
+    await db.insert(
+      'bf_summary',
+      {
+        'date': date,
+        'sales_recovery': salesRecovery,
+        'other_income': otherIncome,
+        'total_income': totalIncome,
+        'total_expenditure': totalExpenditure,
+        'net_balance': netBalance,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<Map<String, dynamic>?> getBFSummaryByDate(String date) async {
+    final db = await instance.database;
+    final result = await db.query('bf_summary', where: 'date = ?', whereArgs: [date]);
+    if (result.isNotEmpty) {
+      return result.first;
+    }
+    return null;
+  }
+
+  Future<List<Map<String, dynamic>>> getBFSummariesInRange(String startDate, String endDate) async {
+    final db = await instance.database;
+    return await db.query(
+      'bf_summary',
+      where: 'date >= ? AND date <= ?',
+      whereArgs: [startDate, endDate],
+      orderBy: 'date ASC',
+    );
+  }
+
+  // Pick List History
+  Future<int> addPickListHistory(String date, String data) async {
+    final db = await instance.database;
+    return await db.insert('pick_list_history', {'date': date, 'data': data});
+  }
+
+  Future<List<Map<String, dynamic>>> getPickListHistory() async {
+    final db = await instance.database;
+    return await db.query('pick_list_history', orderBy: 'date DESC');
+  }
+
+  Future<Map<String, dynamic>?> getPickListHistoryByDate(String date) async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'pick_list_history',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return null;
+  }
+
+  Future<void> clearPickList() async {
+    final db = await database;
+    await db.delete('pick_list');
+  }
+
+  // Load Form History
+  Future<int> addLoadFormHistory(String date, String data) async {
+    final db = await instance.database;
+    return await db.insert('load_form_history', {'date': date, 'data': data});
+  }
+
+  Future<List<Map<String, dynamic>>> getLoadFormHistory() async {
+    final db = await instance.database;
+    return await db.query('load_form_history', orderBy: 'date DESC');
+  }
+
+  Future<void> clearLoadForm() async {
+    final db = await database;
+    await db.delete('load_form');
   }
 } 

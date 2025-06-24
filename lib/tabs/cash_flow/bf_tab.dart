@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:records_keeper/database_helper.dart';
+import 'package:intl/intl.dart';
 
 class BFData {
   final String date;
@@ -51,24 +52,7 @@ class _BFTabState extends State<BFTab> {
   @override
   void initState() {
     super.initState();
-    _initializeQuickDates();
-    // Set default date range from 1st of current month to current date
-    final now = DateTime.now();
-    startDate = DateTime(now.year, now.month, 1); // 1st of current month
-    endDate = now; // Current date
-    isDateRange = true;
     _loadData();
-  }
-
-  void _initializeQuickDates() {
-    final now = DateTime.now();
-    quickDates = [
-      now, // Today
-      now.subtract(const Duration(days: 1)), // Yesterday
-      now.subtract(const Duration(days: 2)), // 2 days ago
-      now.subtract(const Duration(days: 3)), // 3 days ago
-      now.subtract(const Duration(days: 4)), // 4 days ago
-    ];
   }
 
   Future<void> _loadData() async {
@@ -97,31 +81,35 @@ class _BFTabState extends State<BFTab> {
         isIncome: false,
       )).toList();
 
-      // Calculate all-time totals
-      allTimeIncome = incomeData.fold(0, (sum, record) => sum + record.amount);
-      allTimeExpenditure = expenditureData.fold(0, (sum, record) => sum + record.amount);
+      // Get today's date in the same format as stored (dd/MM/yyyy or yyyy-MM-dd)
+      final now = DateTime.now();
+      final todayStr1 = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+      final todayStr2 = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-      // Combine and sort all records by date
+      // Filter for today only
+      final todayIncome = incomeData.where((r) => r.date == todayStr1 || r.date == todayStr2).toList();
+      final todayExpenditure = expenditureData.where((r) => r.date == todayStr1 || r.date == todayStr2).toList();
+
+      // Calculate financial summaries for today
+      salesRecoveryTotal = todayIncome.where((r) => r.category == 'Sales & Recovery').fold(0.0, (sum, r) => sum + r.amount);
+      otherIncomeTotal = todayIncome.where((r) => r.category == 'Other Income').fold(0.0, (sum, r) => sum + r.amount);
+      totalIncome = salesRecoveryTotal + otherIncomeTotal;
+      totalExpenditure = todayExpenditure.fold(0.0, (sum, r) => sum + r.amount);
+
+      // Save summary to bf_summary table (use yyyy-MM-dd for key)
+      final todayDbKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      await DatabaseHelper.instance.upsertBFSummary(
+        date: todayDbKey,
+        salesRecovery: salesRecoveryTotal,
+        otherIncome: otherIncomeTotal,
+        totalIncome: totalIncome,
+        totalExpenditure: totalExpenditure,
+        netBalance: totalIncome - totalExpenditure,
+      );
+
       setState(() {
-        allRecords = [...incomeData, ...expenditureData];
-        allRecords.sort((a, b) {
-          final aDateParts = a.date.split('/');
-          final bDateParts = b.date.split('/');
-
-          final aDate = DateTime(
-            int.parse(aDateParts[2]),
-            int.parse(aDateParts[1]),
-            int.parse(aDateParts[0]),
-          );
-          final bDate = DateTime(
-            int.parse(bDateParts[2]),
-            int.parse(bDateParts[1]),
-            int.parse(bDateParts[0]),
-          );
-
-          return aDate.compareTo(bDate);
-        });
-        _filterRecords();
+        allRecords = [...todayIncome, ...todayExpenditure];
+        filteredRecords = allRecords;
       });
     } catch (e) {
       print('Error loading B/F data: $e');
@@ -130,110 +118,6 @@ class _BFTabState extends State<BFTab> {
         isLoading = false;
       });
     }
-  }
-
-  void _filterRecords() {
-    if (startDate == null) {
-      filteredRecords = allRecords;
-    } else {
-      filteredRecords = allRecords.where((record) {
-        final dateParts = record.date.split('/');
-        final recordDate = DateTime(
-          int.parse(dateParts[2]),
-          int.parse(dateParts[1]),
-          int.parse(dateParts[0]),
-        );
-
-        if (endDate != null) {
-          return recordDate.isAtSameMomentAs(startDate!) ||
-                 (recordDate.isAfter(startDate!) && recordDate.isBefore(endDate!)) ||
-                 recordDate.isAtSameMomentAs(endDate!);
-        } else {
-          return recordDate.year == startDate!.year &&
-                 recordDate.month == startDate!.month &&
-                 recordDate.day == startDate!.day;
-        }
-      }).toList();
-    }
-
-    // Calculate financial summaries
-    salesRecoveryTotal = 0;
-    otherIncomeTotal = 0;
-    totalIncome = 0;
-    totalExpenditure = 0;
-
-    for (var record in filteredRecords) {
-      if (record.isIncome) {
-        totalIncome += record.amount;
-        if (record.category == 'Sales & Recovery') {
-          salesRecoveryTotal += record.amount;
-        } else if (record.category == 'Other Income') {
-          otherIncomeTotal += record.amount;
-        }
-      } else {
-        totalExpenditure += record.amount;
-      }
-    }
-
-    setState(() {});
-  }
-
-  Future<void> _selectDate(BuildContext context, bool isStart) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: isStart ? (startDate ?? DateTime.now()) : (endDate ?? DateTime.now()),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          startDate = picked;
-          if (!isDateRange) {
-            endDate = picked; // In single date mode, set both dates to same day
-          } else if (endDate != null && picked.isAfter(endDate!)) {
-            // If start date is after end date, clear end date
-            endDate = null;
-          }
-        } else {
-          if (picked.isBefore(startDate!)) {
-            // Show error message if end date is before start date
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('End date must be after start date'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          } else {
-            endDate = picked;
-          }
-        }
-      });
-      _filterRecords();
-    }
-  }
-
-  String _getDateRangeText() {
-    if (startDate == null) {
-      return 'All Time';
-    } else if (!isDateRange) {
-      return '${startDate!.day}/${startDate!.month}/${startDate!.year}';
-    } else {
-      return '${startDate!.day}/${startDate!.month}/${startDate!.year} - ${endDate!.day}/${endDate!.month}/${endDate!.year}';
-    }
-  }
-
-
-
-  void _resetToCurrentMonth() {
-    final now = DateTime.now();
-    setState(() {
-      startDate = DateTime(now.year, now.month, 1); // 1st of current month
-      endDate = now; // Current date
-      isDateRange = true;
-    });
-    _filterRecords();
   }
 
   @override
@@ -275,8 +159,8 @@ class _BFTabState extends State<BFTab> {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.refresh, color: Colors.deepPurple),
-                      onPressed: _resetToCurrentMonth,
-                      tooltip: 'Reset to Current Month',
+                      onPressed: _loadData,
+                      tooltip: 'Refresh',
                     ),
                   ),
                 ],
@@ -292,73 +176,22 @@ class _BFTabState extends State<BFTab> {
                   children: [
                     const Icon(Icons.date_range, color: Colors.deepPurple),
                     const SizedBox(width: 8),
-                    Text(
-                      _getDateRangeText(),
-                      style: const TextStyle(
-                        color: Colors.deepPurple,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final now = DateTime.now();
+                        final dateStr = DateFormat('dd-MMMM-yyyy').format(now);
+                        final dayStr = DateFormat('EEEE').format(now).toUpperCase();
+                        return Text(
+                          '$dateStr  ($dayStr)',
+                          style: const TextStyle(
+                            color: Colors.deepPurple,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Checkbox(
-                    value: isDateRange,
-                    onChanged: (value) {
-                      setState(() {
-                        isDateRange = value ?? false;
-                        if (!isDateRange && startDate != null) {
-                          // In single date mode, set both dates to same day
-                          endDate = startDate;
-                        }
-                      });
-                      _filterRecords();
-                    },
-                    activeColor: Colors.deepPurple,
-                  ),
-                  Text(
-                    'Show Date Range',
-                    style: TextStyle(
-                      color: Colors.grey[800],
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _selectDate(context, true),
-                      icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(isDateRange ? 'Start Date' : 'Select Date'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.deepPurple,
-                        side: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                  ),
-                  if (isDateRange) ...[
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _selectDate(context, false),
-                        icon: const Icon(Icons.calendar_today, size: 18),
-                        label: const Text('End Date'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.deepPurple,
-                          side: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
               ),
             ],
           ),
@@ -435,10 +268,9 @@ class _BFTabState extends State<BFTab> {
                         width: double.infinity,
                         child: _buildFinancialCard(
                           title: 'Net Balance',
-                          amount: allTimeIncome - allTimeExpenditure,
+                          amount: totalIncome - totalExpenditure,
                           icon: Icons.account_balance,
-                          color: (allTimeIncome - allTimeExpenditure) >= 0 ? Colors.green : Colors.red,
-                          showAllTime: true,
+                          color: (totalIncome - totalExpenditure) >= 0 ? Colors.green : Colors.red,
                         ),
                       ),
                     ],
@@ -454,7 +286,6 @@ class _BFTabState extends State<BFTab> {
     required double amount,
     required IconData icon,
     required Color color,
-    bool showAllTime = false,
   }) {
     return Container(
       decoration: BoxDecoration(

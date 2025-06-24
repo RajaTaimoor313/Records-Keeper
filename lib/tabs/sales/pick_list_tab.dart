@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
@@ -860,6 +861,42 @@ class _PickListTabState extends State<PickListTab> {
                       'amount': cashSum,
                     });
                     await _showPickListPrintPreview();
+
+                    // Save to history
+                    final notes = <String, String>{};
+                    _noteControllers.forEach((key, value) {
+                      if (value.text.isNotEmpty) {
+                        notes[key.toString()] = value.text;
+                      }
+                    });
+                    final historyData = {
+                      'items': _items.map((e) => e.toMap()).toList(),
+                      'manpower': _selectedManPowers.map((e) => e.toMap()).toList(),
+                      'notes': notes,
+                      'date': DateTime.now().toIso8601String(),
+                    };
+                    await DatabaseHelper.instance.addPickListHistory(
+                      DateTime.now().toIso8601String().split('T')[0],
+                      jsonEncode(historyData),
+                    );
+
+                    // Clear form
+                    await DatabaseHelper.instance.clearPickList();
+                    setState(() {
+                      _items.clear();
+                      _selectedManPowers.clear();
+                      _noteControllers.forEach((key, value) => value.clear());
+                    });
+                    await _loadItems(); // Refresh the list
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Pick List saved to history and form cleared.'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
                   } : null,
                   child: const Text('OK'),
                 ),
@@ -873,53 +910,107 @@ class _PickListTabState extends State<PickListTab> {
 
   Future<void> _showPickListPrintPreview() async {
     final pdf = pw.Document();
+    final logo = pw.MemoryImage(
+      (await rootBundle.load('assets/logo.png')).buffer.asUint8List(),
+    );
+
+    // Calculate totals
+    final double totalBillAmount = _items.fold(0.0, (sum, item) => sum + item.billAmount);
+    final double totalCash = _items.fold(0.0, (sum, item) => sum + item.cash);
+    final double totalCredit = _items.fold(0.0, (sum, item) => sum + item.credit);
+    final double totalDiscount = _items.fold(0.0, (sum, item) => sum + item.discount);
+    final double totalReturn = _items.fold(0.0, (sum, item) => sum + item.return_);
+
+    final String date = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    final String day = DateFormat('EEEE').format(DateTime.now());
+
+    final supplier = _selectedManPowers.where((mp) => mp.type == 'Supplier').map((mp) => mp.name).join(', ');
+    final orderBooker = _selectedManPowers.where((mp) => mp.type == 'Order Booker').map((mp) => mp.name).join(', ');
+
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Pick List', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 8),
-              if (_selectedManPowers.isNotEmpty)
-                ..._selectedManPowers.map((mp) => pw.Text('${mp.type}: ${mp.name}')),
-              pw.SizedBox(height: 16),
-              pw.Table(
-                border: pw.TableBorder.all(),
-                children: [
-                  pw.TableRow(
-                    children: [
-                      pw.Text('Invoice No.', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Shop', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Bill Amount', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Cash', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Credit', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Discount', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Return', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                    ],
-                  ),
-                  ..._items.map((item) => pw.TableRow(
-                    children: [
-                      pw.Text(item.invoiceNumber ?? ''),
-                      pw.Text(item.shopName),
-                      pw.Text(item.billAmount.toStringAsFixed(2)),
-                      pw.Text(item.cash.toStringAsFixed(2)),
-                      pw.Text(item.credit.toStringAsFixed(2)),
-                      pw.Text((item.discount).toStringAsFixed(2)),
-                      pw.Text((item.return_).toStringAsFixed(2)),
-                    ],
-                  )),
-                ],
+          return [
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.SizedBox(
+                  height: 50,
+                  width: 50,
+                  child: pw.Image(logo),
+                ),
+                pw.Text('Pick List', style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 10), // For spacing
+              ],
+            ),
+            pw.SizedBox(height: 10),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoRow('Supplier:', supplier),
+                    _buildInfoRow('Order Booker:', orderBooker),
+                    _buildInfoRow('Total Bill Amount:', totalBillAmount.toStringAsFixed(2)),
+                    _buildInfoRow('Total Credit:', totalCredit.toStringAsFixed(2)),
+                    _buildInfoRow('Total Discount:', totalDiscount.toStringAsFixed(2)),
+                  ],
+                ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoRow('Date:', date),
+                    _buildInfoRow('Day:', day),
+                    _buildInfoRow('Total Cash:', totalCash.toStringAsFixed(2)),
+                    _buildInfoRow('Total Return:', totalReturn.toStringAsFixed(2)),
+                    _buildInfoRow('Total Pages:', '1'), // Placeholder
+                  ],
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['Invoice No.', 'Shop', 'Bill Amount', 'Cash', 'Credit', 'Discount', 'Return'],
+              data: _items.map((item) => [
+                item.invoiceNumber ?? '',
+                item.shopName,
+                item.billAmount.toStringAsFixed(2),
+                item.cash.toStringAsFixed(2),
+                item.credit.toStringAsFixed(2),
+                item.discount.toStringAsFixed(2),
+                item.return_.toStringAsFixed(2),
+              ]).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              cellAlignment: pw.Alignment.center,
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.grey300,
               ),
-            ],
-          );
+              border: pw.TableBorder.all(),
+            ),
+          ];
         },
       ),
     );
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
       name: 'PickList_${DateTime.now().millisecondsSinceEpoch}.pdf',
+    );
+  }
+
+  pw.Widget _buildInfoRow(String title, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(title, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(width: 16),
+          pw.Text(value),
+        ],
+      ),
     );
   }
 

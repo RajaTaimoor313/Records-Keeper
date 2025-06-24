@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dart:math' as math;
+import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'package:records_keeper/database_helper.dart';
 
@@ -93,46 +96,69 @@ class _LoadFormTabState extends State<LoadFormTab> {
 
   Future<void> _showLoadFormPrintPreview() async {
     final pdf = pw.Document();
+    final logo = pw.MemoryImage(
+      (await rootBundle.load('assets/logo.png')).buffer.asUint8List(),
+    );
+    final String date = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    final String day = DateFormat('EEEE').format(DateTime.now());
+
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('Load Form', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 16),
-              pw.Table(
-                border: pw.TableBorder.all(),
-                children: [
-                  pw.TableRow(
-                    children: [
-                      pw.Text('No.', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Brand Name', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Units', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Return', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Sale', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Saled Return', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                    ],
-                  ),
-                  ..._items.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    return pw.TableRow(
-                      children: [
-                        pw.Text((index + 1).toString()),
-                        pw.Text(item.brandName),
-                        pw.Text(item.units.toString()),
-                        pw.Text(item.returnQty.toString()),
-                        pw.Text(item.sale.toString()),
-                        pw.Text(item.saledReturn.toString()),
-                      ],
-                    );
-                  }),
-                ],
+          return [
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.SizedBox(
+                  height: 50,
+                  width: 50,
+                  child: pw.Image(logo),
+                ),
+                pw.Text('Load Form', style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 10),
+              ],
+            ),
+            pw.SizedBox(height: 10),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.start,
+              children: [
+                pw.Text('Date:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 4),
+                pw.Text(date),
+                pw.SizedBox(width: 40),
+                pw.Text('Day:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 4),
+                pw.Text(day),
+                pw.SizedBox(width: 40),
+                pw.Text('Total Pages:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 4),
+                pw.Text('1'), // Placeholder
+              ],
+            ),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['No.', 'Brand Name', 'Units', 'Return', 'Sale', 'Saled Return'],
+              data: _items.asMap().entries.map((entry) {
+                final i = entry.key;
+                final item = entry.value;
+                return [
+                  (i + 1).toString(),
+                  item.brandName,
+                  item.units.toString(),
+                  item.returnQty.toString(),
+                  item.sale.toString(),
+                  item.saledReturn.toString(),
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              cellAlignment: pw.Alignment.center,
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.white,
               ),
-            ],
-          );
+              border: pw.TableBorder.all(),
+            ),
+          ];
         },
       ),
     );
@@ -447,49 +473,31 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                 children: [
                                   ElevatedButton.icon(
                                     onPressed: () async {
-                                      // First recalculate all sales in the database
-                                      await DatabaseHelper.instance.recalculateAllLoadFormSales();
-                                      // Then refresh the data
-                                      await _loadItems();
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Load Form refreshed and sales recalculated'),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.deepPurple,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.refresh, size: 20),
-                                    label: const Text(
-                                      'Refresh',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  ElevatedButton.icon(
-                                    onPressed: () async {
                                       try {
                                         // Update stock records with sale data from Load Form
                                         await DatabaseHelper.instance.updateStockRecordsFromLoadForm();
-                                        
-                                        // New functionality: show print preview
-                                        await _showLoadFormPrintPreview();
+
+                                        // Save to history
+                                        final historyData = {
+                                          'items': _items.map((e) => e.toMap()).toList(),
+                                          'date': DateTime.now().toIso8601String(),
+                                        };
+                                        await DatabaseHelper.instance.addLoadFormHistory(
+                                          DateTime.now().toIso8601String().split('T')[0],
+                                          jsonEncode(historyData),
+                                        );
+
+                                        // Clear form
+                                        await DatabaseHelper.instance.clearLoadForm();
+                                        setState(() {
+                                          _items.clear();
+                                        });
+                                        await _loadItems(); // Refresh the list
 
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             const SnackBar(
-                                              content: Text('Stock Summary has been updated successfully.'),
+                                              content: Text('Load Form saved and stock updated.'),
                                               backgroundColor: Colors.green,
                                             ),
                                           );
@@ -498,7 +506,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
-                                              content: Text('Error updating Stock Summary: $e'),
+                                              content: Text('Error: $e'),
                                               backgroundColor: Colors.red,
                                             ),
                                           );
@@ -516,6 +524,25 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                     icon: const Icon(Icons.check_circle_outline, size: 20),
                                     label: const Text(
                                       'Generate',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: _showLoadFormPrintPreview,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.deepPurple,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.print_outlined, size: 20),
+                                    label: const Text(
+                                      'Print',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
@@ -583,50 +610,31 @@ class _LoadFormTabState extends State<LoadFormTab> {
                               children: [
                                 ElevatedButton.icon(
                                   onPressed: () async {
-                                    // First recalculate all sales in the database
-                                    await DatabaseHelper.instance.recalculateAllLoadFormSales();
-                                    // Then refresh the data
-                                    await _loadItems();
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Load Form refreshed and sales recalculated'),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.deepPurple,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  icon: const Icon(Icons.refresh, size: 20),
-                                  label: const Text(
-                                    'Refresh',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                ElevatedButton.icon(
-                                  onPressed: () async {
                                     try {
                                       // Update stock records with sale data from Load Form
                                       await DatabaseHelper.instance.updateStockRecordsFromLoadForm();
-                                      
-                                      // New functionality: show print preview
-                                      await _showLoadFormPrintPreview();
+
+                                      // Save to history
+                                      final historyData = {
+                                        'items': _items.map((e) => e.toMap()).toList(),
+                                        'date': DateTime.now().toIso8601String(),
+                                      };
+                                      await DatabaseHelper.instance.addLoadFormHistory(
+                                        DateTime.now().toIso8601String().split('T')[0],
+                                        jsonEncode(historyData),
+                                      );
+
+                                      // Clear form
+                                      await DatabaseHelper.instance.clearLoadForm();
+                                      setState(() {
+                                        _items.clear();
+                                      });
+                                      await _loadItems(); // Refresh the list
 
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
-                                            content: Text('Stock Summary has been updated successfully.'),
+                                            content: Text('Load Form saved and stock updated.'),
                                             backgroundColor: Colors.green,
                                           ),
                                         );
@@ -635,7 +643,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
-                                            content: Text('Error updating Stock Summary: $e'),
+                                            content: Text('Error: $e'),
                                             backgroundColor: Colors.red,
                                           ),
                                         );
@@ -653,6 +661,26 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                   icon: const Icon(Icons.check_circle_outline, size: 20),
                                   label: const Text(
                                     'Generate',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                ElevatedButton.icon(
+                                  onPressed: _showLoadFormPrintPreview,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepPurple,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.print_outlined, size: 20),
+                                  label: const Text(
+                                    'Print',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,

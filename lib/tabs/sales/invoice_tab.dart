@@ -491,7 +491,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
       ),
       child: Row(
         children: [
-          _buildTableCell('', flex: 1, isHeader: true, scale: scale),
+          _buildTableCell('No.', flex: 1, isHeader: true, scale: scale),
           _buildTableCell('Description', flex: 3, isHeader: true, scale: scale),
           _buildTableCell('Rate', flex: 2, isHeader: true, scale: scale),
           _buildTableCell('Unit', isHeader: true, scale: scale),
@@ -1145,42 +1145,43 @@ class _InvoiceTabState extends State<InvoiceTab> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final double maxWidth = constraints.maxWidth;
-                  final int invoicesPerRow = (maxWidth / 350).floor().clamp(1, 2);
-                  final double availableWidth = maxWidth - 32;
-                  final double scale = ((availableWidth / invoicesPerRow) / 297).clamp(0.5, 1.0);
+                  // Set a minimum and maximum width for the invoice card
+                  final double invoiceCardWidth = maxWidth < 500 ? maxWidth - 32 : 400;
+                  final double scale = (invoiceCardWidth / 350).clamp(1.0, 1.25);
 
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            _buildInvoice(context, scale),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: 200,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              _saveInvoice();
-                            },
-                            icon: const Icon(Icons.print),
-                            label: const Text('Create Invoice'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                  return Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: invoiceCardWidth,
+                            child: _buildInvoice(context, scale),
+                          ),
+                          // const SizedBox(height: 24),
+                          SizedBox(
+                            width: 240,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _saveInvoice();
+                              },
+                              icon: const Icon(Icons.save),
+                              label: const Text('Create Invoice'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },

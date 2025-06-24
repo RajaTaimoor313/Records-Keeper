@@ -15,6 +15,7 @@ import 'package:records_keeper/tabs/stock/stock_tab.dart';
 import 'package:records_keeper/tabs/stock/view_products_tab.dart';
 import 'package:records_keeper/tabs/suppliers/add_supplier_tab.dart';
 import 'package:records_keeper/tabs/suppliers/view_suppliers_tab.dart';
+import 'package:records_keeper/tabs/history_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,12 +34,16 @@ class _HomeScreenState extends State<HomeScreen>
   bool _salesExpanded = false;
   bool _supplierExpanded = false;
   bool _creditExpanded = false;
+  bool _reportsExpanded = false;
+  bool _accountsExpanded = false;
   String? _cashFlowSubTab;
   String? _stockSubTab;
   String? _newTabSubTab;
   String? _salesSubTab;
   String? _selectedSupplierTab;
   String? _creditSubTab;
+  String? _reportsSubTab;
+  String? _accountsSubTab;
   late AnimationController _animationController;
 
   @override
@@ -214,16 +219,47 @@ class _HomeScreenState extends State<HomeScreen>
                   _buildDashItem(),
                   _buildCashFlowItem(),
                   _buildStockItem(),
-                  _buildNewTabItem(),
+                  _buildShopItem(),
                   _buildSupplierItem(),
                   _buildSalesItem(),
+                  _buildReportsItem(),
+                  _buildAccountsItem(),
                   _buildCreditItem(),
+                  _buildHistoryItem(),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHistoryItem() {
+    return ListTile(
+      horizontalTitleGap: 8,
+      minLeadingWidth: 20,
+      leading: SizedBox(
+        width: 24,
+        height: 24,
+        child: Icon(
+          Icons.history_edu_rounded,
+          size: 20,
+          color: _selectedIndex == 15 ? Colors.deepPurple : Colors.grey.shade700,
+        ),
+      ),
+      title: Text(
+        'History',
+        style: TextStyle(
+          color: _selectedIndex == 15 ? Colors.deepPurple : Colors.grey.shade700,
+          fontWeight: _selectedIndex == 15 ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      onTap: () {
+        setState(() {
+          _selectedIndex = 15;
+        });
+      },
     );
   }
 
@@ -277,56 +313,57 @@ class _HomeScreenState extends State<HomeScreen>
             });
           },
         ),
-        if (_cashFlowExpanded)
-          Column(
-            children: [
-              _buildSubMenuItem(
-                'Income',
-                _cashFlowSubTab == 'Income',
-                () {
-                  setState(() {
-                    _selectedIndex = 1;
-                    _cashFlowSubTab = 'Income';
-                  });
-                },
-              ),
-              _buildSubMenuItem(
-                'Expenditure',
-                _cashFlowSubTab == 'Expenditure',
-                () {
-                  setState(() {
-                    _selectedIndex = 1;
-                    _cashFlowSubTab = 'Expenditure';
-                  });
-                },
-              ),
-              _buildSubMenuItem(
-                'B/F',
-                _cashFlowSubTab == 'B/F',
-                () {
-                  setState(() {
-                    _selectedIndex = 1;
-                    _cashFlowSubTab = 'B/F';
-                  });
-                },
-              ),
-            ],
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _cashFlowExpanded ? 144 : 0, // 48 pixels per item * 3 items
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildCashFlowSubItem('Income'),
+                _buildCashFlowSubItem('Expenditure'),
+                _buildCashFlowSubItem('B/F'),
+              ],
+            ),
           ),
+        ),
       ],
     );
   }
 
-  Widget _buildSubMenuItem(String title, bool isSelected, VoidCallback onTap) => ListTile(
-    title: Text(
-      title,
-      style: TextStyle(
-        color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+  Widget _buildCashFlowSubItem(String tabName) {
+    final isSelected = _selectedIndex == 1 && _cashFlowSubTab == tabName;
+    return Container(
+      padding: const EdgeInsets.only(left: 32.0),
+      child: ListTile(
+        horizontalTitleGap: 8,
+        minLeadingWidth: 20,
+        leading: SizedBox(
+          width: 24,
+          height: 24,
+          child: Icon(
+            Icons.arrow_right_rounded,
+            size: 20,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+          ),
+        ),
+        title: Text(
+          tabName,
+          style: TextStyle(
+            fontSize: 14,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        onTap: () {
+          setState(() {
+            _selectedIndex = 1;
+            _cashFlowSubTab = tabName;
+          });
+        },
       ),
-    ),
-    onTap: onTap,
-    contentPadding: const EdgeInsets.only(left: 48),
-  );
+    );
+  }
 
   Widget _buildStockItem() {
     return Column(
@@ -536,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildNewTabItem() {
+  Widget _buildShopItem() {
     return Column(
       children: [
         ListTile(
@@ -648,7 +685,7 @@ class _HomeScreenState extends State<HomeScreen>
         width: 24,
         height: 24,
         child: Icon(
-              Icons.local_shipping_rounded,
+              Icons.emoji_people,
           size: 20,
               color: (_selectedIndex == 13 && _selectedSupplierTab != null)
                   ? Colors.deepPurple
@@ -733,6 +770,211 @@ class _HomeScreenState extends State<HomeScreen>
           setState(() {
             _selectedIndex = 13;
             _selectedSupplierTab = tabName;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildReportsItem() {
+    return Column(
+      children: [
+        ListTile(
+          horizontalTitleGap: 8,
+          minLeadingWidth: 20,
+          leading: SizedBox(
+            width: 24,
+            height: 24,
+            child: Icon(
+              Icons.bar_chart_rounded,
+              size: 20,
+              color: (_selectedIndex == 16 && _reportsSubTab != null)
+                  ? Colors.deepPurple
+                  : Colors.grey.shade700,
+            ),
+          ),
+          title: Row(
+            children: [
+              Text(
+                'Reports',
+                style: TextStyle(
+                  color: (_selectedIndex == 16 && _reportsSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                  fontWeight: (_selectedIndex == 16 && _reportsSubTab != null)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              AnimatedRotation(
+                turns: _reportsExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 20,
+                  color: (_selectedIndex == 16 && _reportsSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          onTap: () {
+            setState(() {
+              _reportsExpanded = !_reportsExpanded;
+            });
+          },
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _reportsExpanded ? 96 : 0,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildReportsSubItem('Stock'),
+                _buildReportsSubItem('Sale'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReportsSubItem(String tabName) {
+    final isSelected = _selectedIndex == 16 && _reportsSubTab == tabName;
+    return Container(
+      padding: const EdgeInsets.only(left: 32.0),
+      child: ListTile(
+        horizontalTitleGap: 8,
+        minLeadingWidth: 20,
+        leading: SizedBox(
+          width: 24,
+          height: 24,
+          child: Icon(
+            Icons.arrow_right_rounded,
+            size: 20,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+          ),
+        ),
+        title: Text(
+          tabName,
+          style: TextStyle(
+            fontSize: 14,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        onTap: () {
+          setState(() {
+            _selectedIndex = 16;
+            _reportsSubTab = tabName;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildAccountsItem() {
+    return Column(
+      children: [
+        ListTile(
+          horizontalTitleGap: 8,
+          minLeadingWidth: 20,
+          leading: SizedBox(
+            width: 24,
+            height: 24,
+            child: Icon(
+              Icons.account_balance_rounded,
+              size: 20,
+              color: (_selectedIndex == 17 && _accountsSubTab != null)
+                  ? Colors.deepPurple
+                  : Colors.grey.shade700,
+            ),
+          ),
+          title: Row(
+            children: [
+              Text(
+                'Accounts',
+                style: TextStyle(
+                  color: (_selectedIndex == 17 && _accountsSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                  fontWeight: (_selectedIndex == 17 && _accountsSubTab != null)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              AnimatedRotation(
+                turns: _accountsExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 20,
+                  color: (_selectedIndex == 17 && _accountsSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          onTap: () {
+            setState(() {
+              _accountsExpanded = !_accountsExpanded;
+            });
+          },
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _accountsExpanded ? 240 : 0,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildAccountsSubItem('Profit & Loss'),
+                _buildAccountsSubItem('Balance Sheet'),
+                _buildAccountsSubItem('Creditors'),
+                _buildAccountsSubItem('Debtors'),
+                _buildAccountsSubItem('Assets'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAccountsSubItem(String tabName) {
+    final isSelected = _selectedIndex == 17 && _accountsSubTab == tabName;
+    return Container(
+      padding: const EdgeInsets.only(left: 32.0),
+      child: ListTile(
+        horizontalTitleGap: 8,
+        minLeadingWidth: 20,
+        leading: SizedBox(
+          width: 24,
+          height: 24,
+          child: Icon(
+            Icons.arrow_right_rounded,
+            size: 20,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+          ),
+        ),
+        title: Text(
+          tabName,
+          style: TextStyle(
+            fontSize: 14,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        onTap: () {
+          setState(() {
+            _selectedIndex = 17;
+            _accountsSubTab = tabName;
           });
         },
       ),
@@ -860,6 +1102,11 @@ class _HomeScreenState extends State<HomeScreen>
           fontWeight: _selectedIndex == 12 ? FontWeight.bold : FontWeight.normal,
         ),
       ),
+      onTap: () {
+        setState(() {
+          _selectedIndex = 12;
+        });
+      },
     );
   }
 
@@ -948,6 +1195,38 @@ class _HomeScreenState extends State<HomeScreen>
             return const RealisationTab();
           default:
             return _buildPlaceholder('Credit - $_creditSubTab');
+        }
+      case 15:
+        return const HistoryTab();
+      case 16:
+        if (_reportsSubTab == null) {
+          return _buildPlaceholder('Reports');
+        }
+        switch (_reportsSubTab) {
+          case 'Stock':
+            return _buildPlaceholder('Reports - Stock');
+          case 'Sale':
+            return _buildPlaceholder('Reports - Sale');
+          default:
+            return _buildPlaceholder('Reports - $_reportsSubTab');
+        }
+      case 17:
+        if (_accountsSubTab == null) {
+          return _buildPlaceholder('Accounts');
+        }
+        switch (_accountsSubTab) {
+          case 'Profit & Loss':
+            return _buildPlaceholder('Accounts - Profit & Loss');
+          case 'Balance Sheet':
+            return _buildPlaceholder('Accounts - Balance Sheet');
+          case 'Creditors':
+            return _buildPlaceholder('Accounts - Creditors');
+          case 'Debtors':
+            return _buildPlaceholder('Accounts - Debtors');
+          case 'Assets':
+            return _buildPlaceholder('Accounts - Assets');
+          default:
+            return _buildPlaceholder('Accounts - $_accountsSubTab');
         }
       default:
         return _buildPlaceholder('Dashboard');
