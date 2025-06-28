@@ -237,6 +237,10 @@ class _LoadFormTabState extends State<LoadFormTab> {
                       issue: field == 'issue' ? int.tryParse(newValue) ?? 0 : item.issue,
                       saledReturn: field == 'saledReturn' ? int.tryParse(newValue) ?? 0 : item.saledReturn,
                     );
+                    setState(() {
+                      final idx = _items.indexWhere((i) => i.id == item.id);
+                      if (idx != -1) _items[idx] = updatedItem;
+                    });
                     _updateItem(updatedItem);
                   }
                 },
@@ -502,6 +506,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                             ),
                                           );
                                         }
+                                        await _showLoadFormPrintPreview();
                                       } catch (e) {
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
@@ -524,25 +529,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                     icon: const Icon(Icons.check_circle_outline, size: 20),
                                     label: const Text(
                                       'Generate',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  ElevatedButton.icon(
-                                    onPressed: _showLoadFormPrintPreview,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.deepPurple,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.print_outlined, size: 20),
-                                    label: const Text(
-                                      'Print',
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
@@ -639,6 +625,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                           ),
                                         );
                                       }
+                                      await _showLoadFormPrintPreview();
                                     } catch (e) {
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
@@ -661,26 +648,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                   icon: const Icon(Icons.check_circle_outline, size: 20),
                                   label: const Text(
                                     'Generate',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                ElevatedButton.icon(
-                                  onPressed: _showLoadFormPrintPreview,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.deepPurple,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  icon: const Icon(Icons.print_outlined, size: 20),
-                                  label: const Text(
-                                    'Print',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,

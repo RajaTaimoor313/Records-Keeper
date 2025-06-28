@@ -104,6 +104,8 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
         }
       }
       await dbHelper.setAppMetadata('last_rollover_date', todayStr);
+      // Reset available stock from total stock after rollover
+      await dbHelper.resetAvailableStockFromTotalStock();
     }
     await _loadData();
   }
@@ -172,6 +174,65 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading stock summary: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateAvailableStock() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      
+      // Get all products
+      final products = await db.query('products');
+      
+      int updatedCount = 0;
+      
+      for (final product in products) {
+        // Get the latest stock record for this product
+        final records = await db.query(
+          'stock_records',
+          where: 'product_id = ?',
+          whereArgs: [product['id']],
+          orderBy: 'date DESC',
+          limit: 1,
+        );
+        
+        if (records.isNotEmpty) {
+          final latestRecord = records.first;
+          
+          // Calculate total stock (opening + received)
+          final openingStockTotal = (latestRecord['opening_stock_total'] as num).toDouble();
+          final receivedTotal = (latestRecord['received_total'] as num).toDouble();
+          final totalStock = openingStockTotal + receivedTotal;
+          
+          // Update the product's available_stock
+          await db.update(
+            'products',
+            {'available_stock': totalStock},
+            where: 'id = ?',
+            whereArgs: [product['id']],
+          );
+          
+          updatedCount++;
+        }
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Available stock updated for $updatedCount products'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating available stock: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -350,6 +411,191 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     return total;
   }
 
+  // Helper methods for Total row calculations using the same logic as individual rows
+  double _calculateTotalStockCtn(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+      final boxPacking = product['boxPacking'] as int;
+      if (boxPacking > 0) {
+        if (totalStockTotal < boxPacking) {
+          total += 0;
+        } else {
+          total += totalStockTotal ~/ boxPacking;
+        }
+      } else {
+        total += 0;
+      }
+    }
+    return total;
+  }
+
+  double _calculateTotalStockUnits(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+      final boxPacking = product['boxPacking'] as int;
+      if (boxPacking > 0) {
+        if (totalStockTotal < boxPacking) {
+          total += totalStockTotal;
+        } else {
+          total += totalStockTotal % boxPacking;
+        }
+      } else {
+        total += totalStockTotal;
+      }
+    }
+    return total;
+  }
+
+  double _calculateTotalStockTotal(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      total += getVal('opening_stock_total') + getVal('received_total');
+    }
+    return total;
+  }
+
+  double _calculateTotalStockValue(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      total += getVal('opening_stock_value') + getVal('received_value');
+    }
+    return total;
+  }
+
+  double _calculateClosingStockCtn(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+      final saleTotal = getVal('sale_total');
+      final saledReturnTotal = getVal('saled_return_total');
+      final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
+      final boxPacking = product['boxPacking'] as int;
+      if (boxPacking > 0) {
+        if (closingStockTotal < boxPacking) {
+          total += 0;
+        } else {
+          total += closingStockTotal ~/ boxPacking;
+        }
+      } else {
+        total += 0;
+      }
+    }
+    return total;
+  }
+
+  double _calculateClosingStockUnits(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+      final saleTotal = getVal('sale_total');
+      final saledReturnTotal = getVal('saled_return_total');
+      final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
+      final boxPacking = product['boxPacking'] as int;
+      if (boxPacking > 0) {
+        if (closingStockTotal < boxPacking) {
+          total += closingStockTotal;
+        } else {
+          total += closingStockTotal % boxPacking;
+        }
+      } else {
+        total += closingStockTotal;
+      }
+    }
+    return total;
+  }
+
+  double _calculateClosingStockTotal(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+      final saleTotal = getVal('sale_total');
+      final saledReturnTotal = getVal('saled_return_total');
+      total += totalStockTotal - saleTotal + saledReturnTotal;
+    }
+    return total;
+  }
+
+  double _calculateClosingStockValue(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+      final saleTotal = getVal('sale_total');
+      final saledReturnTotal = getVal('saled_return_total');
+      final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
+      final boxRate = product['boxRate'] is num ? (product['boxRate'] as num).toDouble() : double.tryParse(product['boxRate'].toString()) ?? 0.0;
+      total += closingStockTotal * boxRate;
+    }
+    return total;
+  }
+
+  double _calculateSaleCtn(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      final saleTotal = getVal('sale_total');
+      final boxPacking = product['boxPacking'] as int;
+      if (boxPacking > 0) {
+        if (saleTotal < boxPacking) {
+          total += 0;
+        } else {
+          total += saleTotal ~/ boxPacking;
+        }
+      } else {
+        total += 0;
+      }
+    }
+    return total;
+  }
+
+  double _calculateSaleUnits(CompanyStockSummary summary) {
+    double total = 0;
+    for (final product in summary.products) {
+      double getVal(String fieldName) {
+        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+      }
+      final saleTotal = getVal('sale_total');
+      final boxPacking = product['boxPacking'] as int;
+      if (boxPacking > 0) {
+        if (saleTotal < boxPacking) {
+          total += saleTotal;
+        } else {
+          total += saleTotal % boxPacking;
+        }
+      } else {
+        total += saleTotal;
+      }
+    }
+    return total;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -401,34 +647,60 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                     ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await _loadData();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Stock Summary refreshed'),
-                          backgroundColor: Colors.green,
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await _updateAvailableStock();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      ),
+                      icon: const Icon(Icons.update, size: 20),
+                      label: const Text(
+                        'Update Available Stock',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
-                  icon: const Icon(Icons.refresh, size: 20),
-                  label: const Text(
-                    'Refresh',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await _loadData();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Stock Summary refreshed'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.refresh, size: 20),
+                      label: const Text(
+                        'Refresh',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -694,19 +966,19 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                                   _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_units')), false, true),
                                   _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_total')), false, true),
                                   _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_value')), false, true),
-                                  // Total Stock totals
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'total_stock_ctn')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'total_stock_units')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'total_stock_total')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'total_stock_value')), false, true),
-                                  // Closing Stock totals
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'closing_stock_ctn')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'closing_stock_units')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'closing_stock_total')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'closing_stock_value')), false, true),
-                                  // Sale totals
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_ctn')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_units')), false, true),
+                                  // Total Stock totals - calculate using the same logic as individual rows
+                                  _buildDataCell(_formatIndianNumber(_calculateTotalStockCtn(summary)), false, true),
+                                  _buildDataCell(_formatIndianNumber(_calculateTotalStockUnits(summary)), false, true),
+                                  _buildDataCell(_formatIndianNumber(_calculateTotalStockTotal(summary)), false, true),
+                                  _buildDataCell(_formatIndianNumber(_calculateTotalStockValue(summary)), false, true),
+                                  // Closing Stock totals - calculate using the same logic as individual rows
+                                  _buildDataCell(_formatIndianNumber(_calculateClosingStockCtn(summary)), false, true),
+                                  _buildDataCell(_formatIndianNumber(_calculateClosingStockUnits(summary)), false, true),
+                                  _buildDataCell(_formatIndianNumber(_calculateClosingStockTotal(summary)), false, true),
+                                  _buildDataCell(_formatIndianNumber(_calculateClosingStockValue(summary)), false, true),
+                                  // Sale totals - calculate using the same logic as individual rows
+                                  _buildDataCell(_formatIndianNumber(_calculateSaleCtn(summary)), false, true),
+                                  _buildDataCell(_formatIndianNumber(_calculateSaleUnits(summary)), false, true),
                                   _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_total')), false, true),
                                   _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_value')), false, true),
                                 ],

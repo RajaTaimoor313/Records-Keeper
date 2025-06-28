@@ -55,6 +55,11 @@ class _BFTabState extends State<BFTab> {
     _loadData();
   }
 
+  String _formatIndianNumber(double value) {
+    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    return formatter.format(value).trim();
+  }
+
   Future<void> _loadData() async {
     setState(() {
       isLoading = true;
@@ -81,14 +86,13 @@ class _BFTabState extends State<BFTab> {
         isIncome: false,
       )).toList();
 
-      // Get today's date in the same format as stored (dd/MM/yyyy or yyyy-MM-dd)
+      // Get today's date in yyyy-MM-dd format
       final now = DateTime.now();
-      final todayStr1 = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
-      final todayStr2 = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final todayStr = DateFormat('yyyy-MM-dd').format(now);
 
       // Filter for today only
-      final todayIncome = incomeData.where((r) => r.date == todayStr1 || r.date == todayStr2).toList();
-      final todayExpenditure = expenditureData.where((r) => r.date == todayStr1 || r.date == todayStr2).toList();
+      final todayIncome = incomeData.where((r) => r.date == todayStr).toList();
+      final todayExpenditure = expenditureData.where((r) => r.date == todayStr).toList();
 
       // Calculate financial summaries for today
       salesRecoveryTotal = todayIncome.where((r) => r.category == 'Sales & Recovery').fold(0.0, (sum, r) => sum + r.amount);
@@ -328,7 +332,7 @@ class _BFTabState extends State<BFTab> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Rs. ${amount.toStringAsFixed(2)}',
+                  'Rs. ${_formatIndianNumber(amount)}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

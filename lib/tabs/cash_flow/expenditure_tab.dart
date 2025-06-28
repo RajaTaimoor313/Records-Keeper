@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:records_keeper/database_helper.dart';
+import 'package:intl/intl.dart';
 
 class ExpenditureData {
   final String date;
@@ -85,6 +86,11 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
     detailsController.dispose();
     amountController.dispose();
     super.dispose();
+  }
+
+  String _formatIndianNumber(double value) {
+    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    return formatter.format(value).trim();
   }
 
   Future<void> _loadExpenditureRecords() async {
@@ -171,7 +177,7 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
     );
     if (picked != null) {
       setState(() {
-        dateController.text = "${picked.day}/${picked.month}/${picked.year}";
+        dateController.text = DateFormat('yyyy-MM-dd').format(picked);
       });
     }
   }
@@ -912,7 +918,7 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                                     Expanded(
                                       flex: 2,
                                       child: Text(
-                                        'Rs. ${record.amount.toStringAsFixed(2)}',
+                                        'Rs. ${_formatIndianNumber(record.amount)}',
                                         style: const TextStyle(
                                           color: Colors.red,
                                           fontWeight: FontWeight.w600,

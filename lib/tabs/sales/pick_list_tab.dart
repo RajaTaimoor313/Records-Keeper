@@ -882,11 +882,13 @@ class _PickListTabState extends State<PickListTab> {
 
                     // Clear form
                     await DatabaseHelper.instance.clearPickList();
-                    setState(() {
-                      _items.clear();
-                      _selectedManPowers.clear();
-                      _noteControllers.forEach((key, value) => value.clear());
-                    });
+                    if (mounted) {
+                      setState(() {
+                        _items.clear();
+                        _selectedManPowers.clear();
+                        _noteControllers.forEach((key, value) => value.clear());
+                      });
+                    }
                     await _loadItems(); // Refresh the list
 
                     if (mounted) {
@@ -1107,111 +1109,114 @@ class _PickListTabState extends State<PickListTab> {
               content: SizedBox(
                 width: 800,  // Increased width for better visibility
                 height: 600,  // Fixed height for better visibility
-                child: Column(
-                  children: [
-                    Text(
-                      'Return Amount: Rs. ${returnValue.toStringAsFixed(2)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Remaining: Rs. ${remainingReturnValue.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: remainingReturnValue < 0 ? Colors.red : Colors.green,
-                        fontWeight: FontWeight.bold,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Return Amount: Rs. ${returnValue.toStringAsFixed(2)}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: const [
-                          DataColumn(label: Text('Select')),
-                          DataColumn(label: Text('Product')),
-                          DataColumn(label: Text('Original Units')),
-                          DataColumn(label: Text('Rate')),
-                          DataColumn(label: Text('Return Units')),
-                          DataColumn(label: Text('Return Value')),
-                          DataColumn(label: Text('Max Return Value')),
-                        ],
-                        rows: List<DataRow>.generate(
-                          invoiceItems.length,
-                          (index) {
-                            final item = invoiceItems[index];
-                            final controller = unitControllers[index]!;
-                            final isSelected = selectedProducts.contains(item);
-                            final returnUnits = int.tryParse(controller.text) ?? 0;
-                            final returnValue = returnUnits * (item['rate'] as double);
-                            final maxReturnValue = (item['maxUnits'] as int) * (item['rate'] as double);
-
-                            return DataRow(
-                              cells: [
-                                DataCell(
-                                  Checkbox(
-                                    value: isSelected,
-                                    onChanged: (bool? value) {
-                                      setState(() {
-                                        if (value == true) {
-                                          selectedProducts.add(item);
-                                        } else {
-                                          selectedProducts.remove(item);
-                                          controller.clear();
-                                          _recalculateRemainingValue(
-                                            returnValue,
-                                            selectedProducts,
-                                            unitControllers,
-                                            invoiceItems,
-                                            (value) => remainingReturnValue = value,
-                                          );
-                                        }
-                                      });
-                                    },
-                                  ),
-                                ),
-                                DataCell(Text(item['brandName'] as String)),
-                                DataCell(Text((item['maxUnits'] as int).toString())),
-                                DataCell(Text((item['rate'] as double).toString())),
-                                DataCell(
-                                  isSelected
-                                      ? TextField(
-                                          controller: controller,
-                                          keyboardType: TextInputType.number,
-                                          decoration: const InputDecoration(
-                                            isDense: true,
-                                            contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                                          ),
-                                          onChanged: (value) {
-                                            final units = int.tryParse(value) ?? 0;
-                                            if (units > (item['maxUnits'] as int)) {
-                                              controller.text = item['maxUnits'].toString();
-                                            }
-                                            setState(() {
-                                              _recalculateRemainingValue(
-                                                returnValue,
-                                                selectedProducts,
-                                                unitControllers,
-                                                invoiceItems,
-                                                (value) => remainingReturnValue = value,
-                                              );
-                                            });
-                                          },
-                                        )
-                                      : const Text('')
-                                ),
-                                DataCell(
-                                  Text(
-                                    isSelected && returnUnits > 0
-                                        ? returnValue.toStringAsFixed(2)
-                                        : '',
-                                  ),
-                                ),
-                                DataCell(Text(maxReturnValue.toStringAsFixed(2))),
-                              ],
-                            );
-                          },
+                      Text(
+                        'Remaining: Rs. ${remainingReturnValue.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: remainingReturnValue < 0 ? Colors.red : Colors.green,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text('Select')),
+                            DataColumn(label: Text('Product')),
+                            DataColumn(label: Text('Original Units')),
+                            DataColumn(label: Text('Rate')),
+                            DataColumn(label: Text('Return Units')),
+                            DataColumn(label: Text('Return Value')),
+                            DataColumn(label: Text('Max Return Value')),
+                          ],
+                          rows: List<DataRow>.generate(
+                            invoiceItems.length,
+                            (index) {
+                              final item = invoiceItems[index];
+                              final controller = unitControllers[index]!;
+                              final isSelected = selectedProducts.contains(item);
+                              final returnUnits = int.tryParse(controller.text) ?? 0;
+                              final returnValue = returnUnits * (item['rate'] as double);
+                              final maxReturnValue = (item['maxUnits'] as int) * (item['rate'] as double);
+
+                              return DataRow(
+                                cells: [
+                                  DataCell(
+                                    Checkbox(
+                                      value: isSelected,
+                                      onChanged: (bool? value) {
+                                        setState(() {
+                                          if (value == true) {
+                                            selectedProducts.add(item);
+                                          } else {
+                                            selectedProducts.remove(item);
+                                            controller.clear();
+                                            _recalculateRemainingValue(
+                                              returnValue,
+                                              selectedProducts,
+                                              unitControllers,
+                                              invoiceItems,
+                                              (value) => remainingReturnValue = value,
+                                            );
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  DataCell(Text(item['brandName'] as String)),
+                                  DataCell(Text((item['maxUnits'] as int).toString())),
+                                  DataCell(Text((item['rate'] as double).toString())),
+                                  DataCell(
+                                    isSelected
+                                        ? TextField(
+                                            controller: controller,
+                                            keyboardType: TextInputType.number,
+                                            decoration: const InputDecoration(
+                                              isDense: true,
+                                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                                            ),
+                                            onChanged: (value) {
+                                              final units = int.tryParse(value) ?? 0;
+                                              if (units > (item['maxUnits'] as int)) {
+                                                controller.text = item['maxUnits'].toString();
+                                              }
+                                              setState(() {
+                                                _recalculateRemainingValue(
+                                                  returnValue,
+                                                  selectedProducts,
+                                                  unitControllers,
+                                                  invoiceItems,
+                                                  (value) => remainingReturnValue = value,
+                                                );
+                                              });
+                                            },
+                                          )
+                                        : const Text('')
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      isSelected && returnUnits > 0
+                                          ? returnValue.toStringAsFixed(2)
+                                          : '',
+                                    ),
+                                  ),
+                                  DataCell(Text(maxReturnValue.toStringAsFixed(2))),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [

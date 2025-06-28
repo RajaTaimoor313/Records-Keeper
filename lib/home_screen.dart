@@ -16,6 +16,10 @@ import 'package:records_keeper/tabs/stock/view_products_tab.dart';
 import 'package:records_keeper/tabs/suppliers/add_supplier_tab.dart';
 import 'package:records_keeper/tabs/suppliers/view_suppliers_tab.dart';
 import 'package:records_keeper/tabs/history_tab.dart';
+import 'package:records_keeper/tabs/stock/stock_report.dart';
+import 'package:records_keeper/tabs/sales/sale_report.dart';
+import 'package:records_keeper/tabs/accounts/assets_screen.dart';
+import 'package:records_keeper/tabs/accounts/profit_loss_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -204,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
               ),
-              child: Center(
+              child: Center(  
                 child: Image.asset(
                   'assets/logo.png',
                   height: 60,
@@ -1204,9 +1208,9 @@ class _HomeScreenState extends State<HomeScreen>
         }
         switch (_reportsSubTab) {
           case 'Stock':
-            return _buildPlaceholder('Reports - Stock');
+            return const StockReport();
           case 'Sale':
-            return _buildPlaceholder('Reports - Sale');
+            return const SaleReport();
           default:
             return _buildPlaceholder('Reports - $_reportsSubTab');
         }
@@ -1216,7 +1220,7 @@ class _HomeScreenState extends State<HomeScreen>
         }
         switch (_accountsSubTab) {
           case 'Profit & Loss':
-            return _buildPlaceholder('Accounts - Profit & Loss');
+            return const ProfitLossTab();
           case 'Balance Sheet':
             return _buildPlaceholder('Accounts - Balance Sheet');
           case 'Creditors':
@@ -1224,7 +1228,7 @@ class _HomeScreenState extends State<HomeScreen>
           case 'Debtors':
             return _buildPlaceholder('Accounts - Debtors');
           case 'Assets':
-            return _buildPlaceholder('Accounts - Assets');
+            return const AssetsScreen();
           default:
             return _buildPlaceholder('Accounts - $_accountsSubTab');
         }

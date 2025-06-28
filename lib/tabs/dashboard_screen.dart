@@ -29,6 +29,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDashboardData();
   }
 
+  String _formatIndianNumber(double value) {
+    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    return formatter.format(value).trim();
+  }
+
   Future<void> _loadDashboardData() async {
     try {
       final db = DatabaseHelper.instance;
@@ -243,7 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: _buildSummaryCard(
                   title: 'Total Income',
-                  value: 'Rs. ${_totalIncome.toStringAsFixed(2)}',
+                  value: 'Rs. ${_formatIndianNumber(_totalIncome)}',
                   icon: Icons.account_balance_wallet,
                   color: Colors.green,
                   backgroundColor: Colors.green.shade50,
@@ -253,7 +258,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: _buildSummaryCard(
                   title: 'Total Expenditure',
-                  value: 'Rs. ${_totalExpenditure.toStringAsFixed(2)}',
+                  value: 'Rs. ${_formatIndianNumber(_totalExpenditure)}',
                   icon: Icons.shopping_cart,
                   color: Colors.orange,
                   backgroundColor: Colors.orange.shade50,

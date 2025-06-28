@@ -224,8 +224,8 @@ class _StockReportTabState extends State<StockReportTab> {
     final totalUnits = (ctn * _selectedProduct!.boxPacking) + units;
     _openingStockTotalController.text = totalUnits.toString();
     
-    // Calculate value
-    final value = _selectedProduct!.boxRate * totalUnits;
+    // Calculate value: Total × Box Invoice Rate
+    final value = totalUnits * _selectedProduct!.boxRate;
     _openingStockValueController.text = value.toStringAsFixed(2);
 
     // Recalculate total stock when opening stock changes
@@ -242,8 +242,8 @@ class _StockReportTabState extends State<StockReportTab> {
     final totalUnits = (ctn * _selectedProduct!.boxPacking) + units;
     _receivedStockTotalController.text = totalUnits.toString();
     
-    // Calculate value
-    final value = _selectedProduct!.boxRate * totalUnits;
+    // Calculate value: Total × Box Invoice Rate
+    final value = totalUnits * _selectedProduct!.boxRate;
     _receivedStockValueController.text = value.toStringAsFixed(2);
 
     // Recalculate total stock when received stock changes
@@ -301,6 +301,7 @@ class _StockReportTabState extends State<StockReportTab> {
     // Calculate Sale Total and Value
     final saleTotal = (saleCtn * _selectedProduct!.boxPacking) + saleUnits;
     _saleTotalController.text = saleTotal.toStringAsFixed(2);
+    // Calculate value: Total × Box Invoice Rate
     final saleValue = saleTotal * _selectedProduct!.boxRate;
     _saleValueController.text = saleValue.toStringAsFixed(2);
 
@@ -345,6 +346,11 @@ class _StockReportTabState extends State<StockReportTab> {
 
       // Insert the record
       await db.insert('stock_records', record);
+
+      // If new stock is received, reset available_stock for this product
+      if ((double.tryParse(_receivedStockTotalController.text) ?? 0) > 0 && _selectedProduct != null) {
+        await DatabaseHelper.instance.setAvailableStock(_selectedProduct!.id, double.tryParse(_totalStockTotalController.text) ?? 0);
+      }
 
       // Show success message
       if (mounted) {

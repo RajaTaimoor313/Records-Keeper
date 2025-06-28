@@ -58,6 +58,15 @@ class InvoiceItem {
   }) {
     amount = rate * unit;
   }
+
+  static InvoiceItem fromMap(Map<String, dynamic> map) {
+    return InvoiceItem(
+      description: map['description'],
+      company: map['company'],
+      rate: map['rate'],
+      unit: map['unit'],
+    );
+  }
 }
 
 class InvoiceTab extends StatefulWidget {
@@ -1070,6 +1079,67 @@ class _InvoiceTabState extends State<InvoiceTab> {
     }
 
     try {
+      // Validate available_stock for each item
+      List<String> insufficientStock = [];
+      for (final item in _items) {
+        Product? product;
+        try {
+          product = _products.firstWhere(
+            (p) => p.brand == item.description && p.company == item.company,
+          );
+        } catch (_) {
+          product = null;
+        }
+        if (product != null) {
+          final available = await DatabaseHelper.instance.getAvailableStock(product.id) ?? 0;
+          // If editing, add back the previous units for this item (since they will be replaced)
+          int previousUnits = 0;
+          if (_editingInvoiceId != null) {
+            final prevInvoiceMap = await DatabaseHelper.instance.getInvoice(_editingInvoiceId!);
+            if (prevInvoiceMap != null) {
+              final prevItems = (prevInvoiceMap['items'] as List)
+                  .map((i) => InvoiceItem.fromMap(i))
+                  .toList();
+              final prevItem = prevItems.firstWhere(
+                (i) => i.description == item.description && i.company == item.company,
+                orElse: () => InvoiceItem(description: '', company: '', rate: 0, unit: 0),
+              );
+              previousUnits = prevItem.unit;
+            }
+          }
+          final effectiveAvailable = available + previousUnits;
+          if (item.unit > effectiveAvailable) {
+            insufficientStock.add('${product.company} - ${product.brand} (Available: $effectiveAvailable, Requested: ${item.unit})');
+          }
+        }
+      }
+      if (insufficientStock.isNotEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Insufficient stock for:\n${insufficientStock.join('\n')}'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+
+      // If editing, fetch previous invoice items for stock adjustment
+      Map<String, int> previousUnits = {};
+      if (_editingInvoiceId != null) {
+        final prevInvoiceMap = await DatabaseHelper.instance.getInvoice(_editingInvoiceId!);
+        if (prevInvoiceMap != null) {
+          final prevItems = (prevInvoiceMap['items'] as List)
+              .map((item) => InvoiceItem.fromMap(item))
+              .toList();
+          for (final item in prevItems) {
+            previousUnits['${item.description}|${item.company}'] = item.unit;
+          }
+        }
+      }
+
       final invoice = {
         'id': _editingInvoiceId ?? DateTime.now().millisecondsSinceEpoch.toString(),
         'invoiceNumber': _invoiceNumberController.text,
@@ -1091,8 +1161,70 @@ class _InvoiceTabState extends State<InvoiceTab> {
         'generated': widget.invoiceToEdit?.generated ?? 0,
       };
 
+      // If editing, adjust available_stock for each product
+      if (_editingInvoiceId != null) {
+        for (final item in _items) {
+          final key = '${item.description}|${item.company}';
+          final prevUnit = previousUnits[key] ?? 0;
+          Product? product;
+          try {
+            product = _products.firstWhere(
+              (p) => p.brand == item.description && p.company == item.company,
+            );
+          } catch (_) {
+            product = null;
+          }
+          if (product != null && prevUnit != 0) {
+            final diff = prevUnit - item.unit;
+            if (diff != 0) {
+              if (diff > 0) {
+                await DatabaseHelper.instance.incrementAvailableStock(product.id, diff.toDouble());
+              } else {
+                await DatabaseHelper.instance.decrementAvailableStock(product.id, (-diff).toDouble());
+              }
+            }
+          }
+        }
+        // Also handle products that were removed in the edit (add their units back)
+        for (final key in previousUnits.keys) {
+          final exists = _items.any((item) => '${item.description}|${item.company}' == key);
+          if (!exists) {
+            final prevUnit = previousUnits[key]!;
+            final parts = key.split('|');
+            Product? product;
+            try {
+              product = _products.firstWhere(
+                (p) => p.brand == parts[0] && p.company == parts[1],
+              );
+            } catch (_) {
+              product = null;
+            }
+            if (product != null) {
+              await DatabaseHelper.instance.incrementAvailableStock(product.id, prevUnit.toDouble());
+            }
+          }
+        }
+      }
+
       // Save or update invoice
       await DatabaseHelper.instance.insertInvoice(invoice);
+
+      // Decrement available_stock for each product (for new invoices)
+      if (_editingInvoiceId == null) {
+        for (final item in _items) {
+          Product? product;
+          try {
+            product = _products.firstWhere(
+              (p) => p.brand == item.description && p.company == item.company,
+            );
+          } catch (_) {
+            product = null;
+          }
+          if (product != null) {
+            await DatabaseHelper.instance.decrementAvailableStock(product.id, item.unit.toDouble());
+          }
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1160,7 +1292,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
                             width: invoiceCardWidth,
                             child: _buildInvoice(context, scale),
                           ),
-                          // const SizedBox(height: 24),
                           SizedBox(
                             width: 240,
                             child: ElevatedButton.icon(

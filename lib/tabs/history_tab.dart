@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:records_keeper/tabs/sales/sale_report.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -96,7 +97,10 @@ class _HistoryTabState extends State<HistoryTab> {
               title: 'Sales History',
               subtitle: 'View all past sales invoices and transactions.',
               onTap: () {
-                // Sales history navigation
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SaleReport()),
+                );
               },
             ),
             const SizedBox(height: 20),

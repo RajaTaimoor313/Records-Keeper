@@ -49,7 +49,7 @@ class DatabaseHelper {
     final String path = join(await getDatabasesPath(), 'records_keeper.db');
     return await openDatabase(
       path,
-      version: 17,
+      version: 20,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -240,6 +240,16 @@ class DatabaseHelper {
           data TEXT NOT NULL
         )
       ''');
+
+      await txn.execute('''
+        CREATE TABLE IF NOT EXISTS assets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          name TEXT NOT NULL,
+          value REAL NOT NULL,
+          details TEXT
+        )
+      ''');
     });
   }
 
@@ -389,6 +399,29 @@ class DatabaseHelper {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT NOT NULL,
             data TEXT NOT NULL
+          )
+        ''');
+      }
+      if (oldVersion < 18) {
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS available_stock (
+            product_id TEXT PRIMARY KEY,
+            available_stock REAL NOT NULL
+          )
+        ''');
+      }
+      if (oldVersion < 19) {
+        await txn.execute('ALTER TABLE products ADD COLUMN available_stock REAL NOT NULL DEFAULT 0');
+      }
+      if (oldVersion < 20) {
+        await txn.execute('DROP TABLE IF EXISTS available_stock');
+        await txn.execute('''
+          CREATE TABLE IF NOT EXISTS assets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            name TEXT NOT NULL,
+            value REAL NOT NULL,
+            details TEXT
           )
         ''');
       }
@@ -1171,5 +1204,124 @@ class DatabaseHelper {
   Future<void> clearLoadForm() async {
     final db = await database;
     await db.delete('load_form');
+  }
+
+  // Available Stock operations
+  Future<double?> getAvailableStock(String productId) async {
+    final db = await database;
+    final result = await db.query('products', where: 'id = ?', whereArgs: [productId]);
+    if (result.isNotEmpty && result.first.containsKey('available_stock')) {
+      return (result.first['available_stock'] as num).toDouble();
+    }
+    return null;
+  }
+
+  Future<void> setAvailableStock(String productId, double value) async {
+    final db = await database;
+    await db.update('products', {'available_stock': value}, where: 'id = ?', whereArgs: [productId]);
+  }
+
+  Future<void> resetAvailableStockFromTotalStock() async {
+    final db = await database;
+    final products = await db.query('products');
+    for (final product in products) {
+      final productId = product['id'] as String;
+      // Get latest stock record for this product
+      final records = await db.query(
+        'stock_records',
+        where: 'product_id = ?',
+        whereArgs: [productId],
+        orderBy: 'date DESC',
+        limit: 1,
+      );
+      if (records.isNotEmpty) {
+        final totalStock = (records.first['total_stock_total'] as num).toDouble();
+        await setAvailableStock(productId, totalStock);
+      }
+    }
+  }
+
+  Future<void> decrementAvailableStock(String productId, double amount) async {
+    final current = await getAvailableStock(productId) ?? 0;
+    final newValue = current - amount;
+    await setAvailableStock(productId, newValue);
+  }
+
+  Future<void> incrementAvailableStock(String productId, double amount) async {
+    final current = await getAvailableStock(productId) ?? 0;
+    final newValue = current + amount;
+    await setAvailableStock(productId, newValue);
+  }
+
+  Future<void> resetAvailableStockForProduct(String productId) async {
+    final db = await database;
+    // Get latest stock record for this product
+    final records = await db.query(
+      'stock_records',
+      where: 'product_id = ?',
+      whereArgs: [productId],
+      orderBy: 'date DESC',
+      limit: 1,
+    );
+    if (records.isNotEmpty) {
+      final totalStock = (records.first['total_stock_total'] as num).toDouble();
+      await setAvailableStock(productId, totalStock);
+    }
+  }
+
+  /// One-time migration: Normalize all income and expenditure dates to yyyy-MM-dd if possible
+  Future<void> normalizeIncomeAndExpenditureDates() async {
+    final db = await database;
+    // Normalize income
+    final incomeRows = await db.query('income');
+    for (final row in incomeRows) {
+      final id = row['id'];
+      final date = row['date'] as String;
+      DateTime? parsed;
+      // Try parsing common formats
+      try {
+        if (date.contains('-')) {
+          parsed = DateTime.tryParse(date);
+        } else if (date.contains('/')) {
+          final parts = date.split('/');
+          if (parts.length == 3) {
+            parsed = DateTime(
+              int.parse(parts[2]),
+              int.parse(parts[1]),
+              int.parse(parts[0]),
+            );
+          }
+        }
+      } catch (_) {}
+      if (parsed != null) {
+        final normalized = '${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+        await db.update('income', {'date': normalized}, where: 'id = ?', whereArgs: [id]);
+      }
+    }
+    // Normalize expenditure
+    final expRows = await db.query('expenditure');
+    for (final row in expRows) {
+      final id = row['id'];
+      final date = row['date'] as String;
+      DateTime? parsed;
+      try {
+        if (date.contains('-')) {
+          parsed = DateTime.tryParse(date);
+        } else if (date.contains('/')) {
+          final parts = date.split('/');
+          if (parts.length == 3) {
+            parsed = DateTime(
+              int.parse(parts[2]),
+              int.parse(parts[1]),
+              int.parse(parts[0]),
+            );
+          }
+        }
+      } catch (_) {}
+      if (parsed != null) {
+        final normalized = '${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+        await db.update('expenditure', {'date': normalized}, where: 'id = ?', whereArgs: [id]);
+      }
+    }
   }
 } 
