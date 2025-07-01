@@ -916,12 +916,23 @@ class _PickListTabState extends State<PickListTab> {
       (await rootBundle.load('assets/logo.png')).buffer.asUint8List(),
     );
 
+    final numberFormat = NumberFormat('#,##0', 'en_US');
+    final moneyFormat = NumberFormat('#,##0.00', 'en_US');
+
     // Calculate totals
     final double totalBillAmount = _items.fold(0.0, (sum, item) => sum + item.billAmount);
     final double totalCash = _items.fold(0.0, (sum, item) => sum + item.cash);
     final double totalCredit = _items.fold(0.0, (sum, item) => sum + item.credit);
     final double totalDiscount = _items.fold(0.0, (sum, item) => sum + item.discount);
     final double totalReturn = _items.fold(0.0, (sum, item) => sum + item.return_);
+
+    String formatNumber(num value) {
+      if (value % 1 == 0) {
+        return numberFormat.format(value);
+      } else {
+        return moneyFormat.format(value);
+      }
+    }
 
     final String date = DateFormat('dd-MM-yyyy').format(DateTime.now());
     final String day = DateFormat('EEEE').format(DateTime.now());
@@ -956,9 +967,9 @@ class _PickListTabState extends State<PickListTab> {
                   children: [
                     _buildInfoRow('Supplier:', supplier),
                     _buildInfoRow('Order Booker:', orderBooker),
-                    _buildInfoRow('Total Bill Amount:', totalBillAmount.toStringAsFixed(2)),
-                    _buildInfoRow('Total Credit:', totalCredit.toStringAsFixed(2)),
-                    _buildInfoRow('Total Discount:', totalDiscount.toStringAsFixed(2)),
+                    _buildInfoRow('Total Bill Amount:', formatNumber(totalBillAmount)),
+                    _buildInfoRow('Total Credit:', formatNumber(totalCredit)),
+                    _buildInfoRow('Total Discount:', formatNumber(totalDiscount)),
                   ],
                 ),
                 pw.Column(
@@ -966,8 +977,8 @@ class _PickListTabState extends State<PickListTab> {
                   children: [
                     _buildInfoRow('Date:', date),
                     _buildInfoRow('Day:', day),
-                    _buildInfoRow('Total Cash:', totalCash.toStringAsFixed(2)),
-                    _buildInfoRow('Total Return:', totalReturn.toStringAsFixed(2)),
+                    _buildInfoRow('Total Cash:', formatNumber(totalCash)),
+                    _buildInfoRow('Total Return:', formatNumber(totalReturn)),
                     _buildInfoRow('Total Pages:', '1'), // Placeholder
                   ],
                 ),
@@ -977,20 +988,32 @@ class _PickListTabState extends State<PickListTab> {
             pw.Table.fromTextArray(
               headers: ['Invoice No.', 'Shop', 'Bill Amount', 'Cash', 'Credit', 'Discount', 'Return'],
               data: _items.map((item) => [
-                item.invoiceNumber ?? '',
-                item.shopName,
-                item.billAmount.toStringAsFixed(2),
-                item.cash.toStringAsFixed(2),
-                item.credit.toStringAsFixed(2),
-                item.discount.toStringAsFixed(2),
-                item.return_.toStringAsFixed(2),
+                (item.invoiceNumber ?? '').replaceAll('\n', ' '),
+                (item.shopName).replaceAll('\n', ' '),
+                formatNumber(item.billAmount),
+                formatNumber(item.cash),
+                formatNumber(item.credit),
+                formatNumber(item.discount),
+                formatNumber(item.return_),
               ]).toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               cellAlignment: pw.Alignment.center,
+              cellStyle: pw.TextStyle(lineSpacing: 0, fontSize: 10),
+              cellAlignments: {
+                0: pw.Alignment.center,
+                1: pw.Alignment.center,
+                2: pw.Alignment.center,
+                3: pw.Alignment.center,
+                4: pw.Alignment.center,
+                5: pw.Alignment.center,
+                6: pw.Alignment.center,
+              },
               headerDecoration: const pw.BoxDecoration(
                 color: PdfColors.grey300,
               ),
               border: pw.TableBorder.all(),
+              cellHeight: 20,
+              cellPadding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
             ),
           ];
         },

@@ -478,10 +478,13 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                   ElevatedButton.icon(
                                     onPressed: () async {
                                       try {
-                                        // Update stock records with sale data from Load Form
+                                        // 1. Print first
+                                        await _showLoadFormPrintPreview();
+
+                                        // 2. Update stock records with sale data from Load Form
                                         await DatabaseHelper.instance.updateStockRecordsFromLoadForm();
 
-                                        // Save to history
+                                        // 3. Save to history
                                         final historyData = {
                                           'items': _items.map((e) => e.toMap()).toList(),
                                           'date': DateTime.now().toIso8601String(),
@@ -491,7 +494,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                           jsonEncode(historyData),
                                         );
 
-                                        // Clear form
+                                        // 4. Clear form
                                         await DatabaseHelper.instance.clearLoadForm();
                                         setState(() {
                                           _items.clear();
@@ -506,7 +509,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                             ),
                                           );
                                         }
-                                        await _showLoadFormPrintPreview();
                                       } catch (e) {
                                         if (mounted) {
                                           ScaffoldMessenger.of(context).showSnackBar(
@@ -597,10 +599,13 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                 ElevatedButton.icon(
                                   onPressed: () async {
                                     try {
-                                      // Update stock records with sale data from Load Form
+                                      // 1. Print first
+                                      await _showLoadFormPrintPreview();
+
+                                      // 2. Update stock records with sale data from Load Form
                                       await DatabaseHelper.instance.updateStockRecordsFromLoadForm();
 
-                                      // Save to history
+                                      // 3. Save to history
                                       final historyData = {
                                         'items': _items.map((e) => e.toMap()).toList(),
                                         'date': DateTime.now().toIso8601String(),
@@ -610,7 +615,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                         jsonEncode(historyData),
                                       );
 
-                                      // Clear form
+                                      // 4. Clear form
                                       await DatabaseHelper.instance.clearLoadForm();
                                       setState(() {
                                         _items.clear();
@@ -625,7 +630,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                           ),
                                         );
                                       }
-                                      await _showLoadFormPrintPreview();
                                     } catch (e) {
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:records_keeper/database_helper.dart';
 import 'package:records_keeper/tabs/sales/load_form.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:intl/intl.dart';
 
 class LoadFormHistoryScreen extends StatefulWidget {
   const LoadFormHistoryScreen({super.key});
@@ -99,6 +103,16 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
                                   fontSize: 14,
                                 ),
                               ),
+                              IconButton(
+                                icon: const Icon(Icons.print, color: Colors.deepPurple),
+                                tooltip: 'Print',
+                                onPressed: () {
+                                  _printLoadFormHistory(
+                                    items: items,
+                                    date: date,
+                                  );
+                                },
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -155,6 +169,82 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _printLoadFormHistory({
+    required List<LoadFormItem> items,
+    required DateTime date,
+  }) async {
+    final pdf = pw.Document();
+    final logo = pw.MemoryImage(
+      (await DefaultAssetBundle.of(context).load('assets/logo.png')).buffer.asUint8List(),
+    );
+    final String dateStr = DateFormat('dd-MM-yyyy').format(date);
+    final String day = DateFormat('EEEE').format(date);
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return [
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.SizedBox(
+                  height: 50,
+                  width: 50,
+                  child: pw.Image(logo),
+                ),
+                pw.Text('Load Form', style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 10),
+              ],
+            ),
+            pw.SizedBox(height: 10),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.start,
+              children: [
+                pw.Text('Date:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 4),
+                pw.Text(dateStr),
+                pw.SizedBox(width: 40),
+                pw.Text('Day:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 4),
+                pw.Text(day),
+                pw.SizedBox(width: 40),
+                pw.Text('Total Pages:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(width: 4),
+                pw.Text('1'),
+              ],
+            ),
+            pw.SizedBox(height: 10),
+            pw.Table.fromTextArray(
+              headers: ['No.', 'Brand Name', 'Units', 'Return', 'Sale', 'Saled Return'],
+              data: items.asMap().entries.map((entry) {
+                final i = entry.key;
+                final item = entry.value;
+                return [
+                  (i + 1).toString(),
+                  item.brandName,
+                  item.units.toString(),
+                  item.returnQty.toString(),
+                  item.sale.toString(),
+                  item.saledReturn.toString(),
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              cellAlignment: pw.Alignment.center,
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.white,
+              ),
+              border: pw.TableBorder.all(),
+            ),
+          ];
+        },
+      ),
+    );
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: 'LoadFormHistory_${DateTime.now().millisecondsSinceEpoch}.pdf',
     );
   }
 } 
