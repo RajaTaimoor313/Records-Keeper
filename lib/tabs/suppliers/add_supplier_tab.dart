@@ -139,8 +139,14 @@ class _AddSupplierTabState extends State<AddSupplierTab> {
                           ),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'Supplier', child: Text('Supplier')),
-                          DropdownMenuItem(value: 'Order Booker', child: Text('Order Booker')),
+                          DropdownMenuItem(
+                            value: 'Supplier',
+                            child: Text('Supplier'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Order Booker',
+                            child: Text('Order Booker'),
+                          ),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -315,4 +321,4 @@ class _AddSupplierTabState extends State<AddSupplierTab> {
       ),
     );
   }
-} 
+}

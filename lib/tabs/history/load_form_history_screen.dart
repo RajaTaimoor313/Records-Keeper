@@ -104,7 +104,10 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.print, color: Colors.deepPurple),
+                                icon: const Icon(
+                                  Icons.print,
+                                  color: Colors.deepPurple,
+                                ),
                                 tooltip: 'Print',
                                 onPressed: () {
                                   _printLoadFormHistory(
@@ -123,7 +126,10 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
                                 _buildTotalItem('Units', totalUnits),
                                 _buildTotalItem('Return', totalReturn),
                                 _buildTotalItem('Sale', totalSale),
-                                _buildTotalItem('Saled Return', totalSaledReturn),
+                                _buildTotalItem(
+                                  'Saled Return',
+                                  totalSaledReturn,
+                                ),
                               ],
                             ),
                           ),
@@ -153,10 +159,7 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade700,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
           ),
           const SizedBox(height: 4),
           Text(
@@ -178,7 +181,9 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
   }) async {
     final pdf = pw.Document();
     final logo = pw.MemoryImage(
-      (await DefaultAssetBundle.of(context).load('assets/logo.png')).buffer.asUint8List(),
+      (await DefaultAssetBundle.of(
+        context,
+      ).load('assets/logo.png')).buffer.asUint8List(),
     );
     final String dateStr = DateFormat('dd-MM-yyyy').format(date);
     final String day = DateFormat('EEEE').format(date);
@@ -190,12 +195,14 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.SizedBox(
-                  height: 50,
-                  width: 50,
-                  child: pw.Image(logo),
+                pw.SizedBox(height: 50, width: 50, child: pw.Image(logo)),
+                pw.Text(
+                  'Load Form',
+                  style: pw.TextStyle(
+                    fontSize: 40,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-                pw.Text('Load Form', style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(width: 10),
               ],
             ),
@@ -203,22 +210,38 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.start,
               children: [
-                pw.Text('Date:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  'Date:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(width: 4),
                 pw.Text(dateStr),
                 pw.SizedBox(width: 40),
-                pw.Text('Day:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  'Day:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(width: 4),
                 pw.Text(day),
                 pw.SizedBox(width: 40),
-                pw.Text('Total Pages:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  'Total Pages:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(width: 4),
                 pw.Text('1'),
               ],
             ),
             pw.SizedBox(height: 10),
             pw.Table.fromTextArray(
-              headers: ['No.', 'Brand Name', 'Units', 'Return', 'Sale', 'Saled Return'],
+              headers: [
+                'No.',
+                'Brand Name',
+                'Units',
+                'Return',
+                'Sale',
+                'Saled Return',
+              ],
               data: items.asMap().entries.map((entry) {
                 final i = entry.key;
                 final item = entry.value;
@@ -233,9 +256,7 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
               }).toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               cellAlignment: pw.Alignment.center,
-              headerDecoration: const pw.BoxDecoration(
-                color: PdfColors.white,
-              ),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.white),
               border: pw.TableBorder.all(),
             ),
           ];
@@ -247,4 +268,4 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
       name: 'LoadFormHistory_${DateTime.now().millisecondsSinceEpoch}.pdf',
     );
   }
-} 
+}

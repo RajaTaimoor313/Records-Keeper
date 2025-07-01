@@ -85,16 +85,18 @@ class _InvoiceTabState extends State<InvoiceTab> {
   bool _isSearching = false;
   bool _isSearchingProduct = false;
   final TextEditingController _shopSearchController = TextEditingController();
-  final TextEditingController _productSearchController = TextEditingController();
+  final TextEditingController _productSearchController =
+      TextEditingController();
   List<Product> _products = [];
 
   // Initialize with empty list
   final List<InvoiceItem> _items = [];
 
-  final TextEditingController _invoiceNumberController = TextEditingController();
+  final TextEditingController _invoiceNumberController =
+      TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
-  
+
   DateTime _selectedDate = DateTime.now();
   String? _editingInvoiceId;
 
@@ -108,9 +110,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
     });
     _loadProducts();
     if (widget.invoiceToEdit == null) {
-    _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
-    _generateInvoiceNumber();
-    _discountController.text = '0';
+      _dateController.text = DateFormat('dd/MM/yyyy').format(_selectedDate);
+      _generateInvoiceNumber();
+      _discountController.text = '0';
     }
   }
 
@@ -155,7 +157,8 @@ class _InvoiceTabState extends State<InvoiceTab> {
 
   void _generateInvoiceNumber() {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final invoiceNumber = 'INV-${timestamp.toString().substring(timestamp.toString().length - 6)}';
+    final invoiceNumber =
+        'INV-${timestamp.toString().substring(timestamp.toString().length - 6)}';
     _invoiceNumberController.text = invoiceNumber;
   }
 
@@ -181,13 +184,17 @@ class _InvoiceTabState extends State<InvoiceTab> {
     _selectedDate = invoice.date;
     _discountController.text = invoice.discount.toString();
     _items.clear();
-    _items.addAll(invoice.items.map((item) => InvoiceItem(
-      description: item.description,
-      company: item.company,
-      rate: item.rate,
-      unit: item.unit,
-      amount: item.amount,
-    )));
+    _items.addAll(
+      invoice.items.map(
+        (item) => InvoiceItem(
+          description: item.description,
+          company: item.company,
+          rate: item.rate,
+          unit: item.unit,
+          amount: item.amount,
+        ),
+      ),
+    );
     // Set selected shop
     final shop = _shops.firstWhere(
       (s) => s.code == invoice.shopCode,
@@ -213,8 +220,12 @@ class _InvoiceTabState extends State<InvoiceTab> {
           return _shops;
         }
         return _shops.where((shop) {
-          return shop.name.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                 shop.code.toLowerCase().contains(textEditingValue.text.toLowerCase());
+          return shop.name.toLowerCase().contains(
+                textEditingValue.text.toLowerCase(),
+              ) ||
+              shop.code.toLowerCase().contains(
+                textEditingValue.text.toLowerCase(),
+              );
         });
       },
       displayStringForOption: (Shop shop) => shop.name,
@@ -226,20 +237,14 @@ class _InvoiceTabState extends State<InvoiceTab> {
       },
       fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
         Future.delayed(Duration.zero, () => focusNode.requestFocus());
-        
+
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
-          style: TextStyle(
-            fontSize: 12 * scale,
-            color: Colors.black,
-          ),
+          style: TextStyle(fontSize: 12 * scale, color: Colors.black),
           decoration: InputDecoration(
             hintText: 'Search shop...',
-            hintStyle: TextStyle(
-              fontSize: 12 * scale,
-              color: Colors.grey,
-            ),
+            hintStyle: TextStyle(fontSize: 12 * scale, color: Colors.grey),
             isDense: true,
             contentPadding: EdgeInsets.symmetric(
               horizontal: 8 * scale,
@@ -334,17 +339,16 @@ class _InvoiceTabState extends State<InvoiceTab> {
           child: Text(
             'Address: ${_selectedShop!.address ?? 'N/A'}',
             style: TextStyle(
-                    fontSize: 12 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                  ),
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
   }
-
 
   Widget _buildProductAutocomplete(double scale) {
     return Autocomplete<Product>(
@@ -353,51 +357,54 @@ class _InvoiceTabState extends State<InvoiceTab> {
           return _products;
         }
         return _products.where((product) {
-          return product.brand.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                 product.company.toLowerCase().contains(textEditingValue.text.toLowerCase());
+          return product.brand.toLowerCase().contains(
+                textEditingValue.text.toLowerCase(),
+              ) ||
+              product.company.toLowerCase().contains(
+                textEditingValue.text.toLowerCase(),
+              );
         });
       },
-      displayStringForOption: (Product product) => '${product.company} - ${product.brand}',
+      displayStringForOption: (Product product) =>
+          '${product.company} - ${product.brand}',
       onSelected: (Product product) {
         setState(() {
           _isSearchingProduct = false;
           // Check if product already exists in items (match by brand, company, and rate)
-          final existingItemIndex = _items.indexWhere((item) =>
-            item.description == product.brand &&
-            item.company == product.company &&
-            item.rate == product.salePrice
+          final existingItemIndex = _items.indexWhere(
+            (item) =>
+                item.description == product.brand &&
+                item.company == product.company &&
+                item.rate == product.salePrice,
           );
           if (existingItemIndex != -1) {
             // Increment unit if product already exists
             _items[existingItemIndex].unit++;
-            _items[existingItemIndex].amount = _items[existingItemIndex].rate * _items[existingItemIndex].unit;
+            _items[existingItemIndex].amount =
+                _items[existingItemIndex].rate * _items[existingItemIndex].unit;
           } else {
             // Add new item if product doesn't exist
-            _items.add(InvoiceItem(
-              description: product.brand,
-              company: product.company,
-              rate: product.salePrice, // Use sale price instead of ctn rate
-              unit: 1,
-            ));
+            _items.add(
+              InvoiceItem(
+                description: product.brand,
+                company: product.company,
+                rate: product.salePrice, // Use sale price instead of ctn rate
+                unit: 1,
+              ),
+            );
           }
         });
       },
       fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
         Future.delayed(Duration.zero, () => focusNode.requestFocus());
-        
+
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
-          style: TextStyle(
-            fontSize: 12 * scale,
-            color: Colors.black,
-          ),
+          style: TextStyle(fontSize: 12 * scale, color: Colors.black),
           decoration: InputDecoration(
             hintText: 'Search product...',
-            hintStyle: TextStyle(
-              fontSize: 12 * scale,
-              color: Colors.grey,
-            ),
+            hintStyle: TextStyle(fontSize: 12 * scale, color: Colors.grey),
             isDense: true,
             contentPadding: EdgeInsets.symmetric(
               horizontal: 8 * scale,
@@ -505,13 +512,20 @@ class _InvoiceTabState extends State<InvoiceTab> {
           _buildTableCell('Rate', flex: 2, isHeader: true, scale: scale),
           _buildTableCell('Unit', isHeader: true, scale: scale),
           _buildTableCell('Price', flex: 2, isHeader: true, scale: scale),
-          _buildTableCell('', flex: 1, isHeader: true, scale: scale, isLast: true), // For actions
+          _buildTableCell(
+            '',
+            flex: 1,
+            isHeader: true,
+            scale: scale,
+            isLast: true,
+          ), // For actions
         ],
       ),
     );
   }
 
-  Widget _buildTableCell(String text, {
+  Widget _buildTableCell(
+    String text, {
     int flex = 1,
     bool isHeader = false,
     required double scale,
@@ -536,7 +550,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
         ),
         decoration: BoxDecoration(
           border: Border(
-            right: !isLast ? BorderSide(color: Colors.grey.shade300) : BorderSide.none,
+            right: !isLast
+                ? BorderSide(color: Colors.grey.shade300)
+                : BorderSide.none,
           ),
         ),
         child: Text(
@@ -572,11 +588,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
             scale: scale,
             align: TextAlign.center,
           ),
-          _buildTableCell(
-            item.description,
-            flex: 3,
-            scale: scale,
-          ),
+          _buildTableCell(item.description, flex: 3, scale: scale),
           _buildTableCell(
             item.rate.toStringAsFixed(2),
             flex: 2,
@@ -635,31 +647,22 @@ class _InvoiceTabState extends State<InvoiceTab> {
             vertical: 6 * scale,
           ),
           decoration: BoxDecoration(
-            border: Border(
-              right: BorderSide(color: Colors.grey.shade300),
-            ),
+            border: Border(right: BorderSide(color: Colors.grey.shade300)),
           ),
           child: Row(
-            mainAxisAlignment: align == TextAlign.right 
-                ? MainAxisAlignment.end 
+            mainAxisAlignment: align == TextAlign.right
+                ? MainAxisAlignment.end
                 : MainAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   text,
                   textAlign: align,
-                  style: TextStyle(
-                    fontSize: 11 * scale,
-                    color: Colors.black87,
-                  ),
+                  style: TextStyle(fontSize: 11 * scale, color: Colors.black87),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(
-                Icons.edit,
-                size: 12 * scale,
-                color: Colors.grey.shade400,
-              ),
+              Icon(Icons.edit, size: 12 * scale, color: Colors.grey.shade400),
             ],
           ),
         ),
@@ -672,7 +675,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
     final TextEditingController controller = TextEditingController(
       text: item.unit.toString(),
     );
-    
+
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -840,29 +843,32 @@ class _InvoiceTabState extends State<InvoiceTab> {
     );
   }
 
-  
   Widget _buildInvoice(BuildContext context, double scale) {
     // Calculate height for each section
     final double headerHeight = 80 * scale; // Logo, invoice number, date
-    final double shopDetailsHeight = _selectedShop != null ? 80 * scale : 40 * scale; // Shop details section
+    final double shopDetailsHeight = _selectedShop != null
+        ? 80 * scale
+        : 40 * scale; // Shop details section
     final double itemHeaderHeight = 40 * scale; // Item details header
     final double itemRowHeight = 32 * scale; // Height per item row
-    final double minItemsHeight = 3 * itemRowHeight; // Minimum height for 3 items
-    final double itemsHeight = _items.length > 3 
-        ? _items.length * itemRowHeight 
+    final double minItemsHeight =
+        3 * itemRowHeight; // Minimum height for 3 items
+    final double itemsHeight = _items.length > 3
+        ? _items.length * itemRowHeight
         : minItemsHeight; // Actual items height
     final double totalsSectionHeight = 100 * scale; // Totals section
     final double signatureSectionHeight = 60 * scale; // Signature section
     final double paddingHeight = 48 * scale; // Total padding (12 * 4)
 
     // Calculate total height
-    final double totalHeight = headerHeight + 
-                             shopDetailsHeight + 
-                             itemHeaderHeight + 
-                             itemsHeight + 
-                             totalsSectionHeight + 
-                             signatureSectionHeight + 
-                             paddingHeight;
+    final double totalHeight =
+        headerHeight +
+        shopDetailsHeight +
+        itemHeaderHeight +
+        itemsHeight +
+        totalsSectionHeight +
+        signatureSectionHeight +
+        paddingHeight;
 
     return Container(
       width: 297 * scale,
@@ -924,7 +930,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
                                 labelText: 'Invoice #',
                                 labelStyle: TextStyle(fontSize: 12 * scale),
                                 isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 8 * scale),
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 8 * scale,
+                                ),
                               ),
                             ),
                           ),
@@ -939,7 +947,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
                                 labelText: 'Date',
                                 labelStyle: TextStyle(fontSize: 12 * scale),
                                 isDense: true,
-                                contentPadding: EdgeInsets.symmetric(vertical: 8 * scale),
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 8 * scale,
+                                ),
                               ),
                             ),
                           ),
@@ -964,21 +974,19 @@ class _InvoiceTabState extends State<InvoiceTab> {
                   });
                 },
                 child: Text(
-                  _selectedShop != null 
-                      ? _selectedShop!.name
-                      : 'Add Shop',
-                    style: TextStyle(
-                      fontSize: 12 * scale,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
+                  _selectedShop != null ? _selectedShop!.name : 'Add Shop',
+                  style: TextStyle(
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
                   ),
+                ),
               ),
               if (_isSearching)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 8 * scale),
                   child: _buildShopAutocomplete(scale),
-              ),
+                ),
               if (_selectedShop != null) ...[
                 SizedBox(height: 8 * scale),
                 _buildShopDetails(scale),
@@ -999,12 +1007,12 @@ class _InvoiceTabState extends State<InvoiceTab> {
                 },
                 child: Text(
                   'Add Item',
-                style: TextStyle(
-                  fontSize: 12 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+                  style: TextStyle(
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
                 ),
-              ),
               ),
               if (_isSearchingProduct)
                 Padding(
@@ -1021,25 +1029,26 @@ class _InvoiceTabState extends State<InvoiceTab> {
               children: [
                 _buildTableHeader(scale),
                 Column(
-                      children: [
-                        ..._items.asMap().entries.map((entry) {
-                          return _buildTableRow(entry.value, entry.key, scale);
-                        }),
-                        if (_items.length < 3) ...[
-                          ...List.generate(3 - _items.length, (index) => 
-                            Container(
-                              height: 32 * scale,
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(color: Colors.grey.shade300),
-                                  right: BorderSide(color: Colors.grey.shade300),
-                                  bottom: BorderSide(color: Colors.grey.shade300),
-                                ),
-                              ),
-                            )
+                  children: [
+                    ..._items.asMap().entries.map((entry) {
+                      return _buildTableRow(entry.value, entry.key, scale);
+                    }),
+                    if (_items.length < 3) ...[
+                      ...List.generate(
+                        3 - _items.length,
+                        (index) => Container(
+                          height: 32 * scale,
+                          decoration: BoxDecoration(
+                            border: Border(
+                              left: BorderSide(color: Colors.grey.shade300),
+                              right: BorderSide(color: Colors.grey.shade300),
+                              bottom: BorderSide(color: Colors.grey.shade300),
+                            ),
                           ),
-                        ],
-                      ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 _buildTotalsSection(scale),
                 SizedBox(height: 8 * scale),
@@ -1091,25 +1100,33 @@ class _InvoiceTabState extends State<InvoiceTab> {
           product = null;
         }
         if (product != null) {
-          final available = await DatabaseHelper.instance.getAvailableStock(product.id) ?? 0;
+          final available =
+              await DatabaseHelper.instance.getAvailableStock(product.id) ?? 0;
           // If editing, add back the previous units for this item (since they will be replaced)
           int previousUnits = 0;
           if (_editingInvoiceId != null) {
-            final prevInvoiceMap = await DatabaseHelper.instance.getInvoice(_editingInvoiceId!);
+            final prevInvoiceMap = await DatabaseHelper.instance.getInvoice(
+              _editingInvoiceId!,
+            );
             if (prevInvoiceMap != null) {
               final prevItems = (prevInvoiceMap['items'] as List)
                   .map((i) => InvoiceItem.fromMap(i))
                   .toList();
               final prevItem = prevItems.firstWhere(
-                (i) => i.description == item.description && i.company == item.company,
-                orElse: () => InvoiceItem(description: '', company: '', rate: 0, unit: 0),
+                (i) =>
+                    i.description == item.description &&
+                    i.company == item.company,
+                orElse: () =>
+                    InvoiceItem(description: '', company: '', rate: 0, unit: 0),
               );
               previousUnits = prevItem.unit;
             }
           }
           final effectiveAvailable = available + previousUnits;
           if (item.unit > effectiveAvailable) {
-            insufficientStock.add('${product.company} - ${product.brand} (Available: $effectiveAvailable, Requested: ${item.unit})');
+            insufficientStock.add(
+              '${product.company} - ${product.brand} (Available: $effectiveAvailable, Requested: ${item.unit})',
+            );
           }
         }
       }
@@ -1117,7 +1134,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Insufficient stock for:\n${insufficientStock.join('\n')}'),
+              content: Text(
+                'Insufficient stock for:\n${insufficientStock.join('\n')}',
+              ),
               backgroundColor: Colors.red,
               duration: Duration(seconds: 4),
             ),
@@ -1129,7 +1148,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
       // If editing, fetch previous invoice items for stock adjustment
       Map<String, int> previousUnits = {};
       if (_editingInvoiceId != null) {
-        final prevInvoiceMap = await DatabaseHelper.instance.getInvoice(_editingInvoiceId!);
+        final prevInvoiceMap = await DatabaseHelper.instance.getInvoice(
+          _editingInvoiceId!,
+        );
         if (prevInvoiceMap != null) {
           final prevItems = (prevInvoiceMap['items'] as List)
               .map((item) => InvoiceItem.fromMap(item))
@@ -1141,7 +1162,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
       }
 
       final invoice = {
-        'id': _editingInvoiceId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        'id':
+            _editingInvoiceId ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         'invoiceNumber': _invoiceNumberController.text,
         'date': _selectedDate,
         'shopName': _selectedShop!.name,
@@ -1149,12 +1172,16 @@ class _InvoiceTabState extends State<InvoiceTab> {
         'ownerName': _selectedShop!.ownerName,
         'category': _selectedShop!.category,
         'address': _selectedShop!.address,
-        'items': _items.map((item) => {
-          'description': item.description,
-          'rate': item.rate,
-          'unit': item.unit,
-          'amount': item.amount,
-        }).toList(),
+        'items': _items
+            .map(
+              (item) => {
+                'description': item.description,
+                'rate': item.rate,
+                'unit': item.unit,
+                'amount': item.amount,
+              },
+            )
+            .toList(),
         'subtotal': subtotal,
         'discount': discount,
         'total': total,
@@ -1178,16 +1205,24 @@ class _InvoiceTabState extends State<InvoiceTab> {
             final diff = prevUnit - item.unit;
             if (diff != 0) {
               if (diff > 0) {
-                await DatabaseHelper.instance.incrementAvailableStock(product.id, diff.toDouble());
+                await DatabaseHelper.instance.incrementAvailableStock(
+                  product.id,
+                  diff.toDouble(),
+                );
               } else {
-                await DatabaseHelper.instance.decrementAvailableStock(product.id, (-diff).toDouble());
+                await DatabaseHelper.instance.decrementAvailableStock(
+                  product.id,
+                  (-diff).toDouble(),
+                );
               }
             }
           }
         }
         // Also handle products that were removed in the edit (add their units back)
         for (final key in previousUnits.keys) {
-          final exists = _items.any((item) => '${item.description}|${item.company}' == key);
+          final exists = _items.any(
+            (item) => '${item.description}|${item.company}' == key,
+          );
           if (!exists) {
             final prevUnit = previousUnits[key]!;
             final parts = key.split('|');
@@ -1200,7 +1235,10 @@ class _InvoiceTabState extends State<InvoiceTab> {
               product = null;
             }
             if (product != null) {
-              await DatabaseHelper.instance.incrementAvailableStock(product.id, prevUnit.toDouble());
+              await DatabaseHelper.instance.incrementAvailableStock(
+                product.id,
+                prevUnit.toDouble(),
+              );
             }
           }
         }
@@ -1221,7 +1259,10 @@ class _InvoiceTabState extends State<InvoiceTab> {
             product = null;
           }
           if (product != null) {
-            await DatabaseHelper.instance.decrementAvailableStock(product.id, item.unit.toDouble());
+            await DatabaseHelper.instance.decrementAvailableStock(
+              product.id,
+              item.unit.toDouble(),
+            );
           }
         }
       }
@@ -1229,7 +1270,11 @@ class _InvoiceTabState extends State<InvoiceTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_editingInvoiceId != null ? 'Invoice updated successfully' : 'Invoice saved successfully'),
+            content: Text(
+              _editingInvoiceId != null
+                  ? 'Invoice updated successfully'
+                  : 'Invoice saved successfully',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -1278,8 +1323,13 @@ class _InvoiceTabState extends State<InvoiceTab> {
                 builder: (context, constraints) {
                   final double maxWidth = constraints.maxWidth;
                   // Set a minimum and maximum width for the invoice card
-                  final double invoiceCardWidth = maxWidth < 500 ? maxWidth - 32 : 400;
-                  final double scale = (invoiceCardWidth / 350).clamp(1.0, 1.25);
+                  final double invoiceCardWidth = maxWidth < 500
+                      ? maxWidth - 32
+                      : 400;
+                  final double scale = (invoiceCardWidth / 350).clamp(
+                    1.0,
+                    1.25,
+                  );
 
                   return Center(
                     child: SingleChildScrollView(
@@ -1303,11 +1353,16 @@ class _InvoiceTabState extends State<InvoiceTab> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepPurple,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                textStyle: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -1320,4 +1375,4 @@ class _InvoiceTabState extends State<InvoiceTab> {
             ),
     );
   }
-} 
+}

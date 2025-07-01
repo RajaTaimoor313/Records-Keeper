@@ -112,7 +112,10 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.print, color: Colors.deepPurple),
+                                icon: const Icon(
+                                  Icons.print,
+                                  color: Colors.deepPurple,
+                                ),
                                 tooltip: 'Print',
                                 onPressed: () {
                                   _printPickListHistory(
@@ -129,11 +132,27 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
-                                _buildTotalItem('Bill Amount', totalBillAmount, formatter),
+                                _buildTotalItem(
+                                  'Bill Amount',
+                                  totalBillAmount,
+                                  formatter,
+                                ),
                                 _buildTotalItem('Cash', totalCash, formatter),
-                                _buildTotalItem('Credit', totalCredit, formatter),
-                                _buildTotalItem('Discount', totalDiscount, formatter),
-                                _buildTotalItem('Return', totalReturn, formatter),
+                                _buildTotalItem(
+                                  'Credit',
+                                  totalCredit,
+                                  formatter,
+                                ),
+                                _buildTotalItem(
+                                  'Discount',
+                                  totalDiscount,
+                                  formatter,
+                                ),
+                                _buildTotalItem(
+                                  'Return',
+                                  totalReturn,
+                                  formatter,
+                                ),
                               ],
                             ),
                           ),
@@ -163,10 +182,7 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade700,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
           ),
           const SizedBox(height: 4),
           Text(
@@ -189,7 +205,9 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
   }) async {
     final pdf = pw.Document();
     final logo = pw.MemoryImage(
-      (await DefaultAssetBundle.of(context).load('assets/logo.png')).buffer.asUint8List(),
+      (await DefaultAssetBundle.of(
+        context,
+      ).load('assets/logo.png')).buffer.asUint8List(),
     );
     final numberFormat = NumberFormat('#,##0', 'en_US');
     final moneyFormat = NumberFormat('#,##0.00', 'en_US');
@@ -200,19 +218,38 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
         return moneyFormat.format(value);
       }
     }
+
     final String dateStr = DateFormat('dd-MM-yyyy').format(date);
     final String day = DateFormat('EEEE').format(date);
     String supplier = '';
     String orderBooker = '';
     if (manpower != null) {
-      supplier = manpower.where((mp) => mp['type'] == 'Supplier').map((mp) => mp['name']).join(', ');
-      orderBooker = manpower.where((mp) => mp['type'] == 'Order Booker').map((mp) => mp['name']).join(', ');
+      supplier = manpower
+          .where((mp) => mp['type'] == 'Supplier')
+          .map((mp) => mp['name'])
+          .join(', ');
+      orderBooker = manpower
+          .where((mp) => mp['type'] == 'Order Booker')
+          .map((mp) => mp['name'])
+          .join(', ');
     }
-    final double totalBillAmount = items.fold(0.0, (sum, item) => sum + item.billAmount);
+    final double totalBillAmount = items.fold(
+      0.0,
+      (sum, item) => sum + item.billAmount,
+    );
     final double totalCash = items.fold(0.0, (sum, item) => sum + item.cash);
-    final double totalCredit = items.fold(0.0, (sum, item) => sum + item.credit);
-    final double totalDiscount = items.fold(0.0, (sum, item) => sum + item.discount);
-    final double totalReturn = items.fold(0.0, (sum, item) => sum + item.return_);
+    final double totalCredit = items.fold(
+      0.0,
+      (sum, item) => sum + item.credit,
+    );
+    final double totalDiscount = items.fold(
+      0.0,
+      (sum, item) => sum + item.discount,
+    );
+    final double totalReturn = items.fold(
+      0.0,
+      (sum, item) => sum + item.return_,
+    );
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -221,12 +258,14 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.SizedBox(
-                  height: 50,
-                  width: 50,
-                  child: pw.Image(logo),
+                pw.SizedBox(height: 50, width: 50, child: pw.Image(logo)),
+                pw.Text(
+                  'Pick List',
+                  style: pw.TextStyle(
+                    fontSize: 40,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-                pw.Text('Pick List', style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(width: 10),
               ],
             ),
@@ -240,9 +279,15 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
                   children: [
                     _buildInfoRow('Supplier:', supplier),
                     _buildInfoRow('Order Booker:', orderBooker),
-                    _buildInfoRow('Total Bill Amount:', formatNumber(totalBillAmount)),
+                    _buildInfoRow(
+                      'Total Bill Amount:',
+                      formatNumber(totalBillAmount),
+                    ),
                     _buildInfoRow('Total Credit:', formatNumber(totalCredit)),
-                    _buildInfoRow('Total Discount:', formatNumber(totalDiscount)),
+                    _buildInfoRow(
+                      'Total Discount:',
+                      formatNumber(totalDiscount),
+                    ),
                   ],
                 ),
                 pw.Column(
@@ -259,16 +304,28 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
             ),
             pw.SizedBox(height: 10),
             pw.Table.fromTextArray(
-              headers: ['Invoice No.', 'Shop', 'Bill Amount', 'Cash', 'Credit', 'Discount', 'Return'],
-              data: items.map((item) => [
-                (item.invoiceNumber ?? '').replaceAll('\n', ' '),
-                (item.shopName).replaceAll('\n', ' '),
-                formatNumber(item.billAmount),
-                formatNumber(item.cash),
-                formatNumber(item.credit),
-                formatNumber(item.discount),
-                formatNumber(item.return_),
-              ]).toList(),
+              headers: [
+                'Invoice No.',
+                'Shop',
+                'Bill Amount',
+                'Cash',
+                'Credit',
+                'Discount',
+                'Return',
+              ],
+              data: items
+                  .map(
+                    (item) => [
+                      (item.invoiceNumber ?? '').replaceAll('\n', ' '),
+                      (item.shopName).replaceAll('\n', ' '),
+                      formatNumber(item.billAmount),
+                      formatNumber(item.cash),
+                      formatNumber(item.credit),
+                      formatNumber(item.discount),
+                      formatNumber(item.return_),
+                    ],
+                  )
+                  .toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               cellAlignment: pw.Alignment.center,
               cellStyle: pw.TextStyle(lineSpacing: 0, fontSize: 10),
@@ -286,7 +343,10 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
               ),
               border: pw.TableBorder.all(),
               cellHeight: 20,
-              cellPadding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 2,
+                vertical: 2,
+              ),
             ),
           ];
         },
@@ -311,4 +371,4 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
       ),
     );
   }
-} 
+}

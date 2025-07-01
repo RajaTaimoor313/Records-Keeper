@@ -9,7 +9,8 @@ class PickListDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final historyItem = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final historyItem =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final data = jsonDecode(historyItem['data']);
     final List<PickListItem> items = (data['items'] as List)
         .map((item) => PickListItem.fromMap(item))
@@ -22,7 +23,9 @@ class PickListDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pick List from ${date.toLocal().toString().split(' ')[0]}'),
+        title: Text(
+          'Pick List from ${date.toLocal().toString().split(' ')[0]}',
+        ),
         backgroundColor: Colors.deepPurple,
       ),
       body: SingleChildScrollView(
@@ -30,12 +33,21 @@ class PickListDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Date: ${date.toLocal()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Date: ${date.toLocal()}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
-            const Text('Man Power:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Man Power:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             ...manPower.map((s) => Text('${s.type}: ${s.name}')),
             const SizedBox(height: 16),
-            const Text('Pick List Items:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Pick List Items:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: _buildItemsTable(items),
@@ -89,34 +101,93 @@ class PickListDetailScreen extends StatelessWidget {
         child: DataTable(
           headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade50),
           columns: const [
-            DataColumn(label: Text('Shop', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Bill Amount', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Cash', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Credit', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Discount', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Return', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+              label: Text(
+                'Shop',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Bill Amount',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Cash',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Credit',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Discount',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Return',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
           rows: [
             ...items.map((item) {
-              return DataRow(cells: [
-                DataCell(Text(item.shopName)),
-                DataCell(Text(formatter.format(item.billAmount))),
-                DataCell(Text(formatter.format(item.cash))),
-                DataCell(Text(formatter.format(item.credit))),
-                DataCell(Text(formatter.format(item.discount))),
-                DataCell(Text(formatter.format(item.return_))),
-              ]);
+              return DataRow(
+                cells: [
+                  DataCell(Text(item.shopName)),
+                  DataCell(Text(formatter.format(item.billAmount))),
+                  DataCell(Text(formatter.format(item.cash))),
+                  DataCell(Text(formatter.format(item.credit))),
+                  DataCell(Text(formatter.format(item.discount))),
+                  DataCell(Text(formatter.format(item.return_))),
+                ],
+              );
             }),
             // Total row
             DataRow(
               color: MaterialStateProperty.all(Colors.deepPurple.shade50),
               cells: [
-                const DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(formatter.format(totalBillAmount), style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(formatter.format(totalCash), style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(formatter.format(totalCredit), style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(formatter.format(totalDiscount), style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(formatter.format(totalReturn), style: const TextStyle(fontWeight: FontWeight.bold))),
+                const DataCell(
+                  Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                DataCell(
+                  Text(
+                    formatter.format(totalBillAmount),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    formatter.format(totalCash),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    formatter.format(totalCredit),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    formatter.format(totalDiscount),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    formatter.format(totalReturn),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
             ),
           ],
@@ -124,4 +195,4 @@ class PickListDetailScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

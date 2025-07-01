@@ -40,4 +40,4 @@ class Supplier {
       type: map['type'] ?? 'Supplier',
     );
   }
-} 
+}

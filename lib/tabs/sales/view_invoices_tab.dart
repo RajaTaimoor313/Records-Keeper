@@ -380,7 +380,12 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
               pw.SizedBox(height: 3),
               _buildPdfTotalRow('Discount:', invoice.discount, indianFormat),
               pw.Divider(color: PdfColors.grey300, height: 4),
-              _buildPdfTotalRow('Total:', invoice.total, indianFormat, isTotal: true),
+              _buildPdfTotalRow(
+                'Total:',
+                invoice.total,
+                indianFormat,
+                isTotal: true,
+              ),
             ],
           ),
         ),
@@ -477,9 +482,9 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
   pw.Widget _buildPdfTotalRow(
     String label,
     double amount,
-    NumberFormat? indianFormat,
-    {bool isTotal = false,}
-  ) {
+    NumberFormat? indianFormat, {
+    bool isTotal = false,
+  }) {
     final textStyle = pw.TextStyle(
       fontSize: 8,
       fontWeight: isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
@@ -490,7 +495,12 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
         pw.Text(label, style: textStyle),
-        pw.Text(indianFormat != null ? indianFormat.format(amount) : amount.toStringAsFixed(2), style: textStyle),
+        pw.Text(
+          indianFormat != null
+              ? indianFormat.format(amount)
+              : amount.toStringAsFixed(2),
+          style: textStyle,
+        ),
       ],
     );
   }
@@ -554,7 +564,8 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                                   children: [
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Invoice #',
@@ -577,7 +588,8 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Date',
@@ -588,7 +600,9 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            DateFormat('dd/MM/yyyy').format(invoice.date),
+                                            DateFormat(
+                                              'dd/MM/yyyy',
+                                            ).format(invoice.date),
                                             style: const TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w500,
@@ -653,16 +667,38 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                               decoration: BoxDecoration(
                                 color: Colors.grey.shade50,
                                 border: Border(
-                                  bottom: BorderSide(color: Colors.grey.shade300),
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                               ),
                               child: Row(
                                 children: [
-                                  _buildTableHeaderCell('Sr.', 1, align: TextAlign.center),
-                                  _buildTableHeaderCell('Description', 4, align: TextAlign.center),
-                                  _buildTableHeaderCell('Rate', 2, align: TextAlign.center),
-                                  _buildTableHeaderCell('Unit', 2, align: TextAlign.center),
-                                  _buildTableHeaderCell('Price', 2, align: TextAlign.center),
+                                  _buildTableHeaderCell(
+                                    'Sr.',
+                                    1,
+                                    align: TextAlign.center,
+                                  ),
+                                  _buildTableHeaderCell(
+                                    'Description',
+                                    4,
+                                    align: TextAlign.center,
+                                  ),
+                                  _buildTableHeaderCell(
+                                    'Rate',
+                                    2,
+                                    align: TextAlign.center,
+                                  ),
+                                  _buildTableHeaderCell(
+                                    'Unit',
+                                    2,
+                                    align: TextAlign.center,
+                                  ),
+                                  _buildTableHeaderCell(
+                                    'Price',
+                                    2,
+                                    align: TextAlign.center,
+                                  ),
                                 ],
                               ),
                             ),
@@ -672,18 +708,42 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                               final item = entry.value;
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: index.isEven ? Colors.grey.shade50 : Colors.white,
+                                  color: index.isEven
+                                      ? Colors.grey.shade50
+                                      : Colors.white,
                                   border: Border(
-                                    bottom: BorderSide(color: Colors.grey.shade300),
+                                    bottom: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
                                 ),
                                 child: Row(
                                   children: [
-                                    _buildTableCell((index + 1).toString(), 1, align: TextAlign.center),
-                                    _buildTableCell(item.description, 4, align: TextAlign.center),
-                                    _buildTableCell(item.rate.toStringAsFixed(2), 2, align: TextAlign.center),
-                                    _buildTableCell(item.unit.toString(), 2, align: TextAlign.center),
-                                    _buildTableCell(item.amount.toStringAsFixed(2), 2, align: TextAlign.center),
+                                    _buildTableCell(
+                                      (index + 1).toString(),
+                                      1,
+                                      align: TextAlign.center,
+                                    ),
+                                    _buildTableCell(
+                                      item.description,
+                                      4,
+                                      align: TextAlign.center,
+                                    ),
+                                    _buildTableCell(
+                                      item.rate.toStringAsFixed(2),
+                                      2,
+                                      align: TextAlign.center,
+                                    ),
+                                    _buildTableCell(
+                                      item.unit.toString(),
+                                      2,
+                                      align: TextAlign.center,
+                                    ),
+                                    _buildTableCell(
+                                      item.amount.toStringAsFixed(2),
+                                      2,
+                                      align: TextAlign.center,
+                                    ),
                                   ],
                                 ),
                               );
@@ -708,7 +768,11 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                             const SizedBox(height: 4),
                             const Divider(color: Colors.grey),
                             const SizedBox(height: 4),
-                            _buildTotalRow('Total:', invoice.total, isTotal: true),
+                            _buildTotalRow(
+                              'Total:',
+                              invoice.total,
+                              isTotal: true,
+                            ),
                           ],
                         ),
                       ),
@@ -725,7 +789,9 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                                   height: 20,
                                   decoration: BoxDecoration(
                                     border: Border(
-                                      bottom: BorderSide(color: Colors.grey.shade300),
+                                      bottom: BorderSide(
+                                        color: Colors.grey.shade300,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -745,7 +811,9 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                                   height: 20,
                                   decoration: BoxDecoration(
                                     border: Border(
-                                      bottom: BorderSide(color: Colors.grey.shade300),
+                                      bottom: BorderSide(
+                                        color: Colors.grey.shade300,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -777,7 +845,11 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     );
   }
 
-  Widget _buildTableHeaderCell(String text, int flex, {TextAlign align = TextAlign.left}) {
+  Widget _buildTableHeaderCell(
+    String text,
+    int flex, {
+    TextAlign align = TextAlign.left,
+  }) {
     return Expanded(
       flex: flex,
       child: Container(
@@ -798,7 +870,11 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     );
   }
 
-  Widget _buildTableCell(String text, int flex, {TextAlign align = TextAlign.left}) {
+  Widget _buildTableCell(
+    String text,
+    int flex, {
+    TextAlign align = TextAlign.left,
+  }) {
     return Expanded(
       flex: flex,
       child: Container(
@@ -880,8 +956,12 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     }
 
     // Categorize invoices
-    final unGeneratedInvoices = _filteredInvoices.where((inv) => inv.generated != 1).toList();
-    final generatedInvoices = _filteredInvoices.where((inv) => inv.generated == 1).toList();
+    final unGeneratedInvoices = _filteredInvoices
+        .where((inv) => inv.generated != 1)
+        .toList();
+    final generatedInvoices = _filteredInvoices
+        .where((inv) => inv.generated == 1)
+        .toList();
 
     return Column(
       children: [
@@ -908,10 +988,7 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Search the Invoice...',
                     hintStyle: TextStyle(
@@ -921,7 +998,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                     prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: Icon(Icons.clear, color: Colors.grey.shade400),
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.grey.shade400,
+                            ),
                             onPressed: () {
                               _searchController.clear();
                               _filterInvoices('');
@@ -929,7 +1009,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                           )
                         : null,
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   onChanged: _filterInvoices,
                 ),
@@ -939,11 +1022,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
               Row(
                 children: [
                   ElevatedButton.icon(
-                    onPressed: _selectedInvoices.isEmpty ? null : _deleteSelectedInvoices,
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.red,
-                    ),
+                    onPressed: _selectedInvoices.isEmpty
+                        ? null
+                        : _deleteSelectedInvoices,
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
                     label: Text('Delete (${_selectedInvoices.length})'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red.shade50,
@@ -954,7 +1036,9 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed: _selectedInvoices.isEmpty ? null : _printInvoices,
+                    onPressed: _selectedInvoices.isEmpty
+                        ? null
+                        : _printInvoices,
                     icon: const Icon(Icons.print),
                     label: Text('Print (${_selectedInvoices.length})'),
                     style: ElevatedButton.styleFrom(
@@ -966,7 +1050,17 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed: _selectedInvoices.isEmpty || _selectedInvoices.any((id) => _filteredInvoices.firstWhere((inv) => inv.id == id).generated == 1) ? null : _editSelectedInvoice,
+                    onPressed:
+                        _selectedInvoices.isEmpty ||
+                            _selectedInvoices.any(
+                              (id) =>
+                                  _filteredInvoices
+                                      .firstWhere((inv) => inv.id == id)
+                                      .generated ==
+                                  1,
+                            )
+                        ? null
+                        : _editSelectedInvoice,
                     icon: const Icon(Icons.edit),
                     label: const Text('Edit'),
                     style: ElevatedButton.styleFrom(
@@ -978,7 +1072,17 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed: _selectedInvoices.isEmpty || _selectedInvoices.any((id) => _filteredInvoices.firstWhere((inv) => inv.id == id).generated == 1) ? null : _generateSelectedInvoices,
+                    onPressed:
+                        _selectedInvoices.isEmpty ||
+                            _selectedInvoices.any(
+                              (id) =>
+                                  _filteredInvoices
+                                      .firstWhere((inv) => inv.id == id)
+                                      .generated ==
+                                  1,
+                            )
+                        ? null
+                        : _generateSelectedInvoices,
                     icon: const Icon(Icons.check_circle_outline),
                     label: const Text('Generate'),
                     style: ElevatedButton.styleFrom(
@@ -1016,7 +1120,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                       const SizedBox(height: 8),
                       Text(
                         'Try different search terms',
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                     ],
                   ),
@@ -1030,7 +1137,14 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Row(
                             children: const [
-                              Text('Un-Generated Invoices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple)),
+                              Text(
+                                'Un-Generated Invoices',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.deepPurple,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1040,8 +1154,14 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                           itemCount: unGeneratedInvoices.length,
                           itemBuilder: (context, index) {
                             final invoice = unGeneratedInvoices[index];
-                            final bool isSelected = _selectedInvoices.contains(invoice.id);
-                            return _buildInvoiceCard(invoice, isSelected, index);
+                            final bool isSelected = _selectedInvoices.contains(
+                              invoice.id,
+                            );
+                            return _buildInvoiceCard(
+                              invoice,
+                              isSelected,
+                              index,
+                            );
                           },
                         ),
                       ],
@@ -1051,7 +1171,14 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Row(
                             children: const [
-                              Text('Generated Invoices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                              Text(
+                                'Generated Invoices',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.green,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1061,8 +1188,14 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                           itemCount: generatedInvoices.length,
                           itemBuilder: (context, index) {
                             final invoice = generatedInvoices[index];
-                            final bool isSelected = _selectedInvoices.contains(invoice.id);
-                            return _buildInvoiceCard(invoice, isSelected, index);
+                            final bool isSelected = _selectedInvoices.contains(
+                              invoice.id,
+                            );
+                            return _buildInvoiceCard(
+                              invoice,
+                              isSelected,
+                              index,
+                            );
                           },
                         ),
                       ],
@@ -1082,7 +1215,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       final invoice = Invoice.fromMap(invoiceMap);
       if (invoice.generated == 1) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Generated invoices cannot be edited.'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Generated invoices cannot be edited.'),
+            backgroundColor: Colors.red,
+          ),
         );
         return;
       }
@@ -1098,7 +1234,9 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       await _loadInvoices();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a single invoice to edit.')),
+        const SnackBar(
+          content: Text('Please select a single invoice to edit.'),
+        ),
       );
     }
   }
@@ -1107,10 +1245,19 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     // Transfer selected invoices to Pick List and Load Form, and mark as generated
     if (_selectedInvoices.isEmpty) return;
     // Prevent generating already generated invoices
-    final alreadyGenerated = _selectedInvoices.where((id) => _filteredInvoices.firstWhere((inv) => inv.id == id).generated == 1).toList();
+    final alreadyGenerated = _selectedInvoices
+        .where(
+          (id) =>
+              _filteredInvoices.firstWhere((inv) => inv.id == id).generated ==
+              1,
+        )
+        .toList();
     if (alreadyGenerated.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Some selected invoices are already generated.'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Some selected invoices are already generated.'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -1145,7 +1292,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Selected invoices generated successfully.'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Selected invoices generated successfully.'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
       setState(() {
@@ -1155,7 +1305,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error generating invoices: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error generating invoices: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -1188,12 +1341,16 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.deepPurple : Colors.white,
                       border: Border.all(
-                        color: isSelected ? Colors.deepPurple : Colors.grey.shade400,
+                        color: isSelected
+                            ? Colors.deepPurple
+                            : Colors.grey.shade400,
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
-                      isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                      isSelected
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
                       size: 20,
                       color: isSelected ? Colors.white : Colors.grey.shade600,
                     ),

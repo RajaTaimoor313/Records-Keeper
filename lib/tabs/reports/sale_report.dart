@@ -35,7 +35,11 @@ class _SaleReportState extends State<SaleReport> {
     List<Map<String, dynamic>> detailed = [];
     for (final item in items) {
       final brandName = item['brandName'];
-      final prodList = await db.query('products', where: 'brand = ?', whereArgs: [brandName]);
+      final prodList = await db.query(
+        'products',
+        where: 'brand = ?',
+        whereArgs: [brandName],
+      );
       if (prodList.isNotEmpty) {
         final prod = prodList.first;
         detailed.add({
@@ -77,7 +81,9 @@ class _SaleReportState extends State<SaleReport> {
                     children: [
                       ListTile(
                         title: Text('Date: $date'),
-                        trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
+                        trailing: Icon(
+                          isExpanded ? Icons.expand_less : Icons.expand_more,
+                        ),
                         onTap: () async {
                           setState(() {
                             if (isExpanded) {
@@ -95,7 +101,9 @@ class _SaleReportState extends State<SaleReport> {
                             if (!snapshot.hasData) {
                               return const Padding(
                                 padding: EdgeInsets.all(16.0),
-                                child: Center(child: CircularProgressIndicator()),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               );
                             }
                             final items = snapshot.data!;
@@ -109,13 +117,29 @@ class _SaleReportState extends State<SaleReport> {
                                   DataColumn(label: Text('Trade Rate')),
                                   DataColumn(label: Text('Units Saled')),
                                 ],
-                                rows: items.map((item) => DataRow(cells: [
-                                  DataCell(Text(item['brandName'].toString())),
-                                  DataCell(Text(item['company'].toString())),
-                                  DataCell(Text(item['boxRate'].toString())),
-                                  DataCell(Text(item['tradeRate'].toString())),
-                                  DataCell(Text(item['unitsSaled'].toString())),
-                                ])).toList(),
+                                rows: items
+                                    .map(
+                                      (item) => DataRow(
+                                        cells: [
+                                          DataCell(
+                                            Text(item['brandName'].toString()),
+                                          ),
+                                          DataCell(
+                                            Text(item['company'].toString()),
+                                          ),
+                                          DataCell(
+                                            Text(item['boxRate'].toString()),
+                                          ),
+                                          DataCell(
+                                            Text(item['tradeRate'].toString()),
+                                          ),
+                                          DataCell(
+                                            Text(item['unitsSaled'].toString()),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                    .toList(),
                               ),
                             );
                           },
@@ -127,4 +151,4 @@ class _SaleReportState extends State<SaleReport> {
             ),
     );
   }
-} 
+}

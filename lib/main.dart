@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:records_keeper/database_config.dart';
 import 'package:records_keeper/home_screen.dart';
+import 'package:records_keeper/tabs/history/load_form_history_screen.dart';
+import 'package:records_keeper/tabs/history/pick_list_history_screen.dart';
 import 'package:records_keeper/tabs/sales/pick_list_detail_screen.dart';
-import 'package:records_keeper/tabs/sales/pick_list_history_screen.dart';
-import 'package:records_keeper/tabs/sales/load_form_history_screen.dart';
 import 'package:records_keeper/tabs/sales/load_form_detail_screen.dart';
 import 'database_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
     await DatabaseHelper.instance.deleteDatabase();
     await DatabaseConfig.initialize();
@@ -18,7 +18,7 @@ void main() async {
   } catch (e) {
     debugPrint('Database initialization error: $e');
   }
-  
+
   runApp(const MyApp());
 }
 

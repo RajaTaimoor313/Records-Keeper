@@ -26,7 +26,8 @@ class CompanyStockSummary {
       receivedTotal += (record['received_value'] as num).toDouble();
     }
     totalStockTotal = openingStockTotal + receivedTotal;
-    closingStockTotal = totalStockTotal - saleTotal; // saleTotal is 0 by default
+    closingStockTotal =
+        totalStockTotal - saleTotal; // saleTotal is 0 by default
   }
 }
 
@@ -154,11 +155,13 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
         }
 
         if (stockRecords.isNotEmpty) {
-          summaries.add(CompanyStockSummary(
-            company: company,
-            products: products,
-            stockRecords: stockRecords,
-          ));
+          summaries.add(
+            CompanyStockSummary(
+              company: company,
+              products: products,
+              stockRecords: stockRecords,
+            ),
+          );
         }
       }
 
@@ -184,12 +187,12 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
   Future<void> _updateAvailableStock() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      
+
       // Get all products
       final products = await db.query('products');
-      
+
       int updatedCount = 0;
-      
+
       for (final product in products) {
         // Get the latest stock record for this product
         final records = await db.query(
@@ -199,15 +202,17 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
           orderBy: 'date DESC',
           limit: 1,
         );
-        
+
         if (records.isNotEmpty) {
           final latestRecord = records.first;
-          
+
           // Calculate total stock (opening + received)
-          final openingStockTotal = (latestRecord['opening_stock_total'] as num).toDouble();
-          final receivedTotal = (latestRecord['received_total'] as num).toDouble();
+          final openingStockTotal = (latestRecord['opening_stock_total'] as num)
+              .toDouble();
+          final receivedTotal = (latestRecord['received_total'] as num)
+              .toDouble();
           final totalStock = openingStockTotal + receivedTotal;
-          
+
           // Update the product's available_stock
           await db.update(
             'products',
@@ -215,11 +220,11 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
             where: 'id = ?',
             whereArgs: [product['id']],
           );
-          
+
           updatedCount++;
         }
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -241,10 +246,13 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
   }
 
   String _formatIndianNumber(double value) {
-    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 2,
+    );
     return formatter.format(value).trim();
   }
-
 
   Widget _buildMainHeaderCell(String text, int columnSpan) {
     return Container(
@@ -256,10 +264,7 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         textAlign: TextAlign.center,
       ),
     );
@@ -275,16 +280,17 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
         textAlign: TextAlign.center,
       ),
     );
   }
 
-  Widget _buildDataCell(String text, [bool isBrand = false, bool isBold = false]) {
+  Widget _buildDataCell(
+    String text, [
+    bool isBrand = false,
+    bool isBold = false,
+  ]) {
     return Container(
       width: isBrand ? 240.0 : 120.0,
       padding: const EdgeInsets.all(8),
@@ -303,7 +309,11 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     );
   }
 
-  String _getBrandValue(List<Map<String, dynamic>> records, dynamic productId, String field) {
+  String _getBrandValue(
+    List<Map<String, dynamic>> records,
+    dynamic productId,
+    String field,
+  ) {
     final record = records.firstWhere(
       (r) => r['product_id'].toString() == productId.toString(),
       orElse: () => {},
@@ -313,15 +323,18 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
 
   double _getColumnTotal(CompanyStockSummary summary, String field) {
     double total = 0;
-    
+
     for (final product in summary.products) {
       // Helper to parse values safely
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
-      
+
       final boxPacking = product['boxPacking'] as int;
-      
+
       if (field.startsWith('opening_stock_')) {
         final type = field.substring('opening_stock_'.length);
         if (type == 'ctn') {
@@ -379,35 +392,45 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
       } else if (field.startsWith('closing_stock_')) {
         final type = field.substring('closing_stock_'.length);
         if (type == 'ctn') {
-          final totalStockCtn = getVal('opening_stock_ctn') + getVal('received_ctn');
+          final totalStockCtn =
+              getVal('opening_stock_ctn') + getVal('received_ctn');
           final saleTotal = getVal('sale_total');
           final saleCtn = saleTotal <= boxPacking ? 0 : saleTotal ~/ boxPacking;
           final saledReturnTotal = getVal('saled_return_total');
-          final saledReturnCtn = saledReturnTotal <= boxPacking ? 0 : saledReturnTotal ~/ boxPacking;
+          final saledReturnCtn = saledReturnTotal <= boxPacking
+              ? 0
+              : saledReturnTotal ~/ boxPacking;
           final closingStockCtn = totalStockCtn - saleCtn + saledReturnCtn;
           total += closingStockCtn;
         } else if (type == 'units') {
-          final totalStockUnits = getVal('opening_stock_units') + getVal('received_units');
+          final totalStockUnits =
+              getVal('opening_stock_units') + getVal('received_units');
           final saleTotal = getVal('sale_total');
-          final saleBox = saleTotal <= boxPacking ? saleTotal : saleTotal % boxPacking;
+          final saleBox = saleTotal <= boxPacking
+              ? saleTotal
+              : saleTotal % boxPacking;
           final saledReturnTotal = getVal('saled_return_total');
-          final saledReturnBox = saledReturnTotal <= boxPacking ? saledReturnTotal : saledReturnTotal % boxPacking;
+          final saledReturnBox = saledReturnTotal <= boxPacking
+              ? saledReturnTotal
+              : saledReturnTotal % boxPacking;
           final closingStockBox = totalStockUnits - saleBox + saledReturnBox;
           total += closingStockBox;
         } else if (type == 'total') {
-          final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+          final totalStockTotal =
+              getVal('opening_stock_total') + getVal('received_total');
           final saleTotal = getVal('sale_total');
           final saledReturnTotal = getVal('saled_return_total');
           total += totalStockTotal - saleTotal + saledReturnTotal;
         } else if (type == 'value') {
-          final totalStockValue = getVal('opening_stock_value') + getVal('received_value');
+          final totalStockValue =
+              getVal('opening_stock_value') + getVal('received_value');
           final saleValue = getVal('sale_value');
           final saledReturnValue = getVal('saled_return_value');
           total += totalStockValue - saleValue + saledReturnValue;
         }
       }
     }
-    
+
     return total;
   }
 
@@ -416,9 +439,14 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
-      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+
+      final totalStockTotal =
+          getVal('opening_stock_total') + getVal('received_total');
       final boxPacking = product['boxPacking'] as int;
       if (boxPacking > 0) {
         if (totalStockTotal < boxPacking) {
@@ -437,9 +465,14 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
-      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+
+      final totalStockTotal =
+          getVal('opening_stock_total') + getVal('received_total');
       final boxPacking = product['boxPacking'] as int;
       if (boxPacking > 0) {
         if (totalStockTotal < boxPacking) {
@@ -458,8 +491,12 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
+
       total += getVal('opening_stock_total') + getVal('received_total');
     }
     return total;
@@ -469,8 +506,12 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
+
       total += getVal('opening_stock_value') + getVal('received_value');
     }
     return total;
@@ -480,9 +521,14 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
-      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+
+      final totalStockTotal =
+          getVal('opening_stock_total') + getVal('received_total');
       final saleTotal = getVal('sale_total');
       final saledReturnTotal = getVal('saled_return_total');
       final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
@@ -504,9 +550,14 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
-      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+
+      final totalStockTotal =
+          getVal('opening_stock_total') + getVal('received_total');
       final saleTotal = getVal('sale_total');
       final saledReturnTotal = getVal('saled_return_total');
       final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
@@ -528,9 +579,14 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
-      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+
+      final totalStockTotal =
+          getVal('opening_stock_total') + getVal('received_total');
       final saleTotal = getVal('sale_total');
       final saledReturnTotal = getVal('saled_return_total');
       total += totalStockTotal - saleTotal + saledReturnTotal;
@@ -542,13 +598,20 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
-      final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
+
+      final totalStockTotal =
+          getVal('opening_stock_total') + getVal('received_total');
       final saleTotal = getVal('sale_total');
       final saledReturnTotal = getVal('saled_return_total');
       final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
-      final boxRate = product['boxRate'] is num ? (product['boxRate'] as num).toDouble() : double.tryParse(product['boxRate'].toString()) ?? 0.0;
+      final boxRate = product['boxRate'] is num
+          ? (product['boxRate'] as num).toDouble()
+          : double.tryParse(product['boxRate'].toString()) ?? 0.0;
       total += closingStockTotal * boxRate;
     }
     return total;
@@ -558,8 +621,12 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
+
       final saleTotal = getVal('sale_total');
       final boxPacking = product['boxPacking'] as int;
       if (boxPacking > 0) {
@@ -579,8 +646,12 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     double total = 0;
     for (final product in summary.products) {
       double getVal(String fieldName) {
-        return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], fieldName)) ?? 0.0;
+        return double.tryParse(
+              _getBrandValue(summary.stockRecords, product['id'], fieldName),
+            ) ??
+            0.0;
       }
+
       final saleTotal = getVal('sale_total');
       final boxPacking = product['boxPacking'] as int;
       if (boxPacking > 0) {
@@ -599,15 +670,11 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_companySummaries.isEmpty) {
-      return const Center(
-        child: Text('No stock records found'),
-      );
+      return const Center(child: Text('No stock records found'));
     }
 
     return SingleChildScrollView(
@@ -621,7 +688,10 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.deepPurple.shade50,
                     borderRadius: BorderRadius.circular(8),
@@ -656,7 +726,10 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -686,7 +759,10 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -705,295 +781,563 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
               ],
             ),
           ),
-          ..._companySummaries.map((summary) => Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  if (_expandedCompanies.contains(summary.company)) {
-                    _expandedCompanies.remove(summary.company);
-                  } else {
-                    _expandedCompanies.add(summary.company);
-                  }
-                });
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Company Header
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.deepPurple.shade50,
-                      borderRadius: BorderRadius.vertical(
-                        top: const Radius.circular(8),
-                        bottom: _expandedCompanies.contains(summary.company) 
-                            ? Radius.zero 
-                            : const Radius.circular(8),
+          ..._companySummaries.map(
+            (summary) => Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    if (_expandedCompanies.contains(summary.company)) {
+                      _expandedCompanies.remove(summary.company);
+                    } else {
+                      _expandedCompanies.add(summary.company);
+                    }
+                  });
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Company Header
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.shade50,
+                        borderRadius: BorderRadius.vertical(
+                          top: const Radius.circular(8),
+                          bottom: _expandedCompanies.contains(summary.company)
+                              ? Radius.zero
+                              : const Radius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            summary.company,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              summary.company,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                              ),
                             ),
                           ),
-                        ),
-                        Icon(
-                          _expandedCompanies.contains(summary.company)
-                              ? Icons.expand_less
-                              : Icons.expand_more,
-                          color: Colors.deepPurple,
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Detailed Table (if expanded)
-                  if (_expandedCompanies.contains(summary.company))
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Container(
-                        margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Main Headers
-                            IntrinsicHeight(
-                              child: Row(
-                                children: [
-                                  _buildMainHeaderCell('Brands', 2),
-                                  _buildMainHeaderCell('Invoice Rate', 2),
-                                  _buildMainHeaderCell('Packing', 3),
-                                  _buildMainHeaderCell('Opening Stock', 4),
-                                  _buildMainHeaderCell('Received', 4),
-                                  _buildMainHeaderCell('Total Stock', 4),
-                                  _buildMainHeaderCell('Closing Stock', 4),
-                                  _buildMainHeaderCell('Sale', 4),
-                                ],
-                              ),
-                            ),
-                            // Sub Headers
-                            IntrinsicHeight(
-                              child: Row(
-                                children: [
-                                  _buildSubHeaderCell('', true), // Brands
-                                  // Invoice Rate
-                                  _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Box'),
-                                  // Packing
-                                  _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Box'),
-                                  _buildSubHeaderCell('Units'),
-                                  // Opening Stock
-                                  _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Box'),
-                                  _buildSubHeaderCell('Total'),
-                                  _buildSubHeaderCell('Value'),
-                                  // Received
-                                  _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Box'),
-                                  _buildSubHeaderCell('Total'),
-                                  _buildSubHeaderCell('Value'),
-                                  // Total Stock
-                                  _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Box'),
-                                  _buildSubHeaderCell('Total'),
-                                  _buildSubHeaderCell('Value'),
-                                  // Closing Stock
-                                  _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Box'),
-                                  _buildSubHeaderCell('Total'),
-                                  _buildSubHeaderCell('Value'),
-                                  // Sale
-                                  _buildSubHeaderCell('CTN'),
-                                  _buildSubHeaderCell('Box'),
-                                  _buildSubHeaderCell('Total'),
-                                  _buildSubHeaderCell('Value'),
-                                ],
-                              ),
-                            ),
-                            // Data Rows
-                            ...summary.products.map((product) {
-                              // Helper to parse values safely
-                              double getVal(String field) {
-                                return double.tryParse(_getBrandValue(summary.stockRecords, product['id'], field)) ?? 0.0;
-                              }
-
-                              // Calculate Total Stock values
-                              final totalStockTotal = getVal('opening_stock_total') + getVal('received_total');
-                              final totalStockValue = getVal('opening_stock_value') + getVal('received_value');
-
-                              // Get Sale values
-                              getVal('sale_ctn');
-                              getVal('sale_units');
-                              final saleTotal = getVal('sale_total');
-                              final saleValue = getVal('sale_value');
-
-                              // Get Saled Return values
-                              getVal('saled_return_ctn');
-                              getVal('saled_return_units');
-                              final saledReturnTotal = getVal('saled_return_total');
-                              getVal('saled_return_value');
-
-                              // Calculate proper CTN and Box for Sale based on packing strategy
-                              final boxPacking = (product['boxPacking'] is int) ? product['boxPacking'] as int : int.tryParse(product['boxPacking'].toString()) ?? 0;
-                              int calculatedSaleCtn;
-                              int calculatedSaleBox;
-                              
-                              if (boxPacking > 0) {
-                                if (saleTotal < boxPacking) {
-                                  calculatedSaleCtn = 0;
-                                  calculatedSaleBox = saleTotal.toInt();
-                                } else {
-                                  calculatedSaleCtn = saleTotal ~/ boxPacking;
-                                  calculatedSaleBox = saleTotal.toInt() % boxPacking;
-                                }
-                              } else {
-                                calculatedSaleCtn = 0;
-                                calculatedSaleBox = saleTotal.toInt();
-                              }
-
-                              // Calculate proper CTN and Box for Total Stock based on packing strategy
-                              int calculatedTotalStockCtn;
-                              int calculatedTotalStockBox;
-                              if (boxPacking > 0) {
-                                if (totalStockTotal < boxPacking) {
-                                  calculatedTotalStockCtn = 0;
-                                  calculatedTotalStockBox = totalStockTotal.toInt();
-                                } else {
-                                  calculatedTotalStockCtn = totalStockTotal ~/ boxPacking;
-                                  calculatedTotalStockBox = totalStockTotal.toInt() % boxPacking;
-                                }
-                              } else {
-                                calculatedTotalStockCtn = 0;
-                                calculatedTotalStockBox = totalStockTotal.toInt();
-                              }
-
-                              // Calculate proper CTN and Box for Saled Return based on packing strategy
-                              // ... existing code ...
-                              // Calculate Closing Stock (Total Stock - Sale + Saled Return)
-                              final closingStockTotal = totalStockTotal - saleTotal + saledReturnTotal;
-                              final closingStockValue = closingStockTotal * (product['boxRate'] is num ? (product['boxRate'] as num).toDouble() : double.tryParse(product['boxRate'].toString()) ?? 0.0);
-
-                              // Calculate proper CTN and Box for Closing Stock based on packing strategy
-                              int calculatedClosingStockCtn;
-                              int calculatedClosingStockBox;
-                              if (boxPacking > 0) {
-                                if (closingStockTotal < boxPacking) {
-                                  calculatedClosingStockCtn = 0;
-                                  calculatedClosingStockBox = closingStockTotal.toInt();
-                                } else {
-                                  calculatedClosingStockCtn = closingStockTotal ~/ boxPacking;
-                                  calculatedClosingStockBox = closingStockTotal.toInt() % boxPacking;
-                                }
-                              } else {
-                                calculatedClosingStockCtn = 0;
-                                calculatedClosingStockBox = closingStockTotal.toInt();
-                              }
-
-                              return IntrinsicHeight(
-                                child: Row(
-                                  children: [
-                                    _buildDataCell(product['brand'], true),
-                                    // Invoice Rate
-                                    _buildDataCell(product['ctnRate'].toString()),
-                                    _buildDataCell(product['boxRate'].toString()),
-                                    // Packing
-                                    _buildDataCell(product['ctnPacking'].toString()),
-                                    _buildDataCell(product['boxPacking'].toString()),
-                                    _buildDataCell(product['unitsPacking'].toString()),
-                                    // Opening Stock
-                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_ctn')),
-                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_units')),
-                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_total')),
-                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'opening_stock_value')),
-                                    // Received
-                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_ctn')),
-                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_units')),
-                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_total')),
-                                    _buildDataCell(_getBrandValue(summary.stockRecords, product['id'], 'received_value')),
-                                    // Total Stock (updated logic)
-                                    _buildDataCell(calculatedTotalStockCtn.toString()),
-                                    _buildDataCell(calculatedTotalStockBox.toString()),
-                                    _buildDataCell(_formatIndianNumber(totalStockTotal)),
-                                    _buildDataCell(_formatIndianNumber(totalStockValue)),
-                                    // Closing Stock
-                                    _buildDataCell(calculatedClosingStockCtn.toStringAsFixed(0)),
-                                    _buildDataCell(calculatedClosingStockBox.toStringAsFixed(0)),
-                                    _buildDataCell(_formatIndianNumber(closingStockTotal)),
-                                    _buildDataCell(_formatIndianNumber(closingStockValue)),
-                                    // Sale
-                                    _buildDataCell(calculatedSaleCtn.toStringAsFixed(0)),
-                                    _buildDataCell(calculatedSaleBox.toStringAsFixed(0)),
-                                    _buildDataCell(_formatIndianNumber(saleTotal)),
-                                    _buildDataCell(_formatIndianNumber(saleValue)),
-                                  ],
-                                ),
-                              );
-                            }),
-                            // Total Row
-                            IntrinsicHeight(
-                              child: Row(
-                                children: [
-                                  _buildDataCell('Total', true, true),
-                                  // Empty cells for Invoice Rate
-                                  _buildDataCell('', false, true),
-                                  _buildDataCell('', false, true),
-                                  // Empty cells for Packing
-                                  _buildDataCell('', false, true),
-                                  _buildDataCell('', false, true),
-                                  _buildDataCell('', false, true),
-                                  // Opening Stock totals
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'opening_stock_ctn')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'opening_stock_units')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'opening_stock_total')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'opening_stock_value')), false, true),
-                                  // Received totals
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_ctn')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_units')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_total')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'received_value')), false, true),
-                                  // Total Stock totals - calculate using the same logic as individual rows
-                                  _buildDataCell(_formatIndianNumber(_calculateTotalStockCtn(summary)), false, true),
-                                  _buildDataCell(_formatIndianNumber(_calculateTotalStockUnits(summary)), false, true),
-                                  _buildDataCell(_formatIndianNumber(_calculateTotalStockTotal(summary)), false, true),
-                                  _buildDataCell(_formatIndianNumber(_calculateTotalStockValue(summary)), false, true),
-                                  // Closing Stock totals - calculate using the same logic as individual rows
-                                  _buildDataCell(_formatIndianNumber(_calculateClosingStockCtn(summary)), false, true),
-                                  _buildDataCell(_formatIndianNumber(_calculateClosingStockUnits(summary)), false, true),
-                                  _buildDataCell(_formatIndianNumber(_calculateClosingStockTotal(summary)), false, true),
-                                  _buildDataCell(_formatIndianNumber(_calculateClosingStockValue(summary)), false, true),
-                                  // Sale totals - calculate using the same logic as individual rows
-                                  _buildDataCell(_formatIndianNumber(_calculateSaleCtn(summary)), false, true),
-                                  _buildDataCell(_formatIndianNumber(_calculateSaleUnits(summary)), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_total')), false, true),
-                                  _buildDataCell(_formatIndianNumber(_getColumnTotal(summary, 'sale_value')), false, true),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          Icon(
+                            _expandedCompanies.contains(summary.company)
+                                ? Icons.expand_less
+                                : Icons.expand_more,
+                            color: Colors.deepPurple,
+                          ),
+                        ],
                       ),
                     ),
-                ],
+                    // Detailed Table (if expanded)
+                    if (_expandedCompanies.contains(summary.company))
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Container(
+                          margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Main Headers
+                              IntrinsicHeight(
+                                child: Row(
+                                  children: [
+                                    _buildMainHeaderCell('Brands', 2),
+                                    _buildMainHeaderCell('Invoice Rate', 2),
+                                    _buildMainHeaderCell('Packing', 3),
+                                    _buildMainHeaderCell('Opening Stock', 4),
+                                    _buildMainHeaderCell('Received', 4),
+                                    _buildMainHeaderCell('Total Stock', 4),
+                                    _buildMainHeaderCell('Closing Stock', 4),
+                                    _buildMainHeaderCell('Sale', 4),
+                                  ],
+                                ),
+                              ),
+                              // Sub Headers
+                              IntrinsicHeight(
+                                child: Row(
+                                  children: [
+                                    _buildSubHeaderCell('', true), // Brands
+                                    // Invoice Rate
+                                    _buildSubHeaderCell('CTN'),
+                                    _buildSubHeaderCell('Box'),
+                                    // Packing
+                                    _buildSubHeaderCell('CTN'),
+                                    _buildSubHeaderCell('Box'),
+                                    _buildSubHeaderCell('Units'),
+                                    // Opening Stock
+                                    _buildSubHeaderCell('CTN'),
+                                    _buildSubHeaderCell('Box'),
+                                    _buildSubHeaderCell('Total'),
+                                    _buildSubHeaderCell('Value'),
+                                    // Received
+                                    _buildSubHeaderCell('CTN'),
+                                    _buildSubHeaderCell('Box'),
+                                    _buildSubHeaderCell('Total'),
+                                    _buildSubHeaderCell('Value'),
+                                    // Total Stock
+                                    _buildSubHeaderCell('CTN'),
+                                    _buildSubHeaderCell('Box'),
+                                    _buildSubHeaderCell('Total'),
+                                    _buildSubHeaderCell('Value'),
+                                    // Closing Stock
+                                    _buildSubHeaderCell('CTN'),
+                                    _buildSubHeaderCell('Box'),
+                                    _buildSubHeaderCell('Total'),
+                                    _buildSubHeaderCell('Value'),
+                                    // Sale
+                                    _buildSubHeaderCell('CTN'),
+                                    _buildSubHeaderCell('Box'),
+                                    _buildSubHeaderCell('Total'),
+                                    _buildSubHeaderCell('Value'),
+                                  ],
+                                ),
+                              ),
+                              // Data Rows
+                              ...summary.products.map((product) {
+                                // Helper to parse values safely
+                                double getVal(String field) {
+                                  return double.tryParse(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          field,
+                                        ),
+                                      ) ??
+                                      0.0;
+                                }
+
+                                // Calculate Total Stock values
+                                final totalStockTotal =
+                                    getVal('opening_stock_total') +
+                                    getVal('received_total');
+                                final totalStockValue =
+                                    getVal('opening_stock_value') +
+                                    getVal('received_value');
+
+                                // Get Sale values
+                                getVal('sale_ctn');
+                                getVal('sale_units');
+                                final saleTotal = getVal('sale_total');
+                                final saleValue = getVal('sale_value');
+
+                                // Get Saled Return values
+                                getVal('saled_return_ctn');
+                                getVal('saled_return_units');
+                                final saledReturnTotal = getVal(
+                                  'saled_return_total',
+                                );
+                                getVal('saled_return_value');
+
+                                // Calculate proper CTN and Box for Sale based on packing strategy
+                                final boxPacking =
+                                    (product['boxPacking'] is int)
+                                    ? product['boxPacking'] as int
+                                    : int.tryParse(
+                                            product['boxPacking'].toString(),
+                                          ) ??
+                                          0;
+                                int calculatedSaleCtn;
+                                int calculatedSaleBox;
+
+                                if (boxPacking > 0) {
+                                  if (saleTotal < boxPacking) {
+                                    calculatedSaleCtn = 0;
+                                    calculatedSaleBox = saleTotal.toInt();
+                                  } else {
+                                    calculatedSaleCtn = saleTotal ~/ boxPacking;
+                                    calculatedSaleBox =
+                                        saleTotal.toInt() % boxPacking;
+                                  }
+                                } else {
+                                  calculatedSaleCtn = 0;
+                                  calculatedSaleBox = saleTotal.toInt();
+                                }
+
+                                // Calculate proper CTN and Box for Total Stock based on packing strategy
+                                int calculatedTotalStockCtn;
+                                int calculatedTotalStockBox;
+                                if (boxPacking > 0) {
+                                  if (totalStockTotal < boxPacking) {
+                                    calculatedTotalStockCtn = 0;
+                                    calculatedTotalStockBox = totalStockTotal
+                                        .toInt();
+                                  } else {
+                                    calculatedTotalStockCtn =
+                                        totalStockTotal ~/ boxPacking;
+                                    calculatedTotalStockBox =
+                                        totalStockTotal.toInt() % boxPacking;
+                                  }
+                                } else {
+                                  calculatedTotalStockCtn = 0;
+                                  calculatedTotalStockBox = totalStockTotal
+                                      .toInt();
+                                }
+
+                                // Calculate proper CTN and Box for Saled Return based on packing strategy
+                                // ... existing code ...
+                                // Calculate Closing Stock (Total Stock - Sale + Saled Return)
+                                final closingStockTotal =
+                                    totalStockTotal -
+                                    saleTotal +
+                                    saledReturnTotal;
+                                final closingStockValue =
+                                    closingStockTotal *
+                                    (product['boxRate'] is num
+                                        ? (product['boxRate'] as num).toDouble()
+                                        : double.tryParse(
+                                                product['boxRate'].toString(),
+                                              ) ??
+                                              0.0);
+
+                                // Calculate proper CTN and Box for Closing Stock based on packing strategy
+                                int calculatedClosingStockCtn;
+                                int calculatedClosingStockBox;
+                                if (boxPacking > 0) {
+                                  if (closingStockTotal < boxPacking) {
+                                    calculatedClosingStockCtn = 0;
+                                    calculatedClosingStockBox =
+                                        closingStockTotal.toInt();
+                                  } else {
+                                    calculatedClosingStockCtn =
+                                        closingStockTotal ~/ boxPacking;
+                                    calculatedClosingStockBox =
+                                        closingStockTotal.toInt() % boxPacking;
+                                  }
+                                } else {
+                                  calculatedClosingStockCtn = 0;
+                                  calculatedClosingStockBox = closingStockTotal
+                                      .toInt();
+                                }
+
+                                return IntrinsicHeight(
+                                  child: Row(
+                                    children: [
+                                      _buildDataCell(product['brand'], true),
+                                      // Invoice Rate
+                                      _buildDataCell(
+                                        product['ctnRate'].toString(),
+                                      ),
+                                      _buildDataCell(
+                                        product['boxRate'].toString(),
+                                      ),
+                                      // Packing
+                                      _buildDataCell(
+                                        product['ctnPacking'].toString(),
+                                      ),
+                                      _buildDataCell(
+                                        product['boxPacking'].toString(),
+                                      ),
+                                      _buildDataCell(
+                                        product['unitsPacking'].toString(),
+                                      ),
+                                      // Opening Stock
+                                      _buildDataCell(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          'opening_stock_ctn',
+                                        ),
+                                      ),
+                                      _buildDataCell(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          'opening_stock_units',
+                                        ),
+                                      ),
+                                      _buildDataCell(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          'opening_stock_total',
+                                        ),
+                                      ),
+                                      _buildDataCell(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          'opening_stock_value',
+                                        ),
+                                      ),
+                                      // Received
+                                      _buildDataCell(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          'received_ctn',
+                                        ),
+                                      ),
+                                      _buildDataCell(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          'received_units',
+                                        ),
+                                      ),
+                                      _buildDataCell(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          'received_total',
+                                        ),
+                                      ),
+                                      _buildDataCell(
+                                        _getBrandValue(
+                                          summary.stockRecords,
+                                          product['id'],
+                                          'received_value',
+                                        ),
+                                      ),
+                                      // Total Stock (updated logic)
+                                      _buildDataCell(
+                                        calculatedTotalStockCtn.toString(),
+                                      ),
+                                      _buildDataCell(
+                                        calculatedTotalStockBox.toString(),
+                                      ),
+                                      _buildDataCell(
+                                        _formatIndianNumber(totalStockTotal),
+                                      ),
+                                      _buildDataCell(
+                                        _formatIndianNumber(totalStockValue),
+                                      ),
+                                      // Closing Stock
+                                      _buildDataCell(
+                                        calculatedClosingStockCtn
+                                            .toStringAsFixed(0),
+                                      ),
+                                      _buildDataCell(
+                                        calculatedClosingStockBox
+                                            .toStringAsFixed(0),
+                                      ),
+                                      _buildDataCell(
+                                        _formatIndianNumber(closingStockTotal),
+                                      ),
+                                      _buildDataCell(
+                                        _formatIndianNumber(closingStockValue),
+                                      ),
+                                      // Sale
+                                      _buildDataCell(
+                                        calculatedSaleCtn.toStringAsFixed(0),
+                                      ),
+                                      _buildDataCell(
+                                        calculatedSaleBox.toStringAsFixed(0),
+                                      ),
+                                      _buildDataCell(
+                                        _formatIndianNumber(saleTotal),
+                                      ),
+                                      _buildDataCell(
+                                        _formatIndianNumber(saleValue),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              // Total Row
+                              IntrinsicHeight(
+                                child: Row(
+                                  children: [
+                                    _buildDataCell('Total', true, true),
+                                    // Empty cells for Invoice Rate
+                                    _buildDataCell('', false, true),
+                                    _buildDataCell('', false, true),
+                                    // Empty cells for Packing
+                                    _buildDataCell('', false, true),
+                                    _buildDataCell('', false, true),
+                                    _buildDataCell('', false, true),
+                                    // Opening Stock totals
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(
+                                          summary,
+                                          'opening_stock_ctn',
+                                        ),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(
+                                          summary,
+                                          'opening_stock_units',
+                                        ),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(
+                                          summary,
+                                          'opening_stock_total',
+                                        ),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(
+                                          summary,
+                                          'opening_stock_value',
+                                        ),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    // Received totals
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(
+                                          summary,
+                                          'received_ctn',
+                                        ),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(
+                                          summary,
+                                          'received_units',
+                                        ),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(
+                                          summary,
+                                          'received_total',
+                                        ),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(
+                                          summary,
+                                          'received_value',
+                                        ),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    // Total Stock totals - calculate using the same logic as individual rows
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateTotalStockCtn(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateTotalStockUnits(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateTotalStockTotal(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateTotalStockValue(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    // Closing Stock totals - calculate using the same logic as individual rows
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateClosingStockCtn(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateClosingStockUnits(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateClosingStockTotal(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateClosingStockValue(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    // Sale totals - calculate using the same logic as individual rows
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateSaleCtn(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _calculateSaleUnits(summary),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(summary, 'sale_total'),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                    _buildDataCell(
+                                      _formatIndianNumber(
+                                        _getColumnTotal(summary, 'sale_value'),
+                                      ),
+                                      false,
+                                      true,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          )),
+          ),
         ],
       ),
     );
   }
-} 
+}

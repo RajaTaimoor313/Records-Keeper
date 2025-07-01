@@ -82,12 +82,24 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
   void _showEditProductDialog(Product product) {
     final companyController = TextEditingController(text: product.company);
     final brandController = TextEditingController(text: product.brand);
-    final ctnRateController = TextEditingController(text: product.ctnRate.toString());
-    final boxRateController = TextEditingController(text: product.boxRate.toString());
-    final salePriceController = TextEditingController(text: product.salePrice.toString());
-    final ctnPackingController = TextEditingController(text: product.ctnPacking.toString());
-    final boxPackingController = TextEditingController(text: product.boxPacking.toString());
-    final unitsPackingController = TextEditingController(text: product.unitsPacking.toString());
+    final ctnRateController = TextEditingController(
+      text: product.ctnRate.toString(),
+    );
+    final boxRateController = TextEditingController(
+      text: product.boxRate.toString(),
+    );
+    final salePriceController = TextEditingController(
+      text: product.salePrice.toString(),
+    );
+    final ctnPackingController = TextEditingController(
+      text: product.ctnPacking.toString(),
+    );
+    final boxPackingController = TextEditingController(
+      text: product.boxPacking.toString(),
+    );
+    final unitsPackingController = TextEditingController(
+      text: product.unitsPacking.toString(),
+    );
 
     showDialog(
       context: context,
@@ -157,7 +169,9 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                   boxPacking: int.tryParse(boxPackingController.text) ?? 0,
                   unitsPacking: int.tryParse(unitsPackingController.text) ?? 0,
                 );
-                await DatabaseHelper.instance.updateProduct(updatedProduct.toMap());
+                await DatabaseHelper.instance.updateProduct(
+                  updatedProduct.toMap(),
+                );
                 Navigator.of(context).pop();
                 _loadProducts();
               },
@@ -179,10 +193,7 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border(
-              bottom: BorderSide(
-                color: Colors.grey.shade300,
-                width: 1,
-              ),
+              bottom: BorderSide(color: Colors.grey.shade300, width: 1),
             ),
             boxShadow: [
               BoxShadow(
@@ -205,7 +216,10 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
               ),
               const SizedBox(width: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.deepPurple.shade50,
                   borderRadius: BorderRadius.circular(16),
@@ -240,7 +254,10 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                borderSide: const BorderSide(
+                  color: Colors.deepPurple,
+                  width: 2,
+                ),
               ),
               filled: true,
               fillColor: Colors.white,
@@ -263,7 +280,11 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'No products found',
@@ -276,7 +297,10 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                         const SizedBox(height: 8),
                         Text(
                           'Try adjusting your search',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
                         ),
                       ],
                     ),
@@ -300,24 +324,42 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                       child: SingleChildScrollView(
                         child: DataTable(
                           border: TableBorder(
-                            horizontalInside: BorderSide(color: Colors.grey.shade300, width: 1),
-                            verticalInside: BorderSide(color: Colors.grey.shade300, width: 1),
-                            top: BorderSide(color: Colors.grey.shade300, width: 1),
-                            bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-                            left: BorderSide(color: Colors.grey.shade300, width: 1),
-                            right: BorderSide(color: Colors.grey.shade300, width: 1),
+                            horizontalInside: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                            verticalInside: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                            top: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                            bottom: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                            left: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
+                            right: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1,
+                            ),
                           ),
                           headingRowColor: MaterialStateProperty.all(
                             Colors.deepPurple.shade50,
                           ),
-                          dataRowColor: MaterialStateProperty.resolveWith(
-                            (states) {
-                              if (states.contains(MaterialState.selected)) {
-                                return Colors.deepPurple.shade100;
-                              }
-                              return null;
-                            },
-                          ),
+                          dataRowColor: MaterialStateProperty.resolveWith((
+                            states,
+                          ) {
+                            if (states.contains(MaterialState.selected)) {
+                              return Colors.deepPurple.shade100;
+                            }
+                            return null;
+                          }),
                           headingRowHeight: 80,
                           dataRowMinHeight: 60,
                           dataRowMaxHeight: 80,
@@ -363,7 +405,9 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                             ),
                             DataColumn(
                               label: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -375,12 +419,15 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                       ),
                                     ),
                                     Container(
-                                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 8.0,
+                                      ),
                                       height: 1.0,
                                       color: Colors.grey.shade300,
                                     ),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
                                       children: const [
                                         Text(
                                           'CTN',
@@ -405,7 +452,9 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                             ),
                             DataColumn(
                               label: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -417,12 +466,15 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                       ),
                                     ),
                                     Container(
-                                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 8.0,
+                                      ),
                                       height: 1.0,
                                       color: Colors.grey.shade300,
                                     ),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
                                       children: const [
                                         Text(
                                           'CTN',
@@ -498,7 +550,8 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                 ),
                                 DataCell(
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
                                     children: [
                                       Text(
                                         'Rs. ${product.ctnRate.toStringAsFixed(2)}',
@@ -520,7 +573,8 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                 ),
                                 DataCell(
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
                                     children: [
                                       Text(
                                         '${product.ctnPacking}',
@@ -547,9 +601,13 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                 ),
                                 DataCell(
                                   IconButton(
-                                    icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Colors.deepPurple,
+                                    ),
                                     tooltip: 'Edit Product',
-                                    onPressed: () => _showEditProductDialog(product),
+                                    onPressed: () =>
+                                        _showEditProductDialog(product),
                                   ),
                                 ),
                               ],
@@ -563,4 +621,4 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
       ],
     );
   }
-} 
+}

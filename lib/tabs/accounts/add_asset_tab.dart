@@ -152,7 +152,7 @@ class _AddAssetTabState extends State<AddAssetTab> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Date Field
                     TextFormField(
                       readOnly: true,
@@ -169,7 +169,10 @@ class _AddAssetTabState extends State<AddAssetTab> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                            width: 2,
+                          ),
                         ),
                       ),
                       controller: TextEditingController(
@@ -195,7 +198,10 @@ class _AddAssetTabState extends State<AddAssetTab> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                            width: 2,
+                          ),
                         ),
                       ),
                       validator: (value) {
@@ -219,7 +225,10 @@ class _AddAssetTabState extends State<AddAssetTab> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                            width: 2,
+                          ),
                         ),
                       ),
                       validator: (value) {
@@ -250,7 +259,10 @@ class _AddAssetTabState extends State<AddAssetTab> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -276,7 +288,9 @@ class _AddAssetTabState extends State<AddAssetTab> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : const Text(
@@ -297,4 +311,4 @@ class _AddAssetTabState extends State<AddAssetTab> {
       ),
     );
   }
-} 
+}

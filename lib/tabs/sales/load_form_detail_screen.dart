@@ -7,7 +7,8 @@ class LoadFormDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final historyItem = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final historyItem =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final data = jsonDecode(historyItem['data']);
     final List<LoadFormItem> items = (data['items'] as List)
         .map((item) => LoadFormItem.fromMap(item))
@@ -16,7 +17,9 @@ class LoadFormDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Load Form from ${date.toLocal().toString().split(' ')[0]}'),
+        title: Text(
+          'Load Form from ${date.toLocal().toString().split(' ')[0]}',
+        ),
         backgroundColor: Colors.deepPurple,
       ),
       body: SingleChildScrollView(
@@ -24,9 +27,15 @@ class LoadFormDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Date: ${date.toLocal()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Date: ${date.toLocal()}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
-            const Text('Load Form Items:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Load Form Items:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: _buildItemsTable(items),
@@ -69,31 +78,80 @@ class LoadFormDetailScreen extends StatelessWidget {
         child: DataTable(
           headingRowColor: MaterialStateProperty.all(Colors.deepPurple.shade50),
           columns: const [
-            DataColumn(label: Text('Brand Name', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Units', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Return', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Sale', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Saled Return', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(
+              label: Text(
+                'Brand Name',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Units',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Return',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Sale',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'Saled Return',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
           rows: [
             ...items.map((item) {
-              return DataRow(cells: [
-                DataCell(Text(item.brandName)),
-                DataCell(Text(item.units.toString())),
-                DataCell(Text(item.returnQty.toString())),
-                DataCell(Text(item.sale.toString())),
-                DataCell(Text(item.saledReturn.toString())),
-              ]);
+              return DataRow(
+                cells: [
+                  DataCell(Text(item.brandName)),
+                  DataCell(Text(item.units.toString())),
+                  DataCell(Text(item.returnQty.toString())),
+                  DataCell(Text(item.sale.toString())),
+                  DataCell(Text(item.saledReturn.toString())),
+                ],
+              );
             }),
             // Total row
             DataRow(
               color: MaterialStateProperty.all(Colors.deepPurple.shade50),
               cells: [
-                const DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(totalUnits.toString(), style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(totalReturn.toString(), style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(totalSale.toString(), style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(totalSaledReturn.toString(), style: const TextStyle(fontWeight: FontWeight.bold))),
+                const DataCell(
+                  Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                DataCell(
+                  Text(
+                    totalUnits.toString(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    totalReturn.toString(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    totalSale.toString(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    totalSaledReturn.toString(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
             ),
           ],
@@ -101,4 +159,4 @@ class LoadFormDetailScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

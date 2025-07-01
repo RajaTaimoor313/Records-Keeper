@@ -31,7 +31,7 @@ class _BFTabState extends State<BFTab> {
   bool isLoading = false;
   List<BFData> allRecords = [];
   List<BFData> filteredRecords = [];
-  
+
   DateTime? startDate;
   DateTime? endDate;
   bool isDateRange = false;
@@ -56,7 +56,11 @@ class _BFTabState extends State<BFTab> {
   }
 
   String _formatIndianNumber(double value) {
-    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 2,
+    );
     return formatter.format(value).trim();
   }
 
@@ -68,23 +72,32 @@ class _BFTabState extends State<BFTab> {
     try {
       // Load income records
       final incomeRecords = await DatabaseHelper.instance.getIncomes();
-      final incomeData = incomeRecords.map((record) => BFData(
-        date: record['date'],
-        category: record['category'],
-        details: record['details'],
-        amount: record['amount'],
-        isIncome: true,
-      )).toList();
+      final incomeData = incomeRecords
+          .map(
+            (record) => BFData(
+              date: record['date'],
+              category: record['category'],
+              details: record['details'],
+              amount: record['amount'],
+              isIncome: true,
+            ),
+          )
+          .toList();
 
       // Load expenditure records
-      final expenditureRecords = await DatabaseHelper.instance.getExpenditures();
-      final expenditureData = expenditureRecords.map((record) => BFData(
-        date: record['date'],
-        category: record['category'],
-        details: record['details'],
-        amount: record['amount'],
-        isIncome: false,
-      )).toList();
+      final expenditureRecords = await DatabaseHelper.instance
+          .getExpenditures();
+      final expenditureData = expenditureRecords
+          .map(
+            (record) => BFData(
+              date: record['date'],
+              category: record['category'],
+              details: record['details'],
+              amount: record['amount'],
+              isIncome: false,
+            ),
+          )
+          .toList();
 
       // Get today's date in yyyy-MM-dd format
       final now = DateTime.now();
@@ -92,16 +105,23 @@ class _BFTabState extends State<BFTab> {
 
       // Filter for today only
       final todayIncome = incomeData.where((r) => r.date == todayStr).toList();
-      final todayExpenditure = expenditureData.where((r) => r.date == todayStr).toList();
+      final todayExpenditure = expenditureData
+          .where((r) => r.date == todayStr)
+          .toList();
 
       // Calculate financial summaries for today
-      salesRecoveryTotal = todayIncome.where((r) => r.category == 'Sales & Recovery').fold(0.0, (sum, r) => sum + r.amount);
-      otherIncomeTotal = todayIncome.where((r) => r.category == 'Other Income').fold(0.0, (sum, r) => sum + r.amount);
+      salesRecoveryTotal = todayIncome
+          .where((r) => r.category == 'Sales & Recovery')
+          .fold(0.0, (sum, r) => sum + r.amount);
+      otherIncomeTotal = todayIncome
+          .where((r) => r.category == 'Other Income')
+          .fold(0.0, (sum, r) => sum + r.amount);
       totalIncome = salesRecoveryTotal + otherIncomeTotal;
       totalExpenditure = todayExpenditure.fold(0.0, (sum, r) => sum + r.amount);
 
       // Save summary to bf_summary table (use yyyy-MM-dd for key)
-      final todayDbKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final todayDbKey =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       await DatabaseHelper.instance.upsertBFSummary(
         date: todayDbKey,
         salesRecovery: salesRecoveryTotal,
@@ -171,7 +191,10 @@ class _BFTabState extends State<BFTab> {
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.deepPurple.shade50,
                   borderRadius: BorderRadius.circular(8),
@@ -184,7 +207,9 @@ class _BFTabState extends State<BFTab> {
                       builder: (context) {
                         final now = DateTime.now();
                         final dateStr = DateFormat('dd-MMMM-yyyy').format(now);
-                        final dayStr = DateFormat('EEEE').format(now).toUpperCase();
+                        final dayStr = DateFormat(
+                          'EEEE',
+                        ).format(now).toUpperCase();
                         return Text(
                           '$dateStr  ($dayStr)',
                           style: const TextStyle(
@@ -207,7 +232,9 @@ class _BFTabState extends State<BFTab> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.deepPurple,
+                        ),
                       ),
                       SizedBox(height: 16),
                       Text(
@@ -274,7 +301,9 @@ class _BFTabState extends State<BFTab> {
                           title: 'Net Balance',
                           amount: totalIncome - totalExpenditure,
                           icon: Icons.account_balance,
-                          color: (totalIncome - totalExpenditure) >= 0 ? Colors.green : Colors.red,
+                          color: (totalIncome - totalExpenditure) >= 0
+                              ? Colors.green
+                              : Colors.red,
                         ),
                       ),
                     ],
@@ -338,11 +367,12 @@ class _BFTabState extends State<BFTab> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
-                ),],
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-} 
+}

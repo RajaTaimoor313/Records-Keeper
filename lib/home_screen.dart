@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:records_keeper/tabs/cash_flow/cash_flow_screen.dart';
 import 'package:records_keeper/tabs/credit/ledger_tab.dart';
 import 'package:records_keeper/tabs/credit/realisation_tab.dart';
-import 'package:records_keeper/tabs/dashboard_screen.dart';
+import 'package:records_keeper/tabs/dashboard/dashboard_screen.dart';
+import 'package:records_keeper/tabs/history/history_tab.dart';
+import 'package:records_keeper/tabs/reports/sale_report.dart';
+import 'package:records_keeper/tabs/reports/stock_report.dart';
 import 'package:records_keeper/tabs/sales/invoice_tab.dart';
 import 'package:records_keeper/tabs/sales/load_form.dart';
 import 'package:records_keeper/tabs/sales/pick_list_tab.dart';
@@ -15,9 +18,6 @@ import 'package:records_keeper/tabs/stock/stock_tab.dart';
 import 'package:records_keeper/tabs/stock/view_products_tab.dart';
 import 'package:records_keeper/tabs/suppliers/add_supplier_tab.dart';
 import 'package:records_keeper/tabs/suppliers/view_suppliers_tab.dart';
-import 'package:records_keeper/tabs/history_tab.dart';
-import 'package:records_keeper/tabs/stock/stock_report.dart';
-import 'package:records_keeper/tabs/sales/sale_report.dart';
 import 'package:records_keeper/tabs/accounts/assets_screen.dart';
 import 'package:records_keeper/tabs/accounts/profit_loss_tab.dart';
 
@@ -69,7 +69,9 @@ class _HomeScreenState extends State<HomeScreen>
   void _togglePanel() {
     setState(() {
       _panelVisible = !_panelVisible;
-      _panelVisible ? _animationController.reverse() : _animationController.forward();
+      _panelVisible
+          ? _animationController.reverse()
+          : _animationController.forward();
     });
   }
 
@@ -79,7 +81,8 @@ class _HomeScreenState extends State<HomeScreen>
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth > 900;
-          final isTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
+          final isTablet =
+              constraints.maxWidth > 600 && constraints.maxWidth <= 900;
           final panelWidth = isDesktop ? 250.0 : (isTablet ? 200.0 : 250.0);
 
           return Container(
@@ -106,7 +109,9 @@ class _HomeScreenState extends State<HomeScreen>
                               minWidth: panelWidth,
                               maxWidth: panelWidth,
                               alignment: Alignment.topLeft,
-                              child: _panelVisible ? _buildPanelShow(panelWidth) : null,
+                              child: _panelVisible
+                                  ? _buildPanelShow(panelWidth)
+                                  : null,
                             ),
                           ),
                         ),
@@ -202,13 +207,10 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.symmetric(vertical: 24),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey.shade200,
-                    width: 1,
-                  ),
+                  bottom: BorderSide(color: Colors.grey.shade200, width: 1),
                 ),
               ),
-              child: Center(  
+              child: Center(
                 child: Image.asset(
                   'assets/logo.png',
                   height: 60,
@@ -249,14 +251,20 @@ class _HomeScreenState extends State<HomeScreen>
         child: Icon(
           Icons.history_edu_rounded,
           size: 20,
-          color: _selectedIndex == 15 ? Colors.deepPurple : Colors.grey.shade700,
+          color: _selectedIndex == 15
+              ? Colors.deepPurple
+              : Colors.grey.shade700,
         ),
       ),
       title: Text(
         'History',
         style: TextStyle(
-          color: _selectedIndex == 15 ? Colors.deepPurple : Colors.grey.shade700,
-          fontWeight: _selectedIndex == 15 ? FontWeight.bold : FontWeight.normal,
+          color: _selectedIndex == 15
+              ? Colors.deepPurple
+              : Colors.grey.shade700,
+          fontWeight: _selectedIndex == 15
+              ? FontWeight.bold
+              : FontWeight.normal,
         ),
       ),
       onTap: () {
@@ -683,14 +691,14 @@ class _HomeScreenState extends State<HomeScreen>
     return Column(
       children: [
         ListTile(
-      horizontalTitleGap: 8,
-      minLeadingWidth: 20,
-      leading: SizedBox(
-        width: 24,
-        height: 24,
-        child: Icon(
+          horizontalTitleGap: 8,
+          minLeadingWidth: 20,
+          leading: SizedBox(
+            width: 24,
+            height: 24,
+            child: Icon(
               Icons.emoji_people,
-          size: 20,
+              size: 20,
               color: (_selectedIndex == 13 && _selectedSupplierTab != null)
                   ? Colors.deepPurple
                   : Colors.grey.shade700,
@@ -704,7 +712,8 @@ class _HomeScreenState extends State<HomeScreen>
                   color: (_selectedIndex == 13 && _selectedSupplierTab != null)
                       ? Colors.deepPurple
                       : Colors.grey.shade700,
-                  fontWeight: (_selectedIndex == 13 && _selectedSupplierTab != null)
+                  fontWeight:
+                      (_selectedIndex == 13 && _selectedSupplierTab != null)
                       ? FontWeight.bold
                       : FontWeight.normal,
                 ),
@@ -760,11 +769,11 @@ class _HomeScreenState extends State<HomeScreen>
             Icons.arrow_right_rounded,
             size: 20,
             color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+          ),
         ),
-      ),
-      title: Text(
+        title: Text(
           tabName,
-        style: TextStyle(
+          style: TextStyle(
             fontSize: 14,
             color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -1074,7 +1083,7 @@ class _HomeScreenState extends State<HomeScreen>
             fontSize: 14,
             color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
+          ),
         ),
         onTap: () {
           setState(() {
@@ -1096,14 +1105,20 @@ class _HomeScreenState extends State<HomeScreen>
         child: Icon(
           Icons.analytics_rounded,
           size: 20,
-          color: _selectedIndex == 12 ? Colors.deepPurple : Colors.grey.shade700,
+          color: _selectedIndex == 12
+              ? Colors.deepPurple
+              : Colors.grey.shade700,
         ),
       ),
       title: Text(
         'Dashboard',
         style: TextStyle(
-          color: _selectedIndex == 12 ? Colors.deepPurple : Colors.grey.shade700,
-          fontWeight: _selectedIndex == 12 ? FontWeight.bold : FontWeight.normal,
+          color: _selectedIndex == 12
+              ? Colors.deepPurple
+              : Colors.grey.shade700,
+          fontWeight: _selectedIndex == 12
+              ? FontWeight.bold
+              : FontWeight.normal,
         ),
       ),
       onTap: () {
@@ -1309,10 +1324,7 @@ class _HomeScreenState extends State<HomeScreen>
           const SizedBox(height: 16),
           Text(
             'Select a sub-item from the Shops menu',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -1377,4 +1389,4 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
-} 
+}

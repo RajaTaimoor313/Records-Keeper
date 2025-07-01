@@ -89,7 +89,11 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
   }
 
   String _formatIndianNumber(double value) {
-    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 2,
+    );
     return formatter.format(value).trim();
   }
 
@@ -101,7 +105,9 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
     try {
       final records = await DatabaseHelper.instance.getExpenditures();
       setState(() {
-        expenditureRecords = records.map((record) => ExpenditureData.fromMap(record)).toList();
+        expenditureRecords = records
+            .map((record) => ExpenditureData.fromMap(record))
+            .toList();
         filteredRecords = List.from(expenditureRecords);
         isLoading = false;
       });
@@ -116,11 +122,19 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
   void _filterRecords() {
     setState(() {
       filteredRecords = expenditureRecords.where((record) {
-        bool categoryMatch = filterCategory == null || record.category == filterCategory;
-        bool searchMatch = searchController.text.isEmpty ||
-            record.details.toLowerCase().contains(searchController.text.toLowerCase()) ||
-            record.category.toLowerCase().contains(searchController.text.toLowerCase()) ||
-            record.date.toLowerCase().contains(searchController.text.toLowerCase()) ||
+        bool categoryMatch =
+            filterCategory == null || record.category == filterCategory;
+        bool searchMatch =
+            searchController.text.isEmpty ||
+            record.details.toLowerCase().contains(
+              searchController.text.toLowerCase(),
+            ) ||
+            record.category.toLowerCase().contains(
+              searchController.text.toLowerCase(),
+            ) ||
+            record.date.toLowerCase().contains(
+              searchController.text.toLowerCase(),
+            ) ||
             record.amount.toString().contains(searchController.text);
         return categoryMatch && searchMatch;
       }).toList();
@@ -270,16 +284,16 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: !showAddForm 
-                            ? [Colors.grey[300]!, Colors.grey[200]!]
-                            : [Colors.deepPurple, Colors.deepPurple.shade700],
+                          colors: !showAddForm
+                              ? [Colors.grey[300]!, Colors.grey[200]!]
+                              : [Colors.deepPurple, Colors.deepPurple.shade700],
                         ),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: !showAddForm 
-                              ? Colors.transparent 
-                              : Colors.deepPurple.withOpacity(0.3),
+                            color: !showAddForm
+                                ? Colors.transparent
+                                : Colors.deepPurple.withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -303,14 +317,18 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                               children: [
                                 Icon(
                                   Icons.add_circle_outline,
-                                  color: !showAddForm ? Colors.grey[600] : Colors.white,
+                                  color: !showAddForm
+                                      ? Colors.grey[600]
+                                      : Colors.white,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Add Data',
                                   style: TextStyle(
-                                    color: !showAddForm ? Colors.grey[600] : Colors.white,
+                                    color: !showAddForm
+                                        ? Colors.grey[600]
+                                        : Colors.white,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.3,
@@ -332,16 +350,16 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: showAddForm 
-                            ? [Colors.grey[300]!, Colors.grey[200]!]
-                            : [Colors.deepPurple, Colors.deepPurple.shade700],
+                          colors: showAddForm
+                              ? [Colors.grey[300]!, Colors.grey[200]!]
+                              : [Colors.deepPurple, Colors.deepPurple.shade700],
                         ),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: showAddForm 
-                              ? Colors.transparent 
-                              : Colors.deepPurple.withOpacity(0.3),
+                            color: showAddForm
+                                ? Colors.transparent
+                                : Colors.deepPurple.withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -365,14 +383,18 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                               children: [
                                 Icon(
                                   Icons.visibility,
-                                  color: showAddForm ? Colors.grey[600] : Colors.white,
+                                  color: showAddForm
+                                      ? Colors.grey[600]
+                                      : Colors.white,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'View Data',
                                   style: TextStyle(
-                                    color: showAddForm ? Colors.grey[600] : Colors.white,
+                                    color: showAddForm
+                                        ? Colors.grey[600]
+                                        : Colors.white,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.3,
@@ -395,10 +417,7 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
             duration: const Duration(milliseconds: 300),
             child: showAddForm ? _buildAddForm() : _buildDataView(),
             transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
+              return FadeTransition(opacity: animation, child: child);
             },
           ),
         ),
@@ -411,19 +430,14 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
       padding: const EdgeInsets.all(16),
       child: Card(
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Colors.white,
-                Colors.deepPurple.withOpacity(0.05),
-              ],
+              colors: [Colors.white, Colors.deepPurple.withOpacity(0.05)],
             ),
           ),
           child: Padding(
@@ -467,17 +481,27 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                         labelStyle: const TextStyle(color: Colors.deepPurple),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.deepPurple),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                          borderSide: BorderSide(
+                            color: Colors.deepPurple.withOpacity(0.5),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                            width: 2,
+                          ),
                         ),
-                        prefixIcon: const Icon(Icons.calendar_today, color: Colors.deepPurple),
+                        prefixIcon: const Icon(
+                          Icons.calendar_today,
+                          color: Colors.deepPurple,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -495,13 +519,21 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                      borderSide: BorderSide(
+                        color: Colors.deepPurple.withOpacity(0.5),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                      borderSide: const BorderSide(
+                        color: Colors.deepPurple,
+                        width: 2,
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.category, color: Colors.deepPurple),
+                    prefixIcon: const Icon(
+                      Icons.category,
+                      color: Colors.deepPurple,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                   ),
@@ -541,13 +573,21 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                      borderSide: BorderSide(
+                        color: Colors.deepPurple.withOpacity(0.5),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                      borderSide: const BorderSide(
+                        color: Colors.deepPurple,
+                        width: 2,
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.description, color: Colors.deepPurple),
+                    prefixIcon: const Icon(
+                      Icons.description,
+                      color: Colors.deepPurple,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                   ),
@@ -565,13 +605,21 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                      borderSide: BorderSide(
+                        color: Colors.deepPurple.withOpacity(0.5),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                      borderSide: const BorderSide(
+                        color: Colors.deepPurple,
+                        width: 2,
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.attach_money, color: Colors.deepPurple),
+                    prefixIcon: const Icon(
+                      Icons.attach_money,
+                      color: Colors.deepPurple,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                   ),
@@ -618,10 +666,7 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
             SizedBox(height: 16),
             Text(
               'Loading data...',
-              style: TextStyle(
-                color: Colors.deepPurple,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.deepPurple, fontSize: 16),
             ),
           ],
         ),
@@ -639,18 +684,26 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                 decoration: InputDecoration(
                   hintText: 'Search in all fields...',
                   hintStyle: const TextStyle(color: Colors.grey),
-                  prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Colors.deepPurple,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: Colors.deepPurple),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                    borderSide: BorderSide(
+                      color: Colors.deepPurple.withOpacity(0.5),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                    borderSide: const BorderSide(
+                      color: Colors.deepPurple,
+                      width: 2,
+                    ),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -668,17 +721,27 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                         labelStyle: const TextStyle(color: Colors.deepPurple),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.deepPurple),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                          borderSide: BorderSide(
+                            color: Colors.deepPurple.withOpacity(0.5),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                            width: 2,
+                          ),
                         ),
-                        prefixIcon: const Icon(Icons.filter_alt, color: Colors.deepPurple),
+                        prefixIcon: const Icon(
+                          Icons.filter_alt,
+                          color: Colors.deepPurple,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -723,17 +786,27 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                         labelStyle: const TextStyle(color: Colors.deepPurple),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.deepPurple),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.5)),
+                          borderSide: BorderSide(
+                            color: Colors.deepPurple.withOpacity(0.5),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                          borderSide: const BorderSide(
+                            color: Colors.deepPurple,
+                            width: 2,
+                          ),
                         ),
-                        prefixIcon: const Icon(Icons.sort, color: Colors.deepPurple),
+                        prefixIcon: const Icon(
+                          Icons.sort,
+                          color: Colors.deepPurple,
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                       ),
@@ -751,7 +824,8 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                             DropdownMenuItem<String>(
                               value: 'Date',
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text('Date'),
                                   if (sortBy == 'Date')
@@ -768,7 +842,8 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                             DropdownMenuItem<String>(
                               value: 'Amount',
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text('Amount'),
                                   if (sortBy == 'Amount')
@@ -822,11 +897,7 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.search_off,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
+                      Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
                         'No records found',
@@ -839,10 +910,7 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                       const SizedBox(height: 8),
                       Text(
                         'Try adjusting your search or filters',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                       ),
                     ],
                   ),
@@ -882,7 +950,11 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                                 _buildHeaderCell('Date', flex: 2),
                                 _buildHeaderCell('Category', flex: 3),
                                 _buildHeaderCell('Details', flex: 4),
-                                _buildHeaderCell('Amount', flex: 2, isLast: true),
+                                _buildHeaderCell(
+                                  'Amount',
+                                  flex: 2,
+                                  isLast: true,
+                                ),
                               ],
                             ),
                           ),
@@ -897,7 +969,9 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
 
                             return Container(
                               decoration: BoxDecoration(
-                                color: isEven ? Colors.grey.shade50 : Colors.white,
+                                color: isEven
+                                    ? Colors.grey.shade50
+                                    : Colors.white,
                                 border: Border(
                                   bottom: BorderSide(
                                     color: Colors.grey.shade200,
@@ -962,12 +1036,9 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
       flex: flex,
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.black87,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: Colors.black87, fontSize: 14),
         overflow: TextOverflow.ellipsis,
       ),
     );
   }
-} 
+}

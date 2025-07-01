@@ -7,7 +7,8 @@ class CashIncomeHistoryScreen extends StatefulWidget {
   const CashIncomeHistoryScreen({super.key});
 
   @override
-  State<CashIncomeHistoryScreen> createState() => _CashIncomeHistoryScreenState();
+  State<CashIncomeHistoryScreen> createState() =>
+      _CashIncomeHistoryScreenState();
 }
 
 class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
@@ -38,10 +39,7 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
       final brand = p['brand'] as String? ?? '';
       final boxRate = p['boxRate'] ?? 0.0;
       final salePrice = p['salePrice'] ?? 0.0;
-      productRates[brand] = {
-        'boxRate': boxRate,
-        'salePrice': salePrice,
-      };
+      productRates[brand] = {'boxRate': boxRate, 'salePrice': salePrice};
     }
     double totalBox = 0.0;
     double totalTrade = 0.0;
@@ -107,7 +105,8 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
       for (final inc in incomes.where((e) => e['date'] == date)) {
         if (inc['category'] == 'Sales & Recovery' && inc['details'] == 'Sale') {
           sales += (inc['amount'] as num).toDouble();
-        } else if (inc['category'] == 'Sales & Recovery' && inc['details'] == 'Recovery') {
+        } else if (inc['category'] == 'Sales & Recovery' &&
+            inc['details'] == 'Recovery') {
           recovery += (inc['amount'] as num).toDouble();
         } else if (inc['category'] == 'Other Income') {
           otherIncome += (inc['amount'] as num).toDouble();
@@ -115,9 +114,13 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
       }
       // Prefer bf_summary for expenditure if available
       if (bfSummaries.containsKey(date)) {
-        expenditure = (bfSummaries[date]?['total_expenditure'] as num?)?.toDouble() ?? 0.0;
+        expenditure =
+            (bfSummaries[date]?['total_expenditure'] as num?)?.toDouble() ??
+            0.0;
       } else {
-        expenditure = expenditures.where((e) => e['date'] == date).fold(0.0, (sum, e) => sum + (e['amount'] as num).toDouble());
+        expenditure = expenditures
+            .where((e) => e['date'] == date)
+            .fold(0.0, (sum, e) => sum + (e['amount'] as num).toDouble());
       }
       // Calculate gross/net profit
       final profit = await _getProfitForDate(date);
@@ -155,8 +158,14 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
         title: const Text('Confirm Delete'),
         content: Text('Are you sure you want to delete all records for $date?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
@@ -170,7 +179,11 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
   }
 
   String _formatIndianNumber(double value) {
-    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 2,
+    );
     return formatter.format(value).trim();
   }
 
@@ -196,10 +209,15 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0,
+                      vertical: 4.0,
+                    ),
                     child: Card(
                       elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -213,14 +231,26 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
                             controller: _horizontalScrollController,
                             scrollDirection: Axis.horizontal,
                             child: DataTable(
-                              headingRowColor: MaterialStateProperty.resolveWith<Color?>((states) => Colors.deepPurple.shade50),
-                              headingTextStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple, fontSize: 16),
-                              dataRowColor: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
-                                if (states.contains(MaterialState.selected)) {
-                                  return Colors.deepPurple.shade100;
-                                }
-                                return null;
-                              }),
+                              headingRowColor:
+                                  MaterialStateProperty.resolveWith<Color?>(
+                                    (states) => Colors.deepPurple.shade50,
+                                  ),
+                              headingTextStyle: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                                fontSize: 16,
+                              ),
+                              dataRowColor:
+                                  MaterialStateProperty.resolveWith<Color?>((
+                                    Set<MaterialState> states,
+                                  ) {
+                                    if (states.contains(
+                                      MaterialState.selected,
+                                    )) {
+                                      return Colors.deepPurple.shade100;
+                                    }
+                                    return null;
+                                  }),
                               columns: const [
                                 DataColumn(label: Text('Date')),
                                 DataColumn(label: Text('Sales')),
@@ -238,27 +268,99 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
                                   final s = summaryByDate[date]!;
                                   final isEven = index % 2 == 0;
                                   return DataRow(
-                                    color: MaterialStateProperty.resolveWith<Color?>(
-                                      (Set<MaterialState> states) {
-                                        if (states.contains(MaterialState.selected)) {
-                                          return Colors.deepPurple.shade100;
-                                        }
-                                        return isEven ? Colors.grey.shade50 : Colors.white;
-                                      },
-                                    ),
+                                    color:
+                                        MaterialStateProperty.resolveWith<
+                                          Color?
+                                        >((Set<MaterialState> states) {
+                                          if (states.contains(
+                                            MaterialState.selected,
+                                          )) {
+                                            return Colors.deepPurple.shade100;
+                                          }
+                                          return isEven
+                                              ? Colors.grey.shade50
+                                              : Colors.white;
+                                        }),
                                     cells: [
-                                      DataCell(Text(date, style: const TextStyle(fontWeight: FontWeight.w500))),
-                                      DataCell(Text(_formatIndianNumber(s['sales']!), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600))),
-                                      DataCell(Text(_formatIndianNumber(s['recovery']!), style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600))),
-                                      DataCell(Text(_formatIndianNumber(s['otherIncome']!), style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.w600))),
-                                      DataCell(Text(_formatIndianNumber(s['expenditure']!), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600))),
-                                      DataCell(Text(_formatIndianNumber(s['grossProfit']!), style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600))),
-                                      DataCell(Text(_formatIndianNumber(s['netProfit']!), style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600))),
-                                      DataCell(IconButton(
-                                        icon: const Icon(Icons.delete, color: Colors.red),
-                                        tooltip: 'Delete all records for this date',
-                                        onPressed: () => _deleteDate(date),
-                                      )),
+                                      DataCell(
+                                        Text(
+                                          date,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text(
+                                          _formatIndianNumber(s['sales']!),
+                                          style: const TextStyle(
+                                            color: Colors.green,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text(
+                                          _formatIndianNumber(s['recovery']!),
+                                          style: const TextStyle(
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text(
+                                          _formatIndianNumber(
+                                            s['otherIncome']!,
+                                          ),
+                                          style: const TextStyle(
+                                            color: Colors.teal,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text(
+                                          _formatIndianNumber(
+                                            s['expenditure']!,
+                                          ),
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text(
+                                          _formatIndianNumber(
+                                            s['grossProfit']!,
+                                          ),
+                                          style: const TextStyle(
+                                            color: Colors.deepPurple,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text(
+                                          _formatIndianNumber(s['netProfit']!),
+                                          style: const TextStyle(
+                                            color: Colors.deepPurple,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                          tooltip:
+                                              'Delete all records for this date',
+                                          onPressed: () => _deleteDate(date),
+                                        ),
+                                      ),
                                     ],
                                   );
                                 },
@@ -274,4 +376,4 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
             ),
     );
   }
-} 
+}

@@ -73,8 +73,8 @@ class _ViewAssetsTabState extends State<ViewAssetsTab> {
       } else {
         _filteredAssets = _assets.where((asset) {
           return asset['name'].toString().toLowerCase().contains(query) ||
-                 asset['details'].toString().toLowerCase().contains(query) ||
-                 asset['date'].toString().contains(query);
+              asset['details'].toString().toLowerCase().contains(query) ||
+              asset['date'].toString().contains(query);
         }).toList();
       }
     });
@@ -104,7 +104,7 @@ class _ViewAssetsTabState extends State<ViewAssetsTab> {
       try {
         final db = await DatabaseHelper.instance.database;
         await db.delete('assets', where: 'id = ?', whereArgs: [id]);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -160,7 +160,10 @@ class _ViewAssetsTabState extends State<ViewAssetsTab> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                borderSide: const BorderSide(
+                  color: Colors.deepPurple,
+                  width: 2,
+                ),
               ),
             ),
           ),
@@ -171,150 +174,158 @@ class _ViewAssetsTabState extends State<ViewAssetsTab> {
           child: _isLoading
               ? const Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.deepPurple,
+                    ),
                   ),
                 )
               : _filteredAssets.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.inventory_2_outlined,
-                            size: 64,
-                            color: Colors.grey.shade400,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _searchController.text.isEmpty
-                                ? 'No assets found'
-                                : 'No assets match your search',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _searchController.text.isEmpty
-                                ? 'Add your first asset using the Add tab'
-                                : 'Try a different search term',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 64,
+                        color: Colors.grey.shade400,
                       ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadAssets,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _filteredAssets.length,
-                        itemBuilder: (context, index) {
-                          final asset = _filteredAssets[index];
-                          final date = DateTime.tryParse(asset['date'] ?? '');
-                          final formattedDate = date != null
-                              ? DateFormat('dd/MM/yyyy').format(date)
-                              : 'Unknown Date';
+                      const SizedBox(height: 16),
+                      Text(
+                        _searchController.text.isEmpty
+                            ? 'No assets found'
+                            : 'No assets match your search',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _searchController.text.isEmpty
+                            ? 'Add your first asset using the Add tab'
+                            : 'Try a different search term',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadAssets,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _filteredAssets.length,
+                    itemBuilder: (context, index) {
+                      final asset = _filteredAssets[index];
+                      final date = DateTime.tryParse(asset['date'] ?? '');
+                      final formattedDate = date != null
+                          ? DateFormat('dd/MM/yyyy').format(date)
+                          : 'Unknown Date';
 
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          minVerticalPadding: 0,
+                          isThreeLine: asset['details']?.isNotEmpty == true,
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.deepPurple.shade100,
+                            child: Icon(
+                              Icons.business,
+                              color: Colors.deepPurple,
                             ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              minVerticalPadding: 0,
-                              isThreeLine: asset['details']?.isNotEmpty == true,
-                              leading: CircleAvatar(
-                                backgroundColor: Colors.deepPurple.shade100,
-                                child: Icon(
-                                  Icons.business,
-                                  color: Colors.deepPurple,
-                                ),
-                              ),
-                              title: Text(
-                                asset['name'] ?? 'Unknown Asset',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
+                          ),
+                          title: Text(
+                            asset['name'] ?? 'Unknown Asset',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(height: 4),
+                              Row(
                                 children: [
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_today,
-                                        size: 14,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        formattedDate,
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 14,
+                                    color: Colors.grey.shade600,
                                   ),
-                                  if (asset['details']?.isNotEmpty == true) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      asset['details'],
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 12,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    formattedDate,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12,
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
-                              trailing: SizedBox(
-                                width: 200,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      _currencyFormat.format(asset['value'] ?? 0),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: Colors.deepPurple,
-                                      ),
-                                      textAlign: TextAlign.end,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, size: 18),
-                                      color: Colors.red.shade400,
-                                      onPressed: () => _deleteAsset(asset['id']),
-                                      tooltip: 'Delete asset',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                  ],
+                              if (asset['details']?.isNotEmpty == true) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  asset['details'],
+                                  style: TextStyle(
+                                    color: Colors.grey.shade700,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
+                              ],
+                            ],
+                          ),
+                          trailing: SizedBox(
+                            width: 200,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _currencyFormat.format(asset['value'] ?? 0),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: Colors.deepPurple,
+                                  ),
+                                  textAlign: TextAlign.end,
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                  ),
+                                  color: Colors.red.shade400,
+                                  onPressed: () => _deleteAsset(asset['id']),
+                                  tooltip: 'Delete asset',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
-                    ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
         ),
       ],
     );
   }
-} 
+}

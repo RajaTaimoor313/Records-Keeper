@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:records_keeper/tabs/sales/sale_report.dart';
-import 'package:records_keeper/tabs/cash_income_history_screen.dart';
+import 'package:records_keeper/tabs/history/cash_income_history_screen.dart';
+import 'package:records_keeper/tabs/reports/sale_report.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -50,12 +50,19 @@ class _HistoryTabState extends State<HistoryTab> {
                     },
                     activeColor: Colors.deepPurple,
                   ),
-                  Text(_isRange ? 'Range Picker' : 'Single Date Picker', style: const TextStyle(fontWeight: FontWeight.w500)),
+                  Text(
+                    _isRange ? 'Range Picker' : 'Single Date Picker',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
                   const SizedBox(width: 16),
                   if (!_isRange)
                     OutlinedButton.icon(
                       icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(_selectedDate != null ? DateFormat('dd-MMMM-yyyy').format(_selectedDate!) : 'Select Date'),
+                      label: Text(
+                        _selectedDate != null
+                            ? DateFormat('dd-MMMM-yyyy').format(_selectedDate!)
+                            : 'Select Date',
+                      ),
                       onPressed: () async {
                         final picked = await showDatePicker(
                           context: context,
@@ -73,9 +80,11 @@ class _HistoryTabState extends State<HistoryTab> {
                   if (_isRange)
                     OutlinedButton.icon(
                       icon: const Icon(Icons.date_range, size: 18),
-                      label: Text(_selectedRange != null
-                          ? '${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.start)} - ${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.end)}'
-                          : 'Select Date Range'),
+                      label: Text(
+                        _selectedRange != null
+                            ? '${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.start)} - ${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.end)}'
+                            : 'Select Date Range',
+                      ),
                       onPressed: () async {
                         final picked = await showDateRangePicker(
                           context: context,
@@ -130,11 +139,14 @@ class _HistoryTabState extends State<HistoryTab> {
                 context,
                 icon: Icons.attach_money,
                 title: 'Cash and Income',
-                subtitle: 'View complete history of Income, Expenditure, and Recovery by date.',
+                subtitle:
+                    'View complete history of Income, Expenditure, and Recovery by date.',
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const CashIncomeHistoryScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const CashIncomeHistoryScreen(),
+                    ),
                   );
                 },
               ),
@@ -145,7 +157,8 @@ class _HistoryTabState extends State<HistoryTab> {
     );
   }
 
-  Widget _buildHistoryOption(BuildContext context, {
+  Widget _buildHistoryOption(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,

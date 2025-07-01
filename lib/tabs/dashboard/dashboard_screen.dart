@@ -30,14 +30,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _formatIndianNumber(double value) {
-    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 2,
+    );
     return formatter.format(value).trim();
   }
 
   Future<void> _loadDashboardData() async {
     try {
       final db = DatabaseHelper.instance;
-      
+
       // Load summary data
       final products = await db.getProducts();
       final shops = await db.getShops();
@@ -48,21 +52,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Range mode
         final start = _selectedRange!.start;
         final end = _selectedRange!.end;
-        final startStr = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
-        final endStr = '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
+        final startStr =
+            '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
+        final endStr =
+            '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
         final summaries = await db.getBFSummariesInRange(startStr, endStr);
         for (final row in summaries) {
           totalIncome += (row['total_income'] as num?)?.toDouble() ?? 0.0;
-          totalExpenditure += (row['total_expenditure'] as num?)?.toDouble() ?? 0.0;
+          totalExpenditure +=
+              (row['total_expenditure'] as num?)?.toDouble() ?? 0.0;
         }
       } else if (!_isRange && _selectedDate != null) {
         // Single date mode
         final d = _selectedDate!;
-        final dateStr = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+        final dateStr =
+            '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
         final row = await db.getBFSummaryByDate(dateStr);
         if (row != null) {
           totalIncome = (row['total_income'] as num?)?.toDouble() ?? 0.0;
-          totalExpenditure = (row['total_expenditure'] as num?)?.toDouble() ?? 0.0;
+          totalExpenditure =
+              (row['total_expenditure'] as num?)?.toDouble() ?? 0.0;
         }
       }
 
@@ -129,11 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
+              Icon(icon, color: color, size: 24),
             ],
           ),
           const SizedBox(height: 16),
@@ -180,10 +185,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 8),
           Text(
             'Welcome back! Here\'s your business overview',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 24),
           Row(
@@ -197,12 +199,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
                 activeColor: Colors.deepPurple,
               ),
-              Text(_isRange ? 'Range Picker' : 'Single Date Picker', style: const TextStyle(fontWeight: FontWeight.w500)),
+              Text(
+                _isRange ? 'Range Picker' : 'Single Date Picker',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
               const SizedBox(width: 16),
               if (!_isRange)
                 OutlinedButton.icon(
                   icon: const Icon(Icons.calendar_today, size: 18),
-                  label: Text(_selectedDate != null ? DateFormat('dd-MMMM-yyyy').format(_selectedDate!) : 'Select Date'),
+                  label: Text(
+                    _selectedDate != null
+                        ? DateFormat('dd-MMMM-yyyy').format(_selectedDate!)
+                        : 'Select Date',
+                  ),
                   onPressed: () async {
                     final picked = await showDatePicker(
                       context: context,
@@ -221,9 +230,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (_isRange)
                 OutlinedButton.icon(
                   icon: const Icon(Icons.date_range, size: 18),
-                  label: Text(_selectedRange != null
-                      ? '${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.start)} - ${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.end)}'
-                      : 'Select Date Range'),
+                  label: Text(
+                    _selectedRange != null
+                        ? '${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.start)} - ${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.end)}'
+                        : 'Select Date Range',
+                  ),
                   onPressed: () async {
                     final picked = await showDateRangePicker(
                       context: context,
@@ -273,7 +284,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(child: Divider(thickness: 2)),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text('Other Overview', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+                child: Text(
+                  'Other Overview',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
+                ),
               ),
               Expanded(child: Divider(thickness: 2)),
             ],
@@ -317,4 +334,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-} 
+}

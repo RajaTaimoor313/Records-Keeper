@@ -25,7 +25,8 @@ class _PickListTabState extends State<PickListTab> {
   List<Supplier> _suppliers = [];
   final List<Supplier> _selectedManPowers = [];
   bool _showSupplierSearch = false;
-  final TextEditingController _supplierSearchController = TextEditingController();
+  final TextEditingController _supplierSearchController =
+      TextEditingController();
   final Map<int, TextEditingController> _noteControllers = {
     5000: TextEditingController(),
     1000: TextEditingController(),
@@ -98,7 +99,10 @@ class _PickListTabState extends State<PickListTab> {
     });
   }
 
-  Widget _buildTableHeaderCell(String text, {TextAlign align = TextAlign.center}) {
+  Widget _buildTableHeaderCell(
+    String text, {
+    TextAlign align = TextAlign.center,
+  }) {
     return Container(
       height: 60,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -124,15 +128,15 @@ class _PickListTabState extends State<PickListTab> {
   }
 
   Widget _buildTableCell(
-    String value,
-    {TextAlign align = TextAlign.center,
+    String value, {
+    TextAlign align = TextAlign.center,
     bool isNumeric = false,
     bool isEditable = false,
     bool isPaymentType = false,
     Function(String)? onChanged,
     Function(String)? onFieldSubmitted,
-    String? hintText}
-  ) {
+    String? hintText,
+  }) {
     String displayValue = value;
     final formatter = NumberFormat.currency(
       locale: 'en_IN',
@@ -167,10 +171,7 @@ class _PickListTabState extends State<PickListTab> {
               decoration: BoxDecoration(
                 color: Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: Colors.grey.shade300,
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.grey.shade300, width: 1),
               ),
               child: IntrinsicWidth(
                 child: Row(
@@ -229,10 +230,7 @@ class _PickListTabState extends State<PickListTab> {
                     fontSize: 13,
                   ),
                 ),
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.black87, fontSize: 13),
                 onChanged: onChanged,
                 onFieldSubmitted: onFieldSubmitted,
               )
@@ -262,12 +260,7 @@ class _PickListTabState extends State<PickListTab> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.deepPurple.shade50 : Colors.transparent,
           border: !isFirst
-              ? Border(
-                  left: BorderSide(
-                    color: Colors.grey.shade300,
-                    width: 1,
-                  ),
-                )
+              ? Border(left: BorderSide(color: Colors.grey.shade300, width: 1))
               : null,
         ),
         child: Text(
@@ -294,179 +287,53 @@ class _PickListTabState extends State<PickListTab> {
           : Padding(
               padding: const EdgeInsets.all(24.0),
               child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 2,
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        if (constraints.maxWidth < 600) {
-                          // Mobile layout
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Pick List',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.deepPurple,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Manage your pick list items',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurple.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 2,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth < 600) {
+                            // Mobile layout
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(
-                                      Icons.receipt_long_rounded,
-                                      color: Colors.deepPurple.shade400,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Total Items: ${_items.length}',
+                                    const Text(
+                                      'Pick List',
                                       style: TextStyle(
-                                        color: Colors.deepPurple.shade700,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Manage your pick list items',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade600,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
-                          );
-                        }
-
-                        // Desktop layout
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Pick List',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Manage your pick list items',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ElevatedButton.icon(
-                                    onPressed: () async {
-                                      try {
-                                        // Update Load Form for all pending returns
-                                        for (final ret in _pendingReturns) {
-                                          await DatabaseHelper.instance.updateLoadFormItemReturn(
-                                            ret['brandName'] as String,
-                                            ret['units'] as int,
-                                          );
-                                        }
-                                        _pendingReturns.clear();
-
-                                        // Recalculate all sales in Load Form to ensure consistency
-                                        await DatabaseHelper.instance.recalculateAllLoadFormSales();
-
-                                        // Insert ledger records for credit
-                                        for (final item in _items) {
-                                          if ((item.credit) > 0) {
-                                            await DatabaseHelper.instance.insertLedger({
-                                              'shopName': item.shopName,
-                                              'shopCode': item.code,
-                                              'date': DateTime.now().toIso8601String().split('T')[0],
-                                              'details': '',
-                                              'debit': item.credit, // Credit value from Pick List goes to Debit in Ledger
-                                              'credit': 0,
-                                              'balance': null,
-                                            });
-                                          }
-                                        }
-
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Returns processed successfully and Load Form updated'),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-
-                                        _showNoteDialog();
-                                      } catch (e) {
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Error processing returns: $e'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.deepPurple,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  icon: const Icon(Icons.check_circle_outline, size: 20),
-                                  label: const Text(
-                                    'Generate',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
+                                const SizedBox(height: 16),
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
@@ -493,13 +360,159 @@ class _PickListTabState extends State<PickListTab> {
                                   ),
                                 ),
                               ],
-                            ),
-                          ],
-                        );
-                      },
+                            );
+                          }
+
+                          // Desktop layout
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Pick List',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.deepPurple,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Manage your pick list items',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      try {
+                                        // Update Load Form for all pending returns
+                                        for (final ret in _pendingReturns) {
+                                          await DatabaseHelper.instance
+                                              .updateLoadFormItemReturn(
+                                                ret['brandName'] as String,
+                                                ret['units'] as int,
+                                              );
+                                        }
+                                        _pendingReturns.clear();
+
+                                        // Recalculate all sales in Load Form to ensure consistency
+                                        await DatabaseHelper.instance
+                                            .recalculateAllLoadFormSales();
+
+                                        // Insert ledger records for credit
+                                        for (final item in _items) {
+                                          if ((item.credit) > 0) {
+                                            await DatabaseHelper.instance
+                                                .insertLedger({
+                                                  'shopName': item.shopName,
+                                                  'shopCode': item.code,
+                                                  'date': DateTime.now()
+                                                      .toIso8601String()
+                                                      .split('T')[0],
+                                                  'details': '',
+                                                  'debit': item
+                                                      .credit, // Credit value from Pick List goes to Debit in Ledger
+                                                  'credit': 0,
+                                                  'balance': null,
+                                                });
+                                          }
+                                        }
+
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Returns processed successfully and Load Form updated',
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+
+                                        _showNoteDialog();
+                                      } catch (e) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Error processing returns: $e',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.deepPurple,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    icon: const Icon(
+                                      Icons.check_circle_outline,
+                                      size: 20,
+                                    ),
+                                    label: const Text(
+                                      'Generate',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.deepPurple.shade50,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.receipt_long_rounded,
+                                          color: Colors.deepPurple.shade400,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Total Items: ${_items.length}',
+                                          style: TextStyle(
+                                            color: Colors.deepPurple.shade700,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () {
@@ -513,41 +526,63 @@ class _PickListTabState extends State<PickListTab> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
-                    if (_showSupplierSearch && _selectedManPowers.length < _suppliers.length)
+                    if (_showSupplierSearch &&
+                        _selectedManPowers.length < _suppliers.length)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 12),
                           Autocomplete<Supplier>(
-                            optionsBuilder: (TextEditingValue textEditingValue) {
-                              if (textEditingValue.text.isEmpty) {
-                                return _suppliers;
-                              }
-                              return _suppliers.where((Supplier s) =>
-                                s.name.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                                s.phone.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                                s.address.toLowerCase().contains(textEditingValue.text.toLowerCase())
-                              );
-                            },
+                            optionsBuilder:
+                                (TextEditingValue textEditingValue) {
+                                  if (textEditingValue.text.isEmpty) {
+                                    return _suppliers;
+                                  }
+                                  return _suppliers.where(
+                                    (Supplier s) =>
+                                        s.name.toLowerCase().contains(
+                                          textEditingValue.text.toLowerCase(),
+                                        ) ||
+                                        s.phone.toLowerCase().contains(
+                                          textEditingValue.text.toLowerCase(),
+                                        ) ||
+                                        s.address.toLowerCase().contains(
+                                          textEditingValue.text.toLowerCase(),
+                                        ),
+                                  );
+                                },
                             displayStringForOption: (Supplier s) => s.name,
-                            fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                              _supplierSearchController.text = controller.text;
-                              return TextField(
-                                controller: controller,
-                                focusNode: focusNode,
-                                decoration: InputDecoration(
-                                  labelText: 'Search Man Power',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  prefixIcon: const Icon(Icons.search),
-                                ),
-                              );
-                            },
+                            fieldViewBuilder:
+                                (
+                                  context,
+                                  controller,
+                                  focusNode,
+                                  onFieldSubmitted,
+                                ) {
+                                  _supplierSearchController.text =
+                                      controller.text;
+                                  return TextField(
+                                    controller: controller,
+                                    focusNode: focusNode,
+                                    decoration: InputDecoration(
+                                      labelText: 'Search Man Power',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      prefixIcon: const Icon(Icons.search),
+                                    ),
+                                  );
+                                },
                             onSelected: (Supplier s) {
                               setState(() {
-                                if (!_selectedManPowers.any((mp) => mp.id == s.id)) {
+                                if (!_selectedManPowers.any(
+                                  (mp) => mp.id == s.id,
+                                )) {
                                   _selectedManPowers.add(s);
                                 }
                                 _showSupplierSearch = false;
@@ -562,25 +597,38 @@ class _PickListTabState extends State<PickListTab> {
                         padding: const EdgeInsets.only(top: 12.0, bottom: 12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: _selectedManPowers.map((mp) => Row(
-                            children: [
-                  Expanded(
-                                child: Text(
-                                  '${mp.type}: ${mp.name}, Date: ${DateTime.now().toString().split(' ')[0]}, Day: ${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][DateTime.now().weekday-1]}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple),
+                          children: _selectedManPowers
+                              .map(
+                                (mp) => Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${mp.type}: ${mp.name}, Date: ${DateTime.now().toString().split(' ')[0]}, Day: ${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][DateTime.now().weekday - 1]}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.deepPurple,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.close,
+                                        color: Colors.red,
+                                      ),
+                                      tooltip: 'Remove',
+                                      onPressed: () {
+                                        setState(() {
+                                          _selectedManPowers.removeWhere(
+                                            (x) => x.id == mp.id,
+                                          );
+                                        });
+                                      },
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.close, color: Colors.red),
-                                tooltip: 'Remove',
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedManPowers.removeWhere((x) => x.id == mp.id);
-                                  });
-                                },
-                              ),
-                            ],
-                          )).toList(),
+                              )
+                              .toList(),
                         ),
                       ),
                     const SizedBox(height: 24),
@@ -621,22 +669,44 @@ class _PickListTabState extends State<PickListTab> {
                     // Header Row
                     Row(
                       children: [
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Invoice No.', align: TextAlign.left)),
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Shop', align: TextAlign.left)),
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Bill Amount')),
+                        Expanded(
+                          flex: 2,
+                          child: _buildTableHeaderCell(
+                            'Invoice No.',
+                            align: TextAlign.left,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _buildTableHeaderCell(
+                            'Shop',
+                            align: TextAlign.left,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _buildTableHeaderCell('Bill Amount'),
+                        ),
                         Expanded(flex: 2, child: _buildTableHeaderCell('Cash')),
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Credit')),
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Discount')),
-                        Expanded(flex: 2, child: _buildTableHeaderCell('Return')),
+                        Expanded(
+                          flex: 2,
+                          child: _buildTableHeaderCell('Credit'),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _buildTableHeaderCell('Discount'),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _buildTableHeaderCell('Return'),
+                        ),
                       ],
                     ),
                     // Table Body
                     if (_items.isEmpty)
                       Container(
                         height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                        ),
+                        decoration: BoxDecoration(color: Colors.grey.shade50),
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -676,7 +746,9 @@ class _PickListTabState extends State<PickListTab> {
                           final item = _items[index];
                           return Container(
                             decoration: BoxDecoration(
-                              color: index.isEven ? Colors.white : Colors.grey.shade50,
+                              color: index.isEven
+                                  ? Colors.white
+                                  : Colors.grey.shade50,
                             ),
                             child: Row(
                               children: [
@@ -708,8 +780,11 @@ class _PickListTabState extends State<PickListTab> {
                                     isNumeric: true,
                                     isEditable: true,
                                     onChanged: (value) {
-                                      final cash = double.tryParse(value) ?? 0.0;
-                                      final updatedItem = item.copyWith(cash: cash);
+                                      final cash =
+                                          double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(
+                                        cash: cash,
+                                      );
                                       _updateItem(updatedItem);
                                     },
                                   ),
@@ -721,8 +796,11 @@ class _PickListTabState extends State<PickListTab> {
                                     isNumeric: true,
                                     isEditable: true,
                                     onChanged: (value) {
-                                      final credit = double.tryParse(value) ?? 0.0;
-                                      final updatedItem = item.copyWith(credit: credit);
+                                      final credit =
+                                          double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(
+                                        credit: credit,
+                                      );
                                       _updateItem(updatedItem);
                                     },
                                   ),
@@ -734,8 +812,11 @@ class _PickListTabState extends State<PickListTab> {
                                     isNumeric: true,
                                     isEditable: true,
                                     onChanged: (value) {
-                                      final discount = double.tryParse(value) ?? 0.0;
-                                      final updatedItem = item.copyWith(discount: discount);
+                                      final discount =
+                                          double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(
+                                        discount: discount,
+                                      );
                                       _updateItem(updatedItem);
                                     },
                                   ),
@@ -747,13 +828,19 @@ class _PickListTabState extends State<PickListTab> {
                                     isNumeric: true,
                                     isEditable: true,
                                     onChanged: (value) {
-                                      final returnValue = double.tryParse(value) ?? 0.0;
-                                      final updatedItem = item.copyWith(return_: returnValue);
+                                      final returnValue =
+                                          double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(
+                                        return_: returnValue,
+                                      );
                                       _updateItem(updatedItem);
                                     },
                                     onFieldSubmitted: (value) {
-                                      final returnValue = double.tryParse(value) ?? 0.0;
-                                      final updatedItem = item.copyWith(return_: returnValue);
+                                      final returnValue =
+                                          double.tryParse(value) ?? 0.0;
+                                      final updatedItem = item.copyWith(
+                                        return_: returnValue,
+                                      );
                                       _updateItem(updatedItem);
                                       _handleReturn(updatedItem, returnValue);
                                     },
@@ -770,12 +857,99 @@ class _PickListTabState extends State<PickListTab> {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
                           children: [
-                            const Expanded(flex: 4, child: Align(alignment: Alignment.centerRight, child: Text('Total:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)))),
-                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.billAmount))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.cash))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.credit))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.discount))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
-                            Expanded(flex: 2, child: Text(NumberFormat.decimalPattern('en_IN').format(_items.fold(0.0, (sum, item) => sum + (item.return_))), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center)),
+                            const Expanded(
+                              flex: 4,
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  'Total:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                NumberFormat.decimalPattern('en_IN').format(
+                                  _items.fold(
+                                    0.0,
+                                    (sum, item) => sum + (item.billAmount),
+                                  ),
+                                ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                NumberFormat.decimalPattern('en_IN').format(
+                                  _items.fold(
+                                    0.0,
+                                    (sum, item) => sum + (item.cash),
+                                  ),
+                                ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                NumberFormat.decimalPattern('en_IN').format(
+                                  _items.fold(
+                                    0.0,
+                                    (sum, item) => sum + (item.credit),
+                                  ),
+                                ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                NumberFormat.decimalPattern('en_IN').format(
+                                  _items.fold(
+                                    0.0,
+                                    (sum, item) => sum + (item.discount),
+                                  ),
+                                ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                NumberFormat.decimalPattern('en_IN').format(
+                                  _items.fold(
+                                    0.0,
+                                    (sum, item) => sum + (item.return_),
+                                  ),
+                                ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -810,38 +984,49 @@ class _PickListTabState extends State<PickListTab> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ..._noteControllers.entries.map((entry) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: TextField(
-                      controller: entry.value,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Notes of ${entry.key}',
-                        border: const OutlineInputBorder(),
-                      ),
-                      onChanged: (_) {
-                        setState(() {
-                          double t = 0;
-                          _noteControllers.forEach((denom, c) {
-                            final count = int.tryParse(c.text) ?? 0;
-                            t += denom * count;
+                  ..._noteControllers.entries.map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: TextField(
+                        controller: entry.value,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Notes of ${entry.key}',
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (_) {
+                          setState(() {
+                            double t = 0;
+                            _noteControllers.forEach((denom, c) {
+                              final count = int.tryParse(c.text) ?? 0;
+                              t += denom * count;
+                            });
+                            if (t != cashSum) {
+                              _noteError = 'Values are not Matched';
+                            } else {
+                              _noteError = null;
+                            }
                           });
-                          if (t != cashSum) {
-                            _noteError = 'Values are not Matched';
-                          } else {
-                            _noteError = null;
-                          }
-                        });
-                      },
+                        },
+                      ),
                     ),
-                  )),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Total: Rs. ${total.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('Pick List Cash: Rs. ${cashSum.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Total: Rs. ${total.toStringAsFixed(0)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Pick List Cash: Rs. ${cashSum.toStringAsFixed(0)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   if (_noteError != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(_noteError!, style: const TextStyle(color: Colors.red)),
+                      child: Text(
+                        _noteError!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
                 ],
               ),
@@ -851,55 +1036,65 @@ class _PickListTabState extends State<PickListTab> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: matched ? () async {
-                    Navigator.of(context).pop();
-                    // Insert income record
-                    await DatabaseHelper.instance.insertIncome({
-                      'date': DateTime.now().toIso8601String().split('T')[0],
-                      'category': 'Sales & Recovery',
-                      'details': 'Sale',
-                      'amount': cashSum,
-                    });
-                    await _showPickListPrintPreview();
+                  onPressed: matched
+                      ? () async {
+                          Navigator.of(context).pop();
+                          // Insert income record
+                          await DatabaseHelper.instance.insertIncome({
+                            'date': DateTime.now().toIso8601String().split(
+                              'T',
+                            )[0],
+                            'category': 'Sales & Recovery',
+                            'details': 'Sale',
+                            'amount': cashSum,
+                          });
+                          await _showPickListPrintPreview();
 
-                    // Save to history
-                    final notes = <String, String>{};
-                    _noteControllers.forEach((key, value) {
-                      if (value.text.isNotEmpty) {
-                        notes[key.toString()] = value.text;
-                      }
-                    });
-                    final historyData = {
-                      'items': _items.map((e) => e.toMap()).toList(),
-                      'manpower': _selectedManPowers.map((e) => e.toMap()).toList(),
-                      'notes': notes,
-                      'date': DateTime.now().toIso8601String(),
-                    };
-                    await DatabaseHelper.instance.addPickListHistory(
-                      DateTime.now().toIso8601String().split('T')[0],
-                      jsonEncode(historyData),
-                    );
+                          // Save to history
+                          final notes = <String, String>{};
+                          _noteControllers.forEach((key, value) {
+                            if (value.text.isNotEmpty) {
+                              notes[key.toString()] = value.text;
+                            }
+                          });
+                          final historyData = {
+                            'items': _items.map((e) => e.toMap()).toList(),
+                            'manpower': _selectedManPowers
+                                .map((e) => e.toMap())
+                                .toList(),
+                            'notes': notes,
+                            'date': DateTime.now().toIso8601String(),
+                          };
+                          await DatabaseHelper.instance.addPickListHistory(
+                            DateTime.now().toIso8601String().split('T')[0],
+                            jsonEncode(historyData),
+                          );
 
-                    // Clear form
-                    await DatabaseHelper.instance.clearPickList();
-                    if (mounted) {
-                      setState(() {
-                        _items.clear();
-                        _selectedManPowers.clear();
-                        _noteControllers.forEach((key, value) => value.clear());
-                      });
-                    }
-                    await _loadItems(); // Refresh the list
+                          // Clear form
+                          await DatabaseHelper.instance.clearPickList();
+                          if (mounted) {
+                            setState(() {
+                              _items.clear();
+                              _selectedManPowers.clear();
+                              _noteControllers.forEach(
+                                (key, value) => value.clear(),
+                              );
+                            });
+                          }
+                          await _loadItems(); // Refresh the list
 
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Pick List saved to history and form cleared.'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  } : null,
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Pick List saved to history and form cleared.',
+                                ),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        }
+                      : null,
                   child: const Text('OK'),
                 ),
               ],
@@ -920,11 +1115,23 @@ class _PickListTabState extends State<PickListTab> {
     final moneyFormat = NumberFormat('#,##0.00', 'en_US');
 
     // Calculate totals
-    final double totalBillAmount = _items.fold(0.0, (sum, item) => sum + item.billAmount);
+    final double totalBillAmount = _items.fold(
+      0.0,
+      (sum, item) => sum + item.billAmount,
+    );
     final double totalCash = _items.fold(0.0, (sum, item) => sum + item.cash);
-    final double totalCredit = _items.fold(0.0, (sum, item) => sum + item.credit);
-    final double totalDiscount = _items.fold(0.0, (sum, item) => sum + item.discount);
-    final double totalReturn = _items.fold(0.0, (sum, item) => sum + item.return_);
+    final double totalCredit = _items.fold(
+      0.0,
+      (sum, item) => sum + item.credit,
+    );
+    final double totalDiscount = _items.fold(
+      0.0,
+      (sum, item) => sum + item.discount,
+    );
+    final double totalReturn = _items.fold(
+      0.0,
+      (sum, item) => sum + item.return_,
+    );
 
     String formatNumber(num value) {
       if (value % 1 == 0) {
@@ -937,8 +1144,14 @@ class _PickListTabState extends State<PickListTab> {
     final String date = DateFormat('dd-MM-yyyy').format(DateTime.now());
     final String day = DateFormat('EEEE').format(DateTime.now());
 
-    final supplier = _selectedManPowers.where((mp) => mp.type == 'Supplier').map((mp) => mp.name).join(', ');
-    final orderBooker = _selectedManPowers.where((mp) => mp.type == 'Order Booker').map((mp) => mp.name).join(', ');
+    final supplier = _selectedManPowers
+        .where((mp) => mp.type == 'Supplier')
+        .map((mp) => mp.name)
+        .join(', ');
+    final orderBooker = _selectedManPowers
+        .where((mp) => mp.type == 'Order Booker')
+        .map((mp) => mp.name)
+        .join(', ');
 
     pdf.addPage(
       pw.MultiPage(
@@ -948,12 +1161,14 @@ class _PickListTabState extends State<PickListTab> {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.SizedBox(
-                  height: 50,
-                  width: 50,
-                  child: pw.Image(logo),
+                pw.SizedBox(height: 50, width: 50, child: pw.Image(logo)),
+                pw.Text(
+                  'Pick List',
+                  style: pw.TextStyle(
+                    fontSize: 40,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-                pw.Text('Pick List', style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(width: 10), // For spacing
               ],
             ),
@@ -967,9 +1182,15 @@ class _PickListTabState extends State<PickListTab> {
                   children: [
                     _buildInfoRow('Supplier:', supplier),
                     _buildInfoRow('Order Booker:', orderBooker),
-                    _buildInfoRow('Total Bill Amount:', formatNumber(totalBillAmount)),
+                    _buildInfoRow(
+                      'Total Bill Amount:',
+                      formatNumber(totalBillAmount),
+                    ),
                     _buildInfoRow('Total Credit:', formatNumber(totalCredit)),
-                    _buildInfoRow('Total Discount:', formatNumber(totalDiscount)),
+                    _buildInfoRow(
+                      'Total Discount:',
+                      formatNumber(totalDiscount),
+                    ),
                   ],
                 ),
                 pw.Column(
@@ -986,16 +1207,28 @@ class _PickListTabState extends State<PickListTab> {
             ),
             pw.SizedBox(height: 10),
             pw.Table.fromTextArray(
-              headers: ['Invoice No.', 'Shop', 'Bill Amount', 'Cash', 'Credit', 'Discount', 'Return'],
-              data: _items.map((item) => [
-                (item.invoiceNumber ?? '').replaceAll('\n', ' '),
-                (item.shopName).replaceAll('\n', ' '),
-                formatNumber(item.billAmount),
-                formatNumber(item.cash),
-                formatNumber(item.credit),
-                formatNumber(item.discount),
-                formatNumber(item.return_),
-              ]).toList(),
+              headers: [
+                'Invoice No.',
+                'Shop',
+                'Bill Amount',
+                'Cash',
+                'Credit',
+                'Discount',
+                'Return',
+              ],
+              data: _items
+                  .map(
+                    (item) => [
+                      (item.invoiceNumber ?? '').replaceAll('\n', ' '),
+                      (item.shopName).replaceAll('\n', ' '),
+                      formatNumber(item.billAmount),
+                      formatNumber(item.cash),
+                      formatNumber(item.credit),
+                      formatNumber(item.discount),
+                      formatNumber(item.return_),
+                    ],
+                  )
+                  .toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               cellAlignment: pw.Alignment.center,
               cellStyle: pw.TextStyle(lineSpacing: 0, fontSize: 10),
@@ -1013,7 +1246,10 @@ class _PickListTabState extends State<PickListTab> {
               ),
               border: pw.TableBorder.all(),
               cellHeight: 20,
-              cellPadding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 2,
+                vertical: 2,
+              ),
             ),
           ];
         },
@@ -1043,7 +1279,9 @@ class _PickListTabState extends State<PickListTab> {
     if (returnValue <= 0) return;
 
     // Get the invoice details
-    final invoice = await DatabaseHelper.instance.getInvoiceByNumber(item.invoiceNumber ?? '');
+    final invoice = await DatabaseHelper.instance.getInvoiceByNumber(
+      item.invoiceNumber ?? '',
+    );
     if (invoice == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1057,17 +1295,23 @@ class _PickListTabState extends State<PickListTab> {
     }
 
     try {
-      final List<Map<String, dynamic>> invoiceItems = List<Map<String, dynamic>>.from(
-        (jsonDecode(invoice['items'] as String) as List).map((item) => {
-          'brandName': item['description'] as String,
-          'units': item['unit'] as int,
-          'rate': item['rate'] as double,
-        }).toList(),
-      );
+      final List<Map<String, dynamic>> invoiceItems =
+          List<Map<String, dynamic>>.from(
+            (jsonDecode(invoice['items'] as String) as List)
+                .map(
+                  (item) => {
+                    'brandName': item['description'] as String,
+                    'units': item['unit'] as int,
+                    'rate': item['rate'] as double,
+                  },
+                )
+                .toList(),
+          );
 
       final total = invoice['total'] as double;
 
-      if ((returnValue - total).abs() < 0.01) {  // Using abs() to handle floating point comparison
+      if ((returnValue - total).abs() < 0.01) {
+        // Using abs() to handle floating point comparison
         // Full return - store all products as pending returns
         for (final invoiceItem in invoiceItems) {
           _pendingReturns.add({
@@ -1077,11 +1321,14 @@ class _PickListTabState extends State<PickListTab> {
         }
         // Show the invoice
         if (mounted) {
-          final returnedProducts = invoiceItems.map((item) => {
-            ...item,
-            'units': item['units'],
-          }).toList();
-          _showInvoiceDialog(invoice, isFullReturn: true, returnedProducts: returnedProducts);
+          final returnedProducts = invoiceItems
+              .map((item) => {...item, 'units': item['units']})
+              .toList();
+          _showInvoiceDialog(
+            invoice,
+            isFullReturn: true,
+            returnedProducts: returnedProducts,
+          );
         }
       } else {
         // Partial return - show product selection dialog
@@ -1101,15 +1348,24 @@ class _PickListTabState extends State<PickListTab> {
     }
   }
 
-  Future<void> _showReturnProductDialog(Map<String, dynamic> invoice, double returnValue) async {
-    final List<Map<String, dynamic>> invoiceItems = List<Map<String, dynamic>>.from(
-      (jsonDecode(invoice['items'] as String) as List).map((item) => {
-        'brandName': item['description'] as String,
-        'units': item['unit'] as int,
-        'rate': item['rate'] as double,
-        'maxUnits': item['unit'] as int,  // Store original units as max limit
-      }).toList(),
-    );
+  Future<void> _showReturnProductDialog(
+    Map<String, dynamic> invoice,
+    double returnValue,
+  ) async {
+    final List<Map<String, dynamic>> invoiceItems =
+        List<Map<String, dynamic>>.from(
+          (jsonDecode(invoice['items'] as String) as List)
+              .map(
+                (item) => {
+                  'brandName': item['description'] as String,
+                  'units': item['unit'] as int,
+                  'rate': item['rate'] as double,
+                  'maxUnits':
+                      item['unit'] as int, // Store original units as max limit
+                },
+              )
+              .toList(),
+        );
 
     final selectedProducts = <Map<String, dynamic>>[];
     final unitControllers = <int, TextEditingController>{};
@@ -1130,8 +1386,8 @@ class _PickListTabState extends State<PickListTab> {
             return AlertDialog(
               title: const Text('Select Products to Return'),
               content: SizedBox(
-                width: 800,  // Increased width for better visibility
-                height: 600,  // Fixed height for better visibility
+                width: 800, // Increased width for better visibility
+                height: 600, // Fixed height for better visibility
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1143,7 +1399,9 @@ class _PickListTabState extends State<PickListTab> {
                       Text(
                         'Remaining: Rs. ${remainingReturnValue.toStringAsFixed(2)}',
                         style: TextStyle(
-                          color: remainingReturnValue < 0 ? Colors.red : Colors.green,
+                          color: remainingReturnValue < 0
+                              ? Colors.red
+                              : Colors.green,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1160,82 +1418,100 @@ class _PickListTabState extends State<PickListTab> {
                             DataColumn(label: Text('Return Value')),
                             DataColumn(label: Text('Max Return Value')),
                           ],
-                          rows: List<DataRow>.generate(
-                            invoiceItems.length,
-                            (index) {
-                              final item = invoiceItems[index];
-                              final controller = unitControllers[index]!;
-                              final isSelected = selectedProducts.contains(item);
-                              final returnUnits = int.tryParse(controller.text) ?? 0;
-                              final returnValue = returnUnits * (item['rate'] as double);
-                              final maxReturnValue = (item['maxUnits'] as int) * (item['rate'] as double);
+                          rows: List<DataRow>.generate(invoiceItems.length, (
+                            index,
+                          ) {
+                            final item = invoiceItems[index];
+                            final controller = unitControllers[index]!;
+                            final isSelected = selectedProducts.contains(item);
+                            final returnUnits =
+                                int.tryParse(controller.text) ?? 0;
+                            final returnValue =
+                                returnUnits * (item['rate'] as double);
+                            final maxReturnValue =
+                                (item['maxUnits'] as int) *
+                                (item['rate'] as double);
 
-                              return DataRow(
-                                cells: [
-                                  DataCell(
-                                    Checkbox(
-                                      value: isSelected,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            selectedProducts.add(item);
-                                          } else {
-                                            selectedProducts.remove(item);
-                                            controller.clear();
-                                            _recalculateRemainingValue(
-                                              returnValue,
-                                              selectedProducts,
-                                              unitControllers,
-                                              invoiceItems,
-                                              (value) => remainingReturnValue = value,
-                                            );
-                                          }
-                                        });
-                                      },
-                                    ),
+                            return DataRow(
+                              cells: [
+                                DataCell(
+                                  Checkbox(
+                                    value: isSelected,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          selectedProducts.add(item);
+                                        } else {
+                                          selectedProducts.remove(item);
+                                          controller.clear();
+                                          _recalculateRemainingValue(
+                                            returnValue,
+                                            selectedProducts,
+                                            unitControllers,
+                                            invoiceItems,
+                                            (value) =>
+                                                remainingReturnValue = value,
+                                          );
+                                        }
+                                      });
+                                    },
                                   ),
-                                  DataCell(Text(item['brandName'] as String)),
-                                  DataCell(Text((item['maxUnits'] as int).toString())),
-                                  DataCell(Text((item['rate'] as double).toString())),
-                                  DataCell(
-                                    isSelected
-                                        ? TextField(
-                                            controller: controller,
-                                            keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
-                                              isDense: true,
-                                              contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                                            ),
-                                            onChanged: (value) {
-                                              final units = int.tryParse(value) ?? 0;
-                                              if (units > (item['maxUnits'] as int)) {
-                                                controller.text = item['maxUnits'].toString();
-                                              }
-                                              setState(() {
-                                                _recalculateRemainingValue(
-                                                  returnValue,
-                                                  selectedProducts,
-                                                  unitControllers,
-                                                  invoiceItems,
-                                                  (value) => remainingReturnValue = value,
-                                                );
-                                              });
-                                            },
-                                          )
-                                        : const Text('')
+                                ),
+                                DataCell(Text(item['brandName'] as String)),
+                                DataCell(
+                                  Text((item['maxUnits'] as int).toString()),
+                                ),
+                                DataCell(
+                                  Text((item['rate'] as double).toString()),
+                                ),
+                                DataCell(
+                                  isSelected
+                                      ? TextField(
+                                          controller: controller,
+                                          keyboardType: TextInputType.number,
+                                          decoration: const InputDecoration(
+                                            isDense: true,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                ),
+                                          ),
+                                          onChanged: (value) {
+                                            final units =
+                                                int.tryParse(value) ?? 0;
+                                            if (units >
+                                                (item['maxUnits'] as int)) {
+                                              controller.text = item['maxUnits']
+                                                  .toString();
+                                            }
+                                            setState(() {
+                                              _recalculateRemainingValue(
+                                                returnValue,
+                                                selectedProducts,
+                                                unitControllers,
+                                                invoiceItems,
+                                                (value) =>
+                                                    remainingReturnValue =
+                                                        value,
+                                              );
+                                            });
+                                          },
+                                        )
+                                      : const Text(''),
+                                ),
+                                DataCell(
+                                  Text(
+                                    isSelected && returnUnits > 0
+                                        ? returnValue.toStringAsFixed(2)
+                                        : '',
                                   ),
-                                  DataCell(
-                                    Text(
-                                      isSelected && returnUnits > 0
-                                          ? returnValue.toStringAsFixed(2)
-                                          : '',
-                                    ),
-                                  ),
-                                  DataCell(Text(maxReturnValue.toStringAsFixed(2))),
-                                ],
-                              );
-                            },
-                          ),
+                                ),
+                                DataCell(
+                                  Text(maxReturnValue.toStringAsFixed(2)),
+                                ),
+                              ],
+                            );
+                          }),
                         ),
                       ),
                     ],
@@ -1248,17 +1524,21 @@ class _PickListTabState extends State<PickListTab> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: selectedProducts.isNotEmpty && selectedProducts.any((item) {
-                    final idx = invoiceItems.indexOf(item);
-                    final units = int.tryParse(unitControllers[idx]!.text) ?? 0;
-                    return units > 0;
-                  })
+                  onPressed:
+                      selectedProducts.isNotEmpty &&
+                          selectedProducts.any((item) {
+                            final idx = invoiceItems.indexOf(item);
+                            final units =
+                                int.tryParse(unitControllers[idx]!.text) ?? 0;
+                            return units > 0;
+                          })
                       ? () async {
                           // Store selected products as pending returns
                           for (var i = 0; i < invoiceItems.length; i++) {
                             final item = invoiceItems[i];
                             if (selectedProducts.contains(item)) {
-                              final returnUnits = int.tryParse(unitControllers[i]!.text) ?? 0;
+                              final returnUnits =
+                                  int.tryParse(unitControllers[i]!.text) ?? 0;
                               if (returnUnits > 0) {
                                 _pendingReturns.add({
                                   'brandName': item['brandName'],
@@ -1272,7 +1552,8 @@ class _PickListTabState extends State<PickListTab> {
                             final returnedProducts = <Map<String, dynamic>>[];
                             for (var i = 0; i < invoiceItems.length; i++) {
                               if (selectedProducts.contains(invoiceItems[i])) {
-                                final returnUnits = int.tryParse(unitControllers[i]!.text) ?? 0;
+                                final returnUnits =
+                                    int.tryParse(unitControllers[i]!.text) ?? 0;
                                 if (returnUnits > 0) {
                                   returnedProducts.add({
                                     ...invoiceItems[i],
@@ -1282,7 +1563,11 @@ class _PickListTabState extends State<PickListTab> {
                               }
                             }
                             Navigator.of(context).pop();
-                            _showInvoiceDialog(invoice, isFullReturn: false, returnedProducts: returnedProducts);
+                            _showInvoiceDialog(
+                              invoice,
+                              isFullReturn: false,
+                              returnedProducts: returnedProducts,
+                            );
                           }
                         }
                       : null,
@@ -1319,12 +1604,16 @@ class _PickListTabState extends State<PickListTab> {
     List<Map<String, dynamic>>? returnedProducts,
   }) async {
     if (!mounted) return;
-    
+
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(isFullReturn ? 'Full Return - Invoice Details' : 'Partial Return - Invoice Details'),
+          title: Text(
+            isFullReturn
+                ? 'Full Return - Invoice Details'
+                : 'Partial Return - Invoice Details',
+          ),
           content: SizedBox(
             width: 500,
             child: SingleChildScrollView(
@@ -1336,15 +1625,23 @@ class _PickListTabState extends State<PickListTab> {
                   Text('Shop: ${invoice['shopName']}'),
                   Text('Date: ${invoice['date']}'),
                   const SizedBox(height: 16),
-                  const Text('Products:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Products:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
-                  ...((returnedProducts ?? List<Map<String, dynamic>>.from(jsonDecode(invoice['items'] as String)))
-                      .map((item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(
-                              '${item['brandName']} - ${item['units']} units @ Rs.${item['rate']}',
-                            ),
-                          ))),
+                  ...((returnedProducts ??
+                          List<Map<String, dynamic>>.from(
+                            jsonDecode(invoice['items'] as String),
+                          ))
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            '${item['brandName']} - ${item['units']} units @ Rs.${item['rate']}',
+                          ),
+                        ),
+                      )),
                   const SizedBox(height: 16),
                   Text('Total: Rs.${invoice['total']}'),
                 ],
@@ -1449,4 +1746,4 @@ class PickListItem {
       invoiceNumber: invoiceNumber ?? this.invoiceNumber,
     );
   }
-} 
+}

@@ -39,7 +39,7 @@ class _AddShopTabState extends State<AddShopTab> {
 
     try {
       final code = await DatabaseHelper.instance.generateShopCode();
-      
+
       final shop = Shop(
         code: code,
         name: _nameController.text.trim(),
@@ -336,4 +336,4 @@ class _AddShopTabState extends State<AddShopTab> {
       ),
     );
   }
-} 
+}

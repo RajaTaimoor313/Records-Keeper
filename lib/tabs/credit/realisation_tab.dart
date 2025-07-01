@@ -89,15 +89,19 @@ class _RealisationTabState extends State<RealisationTab> {
       final text = row.getController(field).text;
       if (text.isEmpty) return;
       final suggestions = _shopSuggestions.where((shop) {
-        final value = (field == 'code'
-            ? shop['code']
-            : field == 'name'
-                ? shop['name']
-                : shop['address']) as String?;
+        final value =
+            (field == 'code'
+                    ? shop['code']
+                    : field == 'name'
+                    ? shop['name']
+                    : shop['address'])
+                as String?;
         return value?.toLowerCase().contains(text.toLowerCase()) ?? false;
       }).toList();
       if (suggestions.isEmpty) return;
-      final renderBox = row.getFieldKey(field).currentContext?.findRenderObject() as RenderBox?;
+      final renderBox =
+          row.getFieldKey(field).currentContext?.findRenderObject()
+              as RenderBox?;
       final overlay = Overlay.of(context);
       if (renderBox == null) return;
       final position = renderBox.localToGlobal(Offset.zero);
@@ -119,11 +123,14 @@ class _RealisationTabState extends State<RealisationTab> {
               itemBuilder: (context, index) {
                 final shop = suggestions[index];
                 return ListTile(
-                  title: Text(shop[field == 'code'
-                      ? 'code'
-                      : field == 'name'
-                          ? 'name'
-                          : 'address'] as String),
+                  title: Text(
+                    shop[field == 'code'
+                            ? 'code'
+                            : field == 'name'
+                            ? 'name'
+                            : 'address']
+                        as String,
+                  ),
                   dense: true,
                   onTap: () {
                     _handleShopSelection(row, shop);
@@ -155,7 +162,8 @@ class _RealisationTabState extends State<RealisationTab> {
     setState(() => _isLoading = true);
     final db = await DatabaseHelper.instance.database;
     final now = DateTime.now();
-    final dateStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final dateStr =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
     try {
       await db.transaction((txn) async {
         await txn.insert('income', {
@@ -219,47 +227,57 @@ class _RealisationTabState extends State<RealisationTab> {
     });
   }
 
-  Widget _buildTableHeaderCell(String text, {TextAlign align = TextAlign.center}) {
+  Widget _buildTableHeaderCell(
+    String text, {
+    TextAlign align = TextAlign.center,
+  }) {
     return Container(
       height: 48,
       alignment: Alignment.center,
-        child: Text(
-          text,
-          textAlign: align,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.deepPurple,
-            fontSize: 14,
+      child: Text(
+        text,
+        textAlign: align,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.deepPurple,
+          fontSize: 14,
         ),
       ),
     );
   }
 
-  Widget _buildInputCell(RealisationFormRow row, TextEditingController controller, String field) {
-    final bool isEditable = !row.isLocked || field == 'realisation' || field == 'discount';
+  Widget _buildInputCell(
+    RealisationFormRow row,
+    TextEditingController controller,
+    String field,
+  ) {
+    final bool isEditable =
+        !row.isLocked || field == 'realisation' || field == 'discount';
     return CompositedTransformTarget(
-      link: field == _activeField && row == _activeRow ? _layerLink : LayerLink(),
+      link: field == _activeField && row == _activeRow
+          ? _layerLink
+          : LayerLink(),
       child: Container(
-      height: 44,
+        height: 44,
         padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
+        decoration: BoxDecoration(
           color: isEditable ? Colors.white : Colors.grey.shade100,
-      ),
+        ),
         child: Center(
           child: TextField(
             key: row.getFieldKey(field),
             controller: controller,
             enabled: isEditable,
             textAlign: TextAlign.center,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
               isDense: true,
-                ),
+            ),
             style: TextStyle(
               color: isEditable ? Colors.black87 : Colors.grey.shade700,
-                  fontSize: 13,
-                ),
+              fontSize: 13,
+            ),
             keyboardType: field == 'realisation' || field == 'discount'
                 ? TextInputType.number
                 : TextInputType.text,
@@ -267,29 +285,30 @@ class _RealisationTabState extends State<RealisationTab> {
               _onRowFieldChanged(row, field);
             },
             onTap: () {
-              if (isEditable && (field == 'code' || field == 'name' || field == 'address')) {
+              if (isEditable &&
+                  (field == 'code' || field == 'name' || field == 'address')) {
                 _showSuggestionOverlay(row, field);
               }
             },
-                ),
-              ),
-            ),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildTableHeader() {
-        return Container(
+    return Container(
       color: Colors.deepPurple.shade50,
-                      child: Row(
-                        children: [
-                          Expanded(flex: 2, child: _buildTableHeaderCell('Shop Code')),
-                          Expanded(flex: 3, child: _buildTableHeaderCell('Shop Name')),
-                          Expanded(flex: 4, child: _buildTableHeaderCell('Address')),
-                          Expanded(flex: 2, child: _buildTableHeaderCell('Realisation')),
-                          Expanded(flex: 2, child: _buildTableHeaderCell('Discount')),
+      child: Row(
+        children: [
+          Expanded(flex: 2, child: _buildTableHeaderCell('Shop Code')),
+          Expanded(flex: 3, child: _buildTableHeaderCell('Shop Name')),
+          Expanded(flex: 4, child: _buildTableHeaderCell('Address')),
+          Expanded(flex: 2, child: _buildTableHeaderCell('Realisation')),
+          Expanded(flex: 2, child: _buildTableHeaderCell('Discount')),
           SizedBox(width: 80, child: _buildTableHeaderCell('Actions')),
-                        ],
-                      ),
+        ],
+      ),
     );
   }
 
@@ -303,14 +322,23 @@ class _RealisationTabState extends State<RealisationTab> {
         children: [
           Expanded(flex: 2, child: _buildInputCell(row, row.shopCode, 'code')),
           Expanded(flex: 3, child: _buildInputCell(row, row.shopName, 'name')),
-          Expanded(flex: 4, child: _buildInputCell(row, row.address, 'address')),
-          Expanded(flex: 2, child: _buildInputCell(row, row.realisation, 'realisation')),
-          Expanded(flex: 2, child: _buildInputCell(row, row.discount, 'discount')),
+          Expanded(
+            flex: 4,
+            child: _buildInputCell(row, row.address, 'address'),
+          ),
+          Expanded(
+            flex: 2,
+            child: _buildInputCell(row, row.realisation, 'realisation'),
+          ),
+          Expanded(
+            flex: 2,
+            child: _buildInputCell(row, row.discount, 'discount'),
+          ),
           SizedBox(
             width: 80,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
+              children: [
                 IconButton(
                   icon: const Icon(Icons.edit, size: 20),
                   tooltip: 'Edit',
@@ -346,22 +374,31 @@ class _RealisationTabState extends State<RealisationTab> {
       child: Row(
         children: [
           const Expanded(
-              flex: 9,
-              child: Text('Total',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+            flex: 9,
+            child: Text(
+              'Total',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+          ),
           Expanded(
-              flex: 2,
-              child: Text(_totalRealisation.toStringAsFixed(2),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+            flex: 2,
+            child: Text(
+              _totalRealisation.toStringAsFixed(2),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+          ),
           Expanded(
-              flex: 2,
-              child: Text(_totalDiscount.toStringAsFixed(2),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
-                  ],
-                ),
+            flex: 2,
+            child: Text(
+              _totalDiscount.toStringAsFixed(2),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -370,7 +407,7 @@ class _RealisationTabState extends State<RealisationTab> {
     return GestureDetector(
       onTap: _removeSuggestionOverlay,
       child: Padding(
-      padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -380,9 +417,9 @@ class _RealisationTabState extends State<RealisationTab> {
                 Text(
                   'Realisation Form',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple.shade700,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple.shade700,
+                  ),
                 ),
                 ElevatedButton.icon(
                   onPressed: _isLoading ? null : _handleProceed,
@@ -392,15 +429,28 @@ class _RealisationTabState extends State<RealisationTab> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
-                      : const Icon(Icons.check_circle_outline, color: Colors.white,),
-                  label: const Text('Proceed', style: TextStyle(color: Colors.white),),
+                      : const Icon(
+                          Icons.check_circle_outline,
+                          color: Colors.white,
+                        ),
+                  label: const Text(
+                    'Proceed',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     elevation: 2,
                   ),
                 ),
@@ -422,7 +472,8 @@ class _RealisationTabState extends State<RealisationTab> {
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
                     itemCount: _rows.length,
-                    itemBuilder: (context, index) => _buildTableRow(_rows[index]),
+                    itemBuilder: (context, index) =>
+                        _buildTableRow(_rows[index]),
                   ),
                   _buildTableFooter(),
                 ],
@@ -438,8 +489,13 @@ class _RealisationTabState extends State<RealisationTab> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.deepPurple,
                   side: const BorderSide(color: Colors.deepPurple),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),
@@ -471,6 +527,7 @@ class RealisationFormRow {
     realisation.addListener(() => listener(this, 'realisation'));
     discount.addListener(() => listener(this, 'discount'));
   }
+
   TextEditingController getController(String field) {
     switch (field) {
       case 'code':
@@ -487,6 +544,7 @@ class RealisationFormRow {
         throw Exception('Invalid field');
     }
   }
+
   GlobalKey getFieldKey(String field) => _fieldKeys[field]!;
   void dispose() {
     shopCode.dispose();
@@ -495,4 +553,4 @@ class RealisationFormRow {
     realisation.dispose();
     discount.dispose();
   }
-} 
+}

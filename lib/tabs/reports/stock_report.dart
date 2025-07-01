@@ -28,10 +28,18 @@ class _StockReportState extends State<StockReport> {
     final stockMap = <String, Map<String, dynamic>>{};
     final availMap = <String, double>{};
     for (final prod in prodList) {
-      final stock = await db.query('stock_records', where: 'product_id = ?', whereArgs: [prod['id']], orderBy: 'date DESC', limit: 1);
+      final stock = await db.query(
+        'stock_records',
+        where: 'product_id = ?',
+        whereArgs: [prod['id']],
+        orderBy: 'date DESC',
+        limit: 1,
+      );
       if (stock.isNotEmpty) stockMap[prod['id'].toString()] = stock.first;
       final avail = prod['available_stock'];
-      availMap[prod['id'].toString()] = (avail is num) ? avail.toDouble() : double.tryParse(avail.toString()) ?? 0.0;
+      availMap[prod['id'].toString()] = (avail is num)
+          ? avail.toDouble()
+          : double.tryParse(avail.toString()) ?? 0.0;
     }
     setState(() {
       products = prodList;
@@ -46,7 +54,8 @@ class _StockReportState extends State<StockReport> {
     return products.where((prod) {
       final brand = (prod['brand'] ?? '').toString().toLowerCase();
       final company = (prod['company'] ?? '').toString().toLowerCase();
-      return brand.contains(_searchText.toLowerCase()) || company.contains(_searchText.toLowerCase());
+      return brand.contains(_searchText.toLowerCase()) ||
+          company.contains(_searchText.toLowerCase());
     }).toList();
   }
 
@@ -61,7 +70,10 @@ class _StockReportState extends State<StockReport> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Stock Report', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Stock Report',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     decoration: const InputDecoration(
@@ -90,16 +102,19 @@ class _StockReportState extends State<StockReport> {
                             ],
                             rows: List.generate(_filteredProducts.length, (i) {
                               final prod = _filteredProducts[i];
-                              final avail = availableStock[prod['id'].toString()] ?? 0;
-                              return DataRow(cells: [
-                                DataCell(Text((i + 1).toString())),
-                                DataCell(Text(prod['brand'] ?? '')),
-                                DataCell(Text(prod['company'] ?? '')),
-                                DataCell(Text(avail.toStringAsFixed(2))),
-                                DataCell(Text(prod['salePrice'].toString())),
-                                DataCell(Text(prod['boxRate'].toString())),
-                                DataCell(Text(prod['boxPacking'].toString())),
-                              ]);
+                              final avail =
+                                  availableStock[prod['id'].toString()] ?? 0;
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text((i + 1).toString())),
+                                  DataCell(Text(prod['brand'] ?? '')),
+                                  DataCell(Text(prod['company'] ?? '')),
+                                  DataCell(Text(avail.toStringAsFixed(2))),
+                                  DataCell(Text(prod['salePrice'].toString())),
+                                  DataCell(Text(prod['boxRate'].toString())),
+                                  DataCell(Text(prod['boxPacking'].toString())),
+                                ],
+                              );
                             }),
                           ),
                         ),
@@ -111,4 +126,4 @@ class _StockReportState extends State<StockReport> {
             ),
     );
   }
-} 
+}

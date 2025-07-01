@@ -57,7 +57,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
     }
   }
 
-
   Future<void> _updateItem(LoadFormItem item) async {
     try {
       await DatabaseHelper.instance.updateLoadFormItem(item.toMap());
@@ -77,11 +76,8 @@ class _LoadFormTabState extends State<LoadFormTab> {
     final returnVal = int.tryParse(returnQty) ?? 0;
     final saleVal = item.units - returnVal;
 
-    final updatedItem = item.copyWith(
-      returnQty: returnVal,
-      sale: saleVal,
-    );
-    
+    final updatedItem = item.copyWith(returnQty: returnVal, sale: saleVal);
+
     // Update state to show immediate change
     setState(() {
       final index = _items.indexWhere((i) => i.id == item.id);
@@ -110,12 +106,14 @@ class _LoadFormTabState extends State<LoadFormTab> {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.SizedBox(
-                  height: 50,
-                  width: 50,
-                  child: pw.Image(logo),
+                pw.SizedBox(height: 50, width: 50, child: pw.Image(logo)),
+                pw.Text(
+                  'Load Form',
+                  style: pw.TextStyle(
+                    fontSize: 40,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-                pw.Text('Load Form', style: pw.TextStyle(fontSize: 40, fontWeight: pw.FontWeight.bold)),
                 pw.SizedBox(width: 10),
               ],
             ),
@@ -123,22 +121,38 @@ class _LoadFormTabState extends State<LoadFormTab> {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.start,
               children: [
-                pw.Text('Date:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  'Date:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(width: 4),
                 pw.Text(date),
                 pw.SizedBox(width: 40),
-                pw.Text('Day:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  'Day:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(width: 4),
                 pw.Text(day),
                 pw.SizedBox(width: 40),
-                pw.Text('Total Pages:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  'Total Pages:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(width: 4),
                 pw.Text('1'), // Placeholder
               ],
             ),
             pw.SizedBox(height: 10),
             pw.Table.fromTextArray(
-              headers: ['No.', 'Brand Name', 'Units', 'Return', 'Sale', 'Saled Return'],
+              headers: [
+                'No.',
+                'Brand Name',
+                'Units',
+                'Return',
+                'Sale',
+                'Saled Return',
+              ],
               data: _items.asMap().entries.map((entry) {
                 final i = entry.key;
                 final item = entry.value;
@@ -153,9 +167,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
               }).toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               cellAlignment: pw.Alignment.center,
-              headerDecoration: const pw.BoxDecoration(
-                color: PdfColors.white,
-              ),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.white),
               border: pw.TableBorder.all(),
             ),
           ];
@@ -168,7 +180,10 @@ class _LoadFormTabState extends State<LoadFormTab> {
     );
   }
 
-  Widget _buildTableHeaderCell(String text, {TextAlign align = TextAlign.center}) {
+  Widget _buildTableHeaderCell(
+    String text, {
+    TextAlign align = TextAlign.center,
+  }) {
     return Container(
       height: 60, // Fixed height for header cells
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -196,10 +211,15 @@ class _LoadFormTabState extends State<LoadFormTab> {
   Widget _buildEditableCell(
     LoadFormItem item,
     String value,
-    String field,
-    {TextAlign align = TextAlign.center}
-  ) {
-    final bool isEditable = !['no', 'brandName', 'units', 'sale'].contains(field);
+    String field, {
+    TextAlign align = TextAlign.center,
+  }) {
+    final bool isEditable = ![
+      'no',
+      'brandName',
+      'units',
+      'sale',
+    ].contains(field);
     final displayValue = isEditable ? item.getDisplayValue(field) : value;
 
     return Container(
@@ -225,17 +245,18 @@ class _LoadFormTabState extends State<LoadFormTab> {
                     fontSize: 13,
                   ),
                 ),
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.black87, fontSize: 13),
                 onChanged: (newValue) {
                   if (field == 'returnQty') {
                     _calculateSale(item, newValue);
                   } else {
                     final updatedItem = item.copyWith(
-                      issue: field == 'issue' ? int.tryParse(newValue) ?? 0 : item.issue,
-                      saledReturn: field == 'saledReturn' ? int.tryParse(newValue) ?? 0 : item.saledReturn,
+                      issue: field == 'issue'
+                          ? int.tryParse(newValue) ?? 0
+                          : item.issue,
+                      saledReturn: field == 'saledReturn'
+                          ? int.tryParse(newValue) ?? 0
+                          : item.saledReturn,
                     );
                     setState(() {
                       final idx = _items.indexWhere((i) => i.id == item.id);
@@ -251,9 +272,13 @@ class _LoadFormTabState extends State<LoadFormTab> {
                 field == 'sale' ? item.sale.toString() : displayValue,
                 textAlign: align,
                 style: TextStyle(
-                  color: field == 'sale' ? Colors.deepPurple.shade700 : Colors.black87,
+                  color: field == 'sale'
+                      ? Colors.deepPurple.shade700
+                      : Colors.black87,
                   fontSize: 13,
-                  fontWeight: field == 'brandName' || field == 'sale' ? FontWeight.w500 : FontWeight.normal,
+                  fontWeight: field == 'brandName' || field == 'sale'
+                      ? FontWeight.w500
+                      : FontWeight.normal,
                 ),
               ),
             ),
@@ -282,24 +307,48 @@ class _LoadFormTabState extends State<LoadFormTab> {
               scrollDirection: Axis.horizontal,
               controller: _horizontalScrollController,
               child: SizedBox(
-                width: math.max(constraints.maxWidth, 650.0), // Minimum width with scroll
+                width: math.max(
+                  constraints.maxWidth,
+                  650.0,
+                ), // Minimum width with scroll
                 child: Column(
                   children: [
                     // Header Row
                     Container(
                       decoration: BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Colors.grey.shade300, width: 2),
+                          bottom: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 2,
+                          ),
                         ),
                       ),
                       child: Row(
                         children: [
-                          Expanded(flex: 1, child: _buildTableHeaderCell('No.')),
-                          Expanded(flex: 3, child: _buildTableHeaderCell('Brand Name')),
-                          Expanded(flex: 1, child: _buildTableHeaderCell('Units')),
-                          Expanded(flex: 1, child: _buildTableHeaderCell('Return')),
-                          Expanded(flex: 1, child: _buildTableHeaderCell('Sale')),
-                          Expanded(flex: 1, child: _buildTableHeaderCell('Saled Return')),
+                          Expanded(
+                            flex: 1,
+                            child: _buildTableHeaderCell('No.'),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: _buildTableHeaderCell('Brand Name'),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: _buildTableHeaderCell('Units'),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: _buildTableHeaderCell('Return'),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: _buildTableHeaderCell('Sale'),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: _buildTableHeaderCell('Saled Return'),
+                          ),
                         ],
                       ),
                     ),
@@ -307,9 +356,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                     if (_items.isEmpty)
                       Container(
                         height: 200, // Reduced empty state height
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                        ),
+                        decoration: BoxDecoration(color: Colors.grey.shade50),
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -383,11 +430,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                 ),
                                 Expanded(
                                   flex: 1,
-                                  child: _buildEditableCell(
-                                    item,
-                                    '',
-                                    'sale',
-                                  ),
+                                  child: _buildEditableCell(item, '', 'sale'),
                                 ),
                                 Expanded(
                                   flex: 1,
@@ -482,36 +525,50 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                         await _showLoadFormPrintPreview();
 
                                         // 2. Update stock records with sale data from Load Form
-                                        await DatabaseHelper.instance.updateStockRecordsFromLoadForm();
+                                        await DatabaseHelper.instance
+                                            .updateStockRecordsFromLoadForm();
 
                                         // 3. Save to history
                                         final historyData = {
-                                          'items': _items.map((e) => e.toMap()).toList(),
-                                          'date': DateTime.now().toIso8601String(),
+                                          'items': _items
+                                              .map((e) => e.toMap())
+                                              .toList(),
+                                          'date': DateTime.now()
+                                              .toIso8601String(),
                                         };
-                                        await DatabaseHelper.instance.addLoadFormHistory(
-                                          DateTime.now().toIso8601String().split('T')[0],
-                                          jsonEncode(historyData),
-                                        );
+                                        await DatabaseHelper.instance
+                                            .addLoadFormHistory(
+                                              DateTime.now()
+                                                  .toIso8601String()
+                                                  .split('T')[0],
+                                              jsonEncode(historyData),
+                                            );
 
                                         // 4. Clear form
-                                        await DatabaseHelper.instance.clearLoadForm();
+                                        await DatabaseHelper.instance
+                                            .clearLoadForm();
                                         setState(() {
                                           _items.clear();
                                         });
                                         await _loadItems(); // Refresh the list
 
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             const SnackBar(
-                                              content: Text('Load Form saved and stock updated.'),
+                                              content: Text(
+                                                'Load Form saved and stock updated.',
+                                              ),
                                               backgroundColor: Colors.green,
                                             ),
                                           );
                                         }
                                       } catch (e) {
                                         if (mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
                                               content: Text('Error: $e'),
                                               backgroundColor: Colors.red,
@@ -523,12 +580,18 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.deepPurple,
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
-                                    icon: const Icon(Icons.check_circle_outline, size: 20),
+                                    icon: const Icon(
+                                      Icons.check_circle_outline,
+                                      size: 20,
+                                    ),
                                     label: const Text(
                                       'Generate',
                                       style: TextStyle(
@@ -567,7 +630,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                             ],
                           );
                         }
-                        
+
                         // Desktop layout
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -603,36 +666,50 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                       await _showLoadFormPrintPreview();
 
                                       // 2. Update stock records with sale data from Load Form
-                                      await DatabaseHelper.instance.updateStockRecordsFromLoadForm();
+                                      await DatabaseHelper.instance
+                                          .updateStockRecordsFromLoadForm();
 
                                       // 3. Save to history
                                       final historyData = {
-                                        'items': _items.map((e) => e.toMap()).toList(),
-                                        'date': DateTime.now().toIso8601String(),
+                                        'items': _items
+                                            .map((e) => e.toMap())
+                                            .toList(),
+                                        'date': DateTime.now()
+                                            .toIso8601String(),
                                       };
-                                      await DatabaseHelper.instance.addLoadFormHistory(
-                                        DateTime.now().toIso8601String().split('T')[0],
-                                        jsonEncode(historyData),
-                                      );
+                                      await DatabaseHelper.instance
+                                          .addLoadFormHistory(
+                                            DateTime.now()
+                                                .toIso8601String()
+                                                .split('T')[0],
+                                            jsonEncode(historyData),
+                                          );
 
                                       // 4. Clear form
-                                      await DatabaseHelper.instance.clearLoadForm();
+                                      await DatabaseHelper.instance
+                                          .clearLoadForm();
                                       setState(() {
                                         _items.clear();
                                       });
                                       await _loadItems(); // Refresh the list
 
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            content: Text('Load Form saved and stock updated.'),
+                                            content: Text(
+                                              'Load Form saved and stock updated.',
+                                            ),
                                             backgroundColor: Colors.green,
                                           ),
                                         );
                                       }
                                     } catch (e) {
                                       if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           SnackBar(
                                             content: Text('Error: $e'),
                                             backgroundColor: Colors.red,
@@ -644,12 +721,18 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.deepPurple,
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 12,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
-                                  icon: const Icon(Icons.check_circle_outline, size: 20),
+                                  icon: const Icon(
+                                    Icons.check_circle_outline,
+                                    size: 20,
+                                  ),
                                   label: const Text(
                                     'Generate',
                                     style: TextStyle(
@@ -693,9 +776,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                   ),
                   const SizedBox(height: 24),
                   // Table
-                  Expanded(
-                    child: _buildTable(),
-                  ),
+                  Expanded(child: _buildTable()),
                 ],
               ),
             ),
@@ -726,7 +807,7 @@ class LoadFormItem {
     final units = map['units'] ?? 0;
     final returnQty = map['returnQty'] ?? 0;
     final calculatedSale = units - returnQty;
-    
+
     return LoadFormItem(
       id: map['id'],
       brandName: map['brandName'],
@@ -784,4 +865,4 @@ class LoadFormItem {
         return '';
     }
   }
-} 
+}

@@ -58,14 +58,8 @@ class _AssetsScreenState extends State<AssetsScreen>
                 fontSize: 16,
               ),
               tabs: const [
-                Tab(
-                  icon: Icon(Icons.add_circle_outline),
-                  text: 'Add',
-                ),
-                Tab(
-                  icon: Icon(Icons.visibility_outlined),
-                  text: 'View',
-                ),
+                Tab(icon: Icon(Icons.add_circle_outline), text: 'Add'),
+                Tab(icon: Icon(Icons.visibility_outlined), text: 'View'),
               ],
             ),
           ),
@@ -73,14 +67,11 @@ class _AssetsScreenState extends State<AssetsScreen>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [
-                AddAssetTab(),
-                ViewAssetsTab(),
-              ],
+              children: const [AddAssetTab(), ViewAssetsTab()],
             ),
           ),
         ],
       ),
     );
   }
-} 
+}
