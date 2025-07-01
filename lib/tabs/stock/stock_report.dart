@@ -96,7 +96,7 @@ class _StockReportState extends State<StockReport> {
                                 DataCell(Text(prod['brand'] ?? '')),
                                 DataCell(Text(prod['company'] ?? '')),
                                 DataCell(Text(avail.toStringAsFixed(2))),
-                                DataCell(Text(prod['ctnRate'].toString())),
+                                DataCell(Text(prod['salePrice'].toString())),
                                 DataCell(Text(prod['boxRate'].toString())),
                                 DataCell(Text(prod['boxPacking'].toString())),
                               ]);

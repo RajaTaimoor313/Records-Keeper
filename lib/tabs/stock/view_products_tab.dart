@@ -34,6 +34,7 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
 
     try {
       final records = await DatabaseHelper.instance.getProducts();
+      if (!mounted) return;
       setState(() {
         productRecords = records
             .map(
@@ -54,9 +55,11 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
         isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading products: $e'),

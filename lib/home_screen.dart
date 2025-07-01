@@ -9,7 +9,7 @@ import 'package:records_keeper/tabs/sales/pick_list_tab.dart';
 import 'package:records_keeper/tabs/sales/view_invoices_tab.dart';
 import 'package:records_keeper/tabs/shops/add_shop_tab.dart';
 import 'package:records_keeper/tabs/shops/view_shops_tab.dart';
-import 'package:records_keeper/tabs/stock/stock_report_tab.dart';
+import 'package:records_keeper/tabs/stock/add_stock_tab.dart';
 import 'package:records_keeper/tabs/stock/stock_summary_tab.dart';
 import 'package:records_keeper/tabs/stock/stock_tab.dart';
 import 'package:records_keeper/tabs/stock/view_products_tab.dart';
@@ -428,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 _buildStockSubItem('Add New Product'),
                 _buildStockSubItem('View Products'),
-                _buildStockSubItem('Stock Report'),
+                _buildStockSubItem('Add Stock'),
                 _buildStockSubItem('Stock Summary'),
               ],
             ),
@@ -1137,7 +1137,7 @@ class _HomeScreenState extends State<HomeScreen>
         switch (_stockSubTab) {
           case 'Add New Product':
             return const StockTab();
-          case 'Stock Report':
+          case 'Add Stock':
             return const StockReportTab();
           case 'Stock Summary':
             return const StockSummaryTab();

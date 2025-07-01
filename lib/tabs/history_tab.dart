@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:records_keeper/tabs/sales/sale_report.dart';
+import 'package:records_keeper/tabs/cash_income_history_screen.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -23,107 +24,122 @@ class _HistoryTabState extends State<HistoryTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'History',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Switch(
-                  value: _isRange,
-                  onChanged: (val) {
-                    setState(() {
-                      _isRange = val;
-                    });
-                  },
-                  activeColor: Colors.deepPurple,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'History',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
                 ),
-                Text(_isRange ? 'Range Picker' : 'Single Date Picker', style: const TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(width: 16),
-                if (!_isRange)
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.calendar_today, size: 18),
-                    label: Text(_selectedDate != null ? DateFormat('dd-MMMM-yyyy').format(_selectedDate!) : 'Select Date'),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDate ?? DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _selectedDate = picked;
-                        });
-                      }
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Switch(
+                    value: _isRange,
+                    onChanged: (val) {
+                      setState(() {
+                        _isRange = val;
+                      });
                     },
+                    activeColor: Colors.deepPurple,
                   ),
-                if (_isRange)
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.date_range, size: 18),
-                    label: Text(_selectedRange != null
-                        ? '${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.start)} - ${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.end)}'
-                        : 'Select Date Range'),
-                    onPressed: () async {
-                      final picked = await showDateRangePicker(
-                        context: context,
-                        initialDateRange: _selectedRange,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _selectedRange = picked;
-                        });
-                      }
-                    },
-                  ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            _buildHistoryOption(
-              context,
-              icon: Icons.receipt_long,
-              title: 'Sales History',
-              subtitle: 'View all past sales invoices and transactions.',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SaleReport()),
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-            _buildHistoryOption(
-              context,
-              icon: Icons.list_alt,
-              title: 'Pick List History',
-              subtitle: 'View all past pick lists.',
-              onTap: () {
-                Navigator.pushNamed(context, '/pick-list-history');
-              },
-            ),
-            const SizedBox(height: 20),
-            _buildHistoryOption(
-              context,
-              icon: Icons.assignment,
-              title: 'Load Form History',
-              subtitle: 'View all past load forms.',
-              onTap: () {
-                Navigator.pushNamed(context, '/load-form-history');
-              },
-            ),
-          ],
+                  Text(_isRange ? 'Range Picker' : 'Single Date Picker', style: const TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 16),
+                  if (!_isRange)
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.calendar_today, size: 18),
+                      label: Text(_selectedDate != null ? DateFormat('dd-MMMM-yyyy').format(_selectedDate!) : 'Select Date'),
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDate ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2101),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _selectedDate = picked;
+                          });
+                        }
+                      },
+                    ),
+                  if (_isRange)
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.date_range, size: 18),
+                      label: Text(_selectedRange != null
+                          ? '${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.start)} - ${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.end)}'
+                          : 'Select Date Range'),
+                      onPressed: () async {
+                        final picked = await showDateRangePicker(
+                          context: context,
+                          initialDateRange: _selectedRange,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2101),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _selectedRange = picked;
+                          });
+                        }
+                      },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              _buildHistoryOption(
+                context,
+                icon: Icons.receipt_long,
+                title: 'Sales History',
+                subtitle: 'View all past sales invoices and transactions.',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SaleReport()),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildHistoryOption(
+                context,
+                icon: Icons.list_alt,
+                title: 'Pick List History',
+                subtitle: 'View all past pick lists.',
+                onTap: () {
+                  Navigator.pushNamed(context, '/pick-list-history');
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildHistoryOption(
+                context,
+                icon: Icons.assignment,
+                title: 'Load Form History',
+                subtitle: 'View all past load forms.',
+                onTap: () {
+                  Navigator.pushNamed(context, '/load-form-history');
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildHistoryOption(
+                context,
+                icon: Icons.attach_money,
+                title: 'Cash and Income',
+                subtitle: 'View complete history of Income, Expenditure, and Recovery by date.',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CashIncomeHistoryScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

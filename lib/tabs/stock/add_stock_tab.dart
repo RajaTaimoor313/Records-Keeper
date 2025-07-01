@@ -578,7 +578,7 @@ class _StockReportTabState extends State<StockReportTab> {
             children: [
               // Header
               const Text(
-                'Stock Report',
+                'Add Stock',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

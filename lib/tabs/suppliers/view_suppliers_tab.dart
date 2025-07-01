@@ -47,11 +47,13 @@ class _ViewSuppliersTabState extends State<ViewSuppliersTab> {
     });
     try {
       final suppliersData = await DatabaseHelper.instance.getSuppliers();
+      if (!mounted) return;
       setState(() {
         _suppliers = suppliersData.map((data) => Supplier.fromMap(data)).toList();
         _filteredSuppliers = List.from(_suppliers);
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });

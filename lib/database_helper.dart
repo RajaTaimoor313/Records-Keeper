@@ -49,9 +49,9 @@ class DatabaseHelper {
     final String path = join(await getDatabasesPath(), 'records_keeper.db');
     return await openDatabase(
       path,
-      version: 20,
+      version: 1,
       onCreate: _createDB,
-      onUpgrade: _upgradeDB,
+      onUpgrade: (db, oldVersion, newVersion) async {},
     );
   }
 
@@ -87,7 +87,8 @@ class DatabaseHelper {
           salePrice REAL NOT NULL,
           ctnPacking INTEGER NOT NULL,
           boxPacking INTEGER NOT NULL,
-          unitsPacking INTEGER NOT NULL
+          unitsPacking INTEGER NOT NULL,
+          available_stock REAL NOT NULL DEFAULT 0
         )
       ''');
 
@@ -183,7 +184,7 @@ class DatabaseHelper {
       ''');
 
       await txn.execute('''
-        CREATE TABLE IF NOT EXISTS suppliers (
+        CREATE TABLE suppliers (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
           fatherName TEXT NOT NULL,
@@ -208,14 +209,14 @@ class DatabaseHelper {
       ''');
 
       await txn.execute('''
-        CREATE TABLE IF NOT EXISTS app_metadata (
+        CREATE TABLE app_metadata (
           key TEXT PRIMARY KEY,
           value TEXT
         )
       ''');
 
       await txn.execute('''
-        CREATE TABLE IF NOT EXISTS bf_summary (
+        CREATE TABLE bf_summary (
           date TEXT PRIMARY KEY,
           sales_recovery REAL NOT NULL,
           other_income REAL NOT NULL,
@@ -226,7 +227,7 @@ class DatabaseHelper {
       ''');
 
       await txn.execute('''
-        CREATE TABLE IF NOT EXISTS pick_list_history (
+        CREATE TABLE pick_list_history (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           date TEXT NOT NULL,
           data TEXT NOT NULL
@@ -234,7 +235,7 @@ class DatabaseHelper {
       ''');
 
       await txn.execute('''
-        CREATE TABLE IF NOT EXISTS load_form_history (
+        CREATE TABLE load_form_history (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           date TEXT NOT NULL,
           data TEXT NOT NULL
@@ -242,7 +243,7 @@ class DatabaseHelper {
       ''');
 
       await txn.execute('''
-        CREATE TABLE IF NOT EXISTS assets (
+        CREATE TABLE assets (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           date TEXT NOT NULL,
           name TEXT NOT NULL,
@@ -250,181 +251,6 @@ class DatabaseHelper {
           details TEXT
         )
       ''');
-    });
-  }
-
-  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    await db.transaction((txn) async {
-      if (oldVersion < 2) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS shops (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            ownerName TEXT NOT NULL,
-            category TEXT NOT NULL
-          )
-        ''');
-      }
-      if (oldVersion < 3) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS invoices (
-            id TEXT PRIMARY KEY,
-            invoiceNumber TEXT NOT NULL,
-            date TEXT NOT NULL,
-            shopName TEXT NOT NULL,
-            shopCode TEXT NOT NULL,
-            ownerName TEXT NOT NULL,
-            category TEXT NOT NULL,
-            address TEXT,
-            subtotal REAL NOT NULL,
-            discount REAL NOT NULL,
-            total REAL NOT NULL,
-            items TEXT NOT NULL
-          )
-        ''');
-      }
-      if (oldVersion < 4) {
-        await txn.execute('ALTER TABLE shops ADD COLUMN address TEXT');
-        await txn.execute('ALTER TABLE shops ADD COLUMN area TEXT');
-        await txn.execute('ALTER TABLE shops ADD COLUMN phone TEXT');
-        await txn.execute('ALTER TABLE shops RENAME COLUMN id TO code');
-      }
-      if (oldVersion < 5) {
-        await txn.execute('ALTER TABLE shops RENAME COLUMN ownerName TO owner_name');
-      }
-      if (oldVersion < 6) {
-        // No-op, just for version bump
-      }
-      if (oldVersion < 7) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS load_form (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            brandName TEXT NOT NULL,
-            units INTEGER NOT NULL,
-            issue INTEGER DEFAULT 0,
-            returnQty INTEGER DEFAULT 0,
-            sale INTEGER DEFAULT 0
-          )
-        ''');
-      }
-      if (oldVersion < 8) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS pick_list (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT,
-            shopName TEXT,
-            ownerName TEXT,
-            billAmount REAL DEFAULT 0,
-            recovery REAL DEFAULT 0,
-            discount REAL DEFAULT 0,
-            return REAL DEFAULT 0,
-            cash REAL DEFAULT 0,
-            credit REAL DEFAULT 0,
-            invoiceNumber TEXT
-          )
-        ''');
-      }
-      if (oldVersion < 9) {
-        await txn.execute('''
-        CREATE TABLE IF NOT EXISTS suppliers (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          fatherName TEXT NOT NULL,
-          address TEXT NOT NULL,
-          cnic TEXT NOT NULL,
-          phone TEXT NOT NULL,
-          type TEXT NOT NULL DEFAULT 'Supplier'
-        )
-      ''');
-      }
-      if (oldVersion < 10) {
-        await txn.execute('''
-          CREATE TABLE ledger (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            shopName TEXT,
-            shopCode TEXT,
-            date TEXT,
-            details TEXT,
-            debit REAL,
-            credit REAL,
-            balance REAL
-          )
-        ''');
-      }
-      if (oldVersion < 11) {
-        await txn.execute('ALTER TABLE invoices ADD COLUMN generated INTEGER NOT NULL DEFAULT 0');
-      }
-      if (oldVersion < 12) {
-        await txn.execute('ALTER TABLE load_form ADD COLUMN saledReturn INTEGER DEFAULT 0');
-      }
-      if (oldVersion < 13) {
-        await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_ctn INTEGER NOT NULL DEFAULT 0");
-        await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_units INTEGER NOT NULL DEFAULT 0");
-        await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_total REAL NOT NULL DEFAULT 0");
-        await txn.execute("ALTER TABLE stock_records ADD COLUMN saled_return_value REAL NOT NULL DEFAULT 0");
-      }
-      if (oldVersion < 14) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS app_metadata (
-            key TEXT PRIMARY KEY,
-            value TEXT
-          )
-        ''');
-
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS bf_summary (
-            date TEXT PRIMARY KEY,
-            sales_recovery REAL NOT NULL,
-            other_income REAL NOT NULL,
-            total_income REAL NOT NULL
-          )
-        ''');
-      }
-      if (oldVersion < 15) {
-        await txn.execute('ALTER TABLE bf_summary ADD COLUMN total_expenditure REAL NOT NULL DEFAULT 0');
-        await txn.execute('ALTER TABLE bf_summary ADD COLUMN net_balance REAL NOT NULL DEFAULT 0');
-      }
-      if (oldVersion < 16) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS pick_list_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            data TEXT NOT NULL
-          )
-        ''');
-      }
-      if (oldVersion < 17) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS load_form_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            data TEXT NOT NULL
-          )
-        ''');
-      }
-      if (oldVersion < 18) {
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS available_stock (
-            product_id TEXT PRIMARY KEY,
-            available_stock REAL NOT NULL
-          )
-        ''');
-      }
-      if (oldVersion < 19) {
-        await txn.execute('ALTER TABLE products ADD COLUMN available_stock REAL NOT NULL DEFAULT 0');
-      }
-      if (oldVersion < 20) {
-        await txn.execute('DROP TABLE IF EXISTS available_stock');
-        await txn.execute('''
-          CREATE TABLE IF NOT EXISTS assets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            name TEXT NOT NULL,
-            value REAL NOT NULL,
-            details TEXT
-          )
-        ''');
-      }
     });
   }
 
