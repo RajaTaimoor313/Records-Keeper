@@ -11,14 +11,9 @@ class HistoryTab extends StatefulWidget {
 }
 
 class _HistoryTabState extends State<HistoryTab> {
-  bool _isRange = false;
-  DateTime? _selectedDate;
-  DateTimeRange? _selectedRange;
-
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now();
   }
 
   @override
@@ -39,68 +34,6 @@ class _HistoryTabState extends State<HistoryTab> {
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  Switch(
-                    value: _isRange,
-                    onChanged: (val) {
-                      setState(() {
-                        _isRange = val;
-                      });
-                    },
-                    activeColor: Colors.deepPurple,
-                  ),
-                  Text(
-                    _isRange ? 'Range Picker' : 'Single Date Picker',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(width: 16),
-                  if (!_isRange)
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(
-                        _selectedDate != null
-                            ? DateFormat('dd-MMMM-yyyy').format(_selectedDate!)
-                            : 'Select Date',
-                      ),
-                      onPressed: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedDate ?? DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2101),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _selectedDate = picked;
-                          });
-                        }
-                      },
-                    ),
-                  if (_isRange)
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.date_range, size: 18),
-                      label: Text(
-                        _selectedRange != null
-                            ? '${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.start)} - ${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.end)}'
-                            : 'Select Date Range',
-                      ),
-                      onPressed: () async {
-                        final picked = await showDateRangePicker(
-                          context: context,
-                          initialDateRange: _selectedRange,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2101),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _selectedRange = picked;
-                          });
-                        }
-                      },
-                    ),
-                ],
-              ),
               const SizedBox(height: 32),
               _buildHistoryOption(
                 context,

@@ -509,9 +509,9 @@ class _InvoiceTabState extends State<InvoiceTab> {
         children: [
           _buildTableCell('No.', flex: 1, isHeader: true, scale: scale),
           _buildTableCell('Description', flex: 3, isHeader: true, scale: scale),
-          _buildTableCell('Rate', flex: 2, isHeader: true, scale: scale),
-          _buildTableCell('Unit', isHeader: true, scale: scale),
-          _buildTableCell('Price', flex: 2, isHeader: true, scale: scale),
+          _buildTableCell('Rate', flex: 1, isHeader: true, scale: scale),
+          _buildTableCell('Unit', flex: 1, isHeader: true, scale: scale),
+          _buildTableCell('Price', flex: 1, isHeader: true, scale: scale),
           _buildTableCell(
             '',
             flex: 1,
@@ -591,7 +591,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
           _buildTableCell(item.description, flex: 3, scale: scale),
           _buildTableCell(
             item.rate.toStringAsFixed(2),
-            flex: 2,
+            flex: 1,
             scale: scale,
             align: TextAlign.right,
             isNumeric: true,
@@ -605,7 +605,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
           ),
           _buildTableCell(
             item.amount.toStringAsFixed(2),
-            flex: 2,
+            flex: 1,
             scale: scale,
             align: TextAlign.right,
             isNumeric: true,
@@ -1322,52 +1322,45 @@ class _InvoiceTabState extends State<InvoiceTab> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final double maxWidth = constraints.maxWidth;
-                  // Set a minimum and maximum width for the invoice card
-                  final double invoiceCardWidth = maxWidth < 500
-                      ? maxWidth - 32
-                      : 400;
-                  final double scale = (invoiceCardWidth / 350).clamp(
-                    1.0,
-                    1.25,
-                  );
+                  // Remove fixed width and centering for full screen usage
+                  final double scale = (maxWidth / 350).clamp(1.0, 1.25);
 
-                  return Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: invoiceCardWidth,
-                            child: _buildInvoice(context, scale),
-                          ),
-                          SizedBox(
-                            width: 240,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                _saveInvoice();
-                              },
-                              icon: const Icon(Icons.save),
-                              label: const Text('Create Invoice'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          width: maxWidth,
+                          child: _buildInvoice(context, scale),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: 240,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              _saveInvoice();
+                            },
+                            icon: const Icon(Icons.save),
+                            label: const Text('Create Invoice'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 },

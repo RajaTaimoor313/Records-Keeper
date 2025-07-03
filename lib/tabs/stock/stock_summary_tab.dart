@@ -73,14 +73,33 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
         );
         if (records.isNotEmpty) {
           final latest = records.first;
-          // Insert new record for today with opening = closing, others zero
+          // Only copy closing_stock_total to opening_stock_total
+          final closingStockTotal = (latest['closing_stock_total'] as num).toInt();
+          // Get boxPacking and boxRate from product
+          final boxPacking = (product['boxPacking'] is int)
+              ? product['boxPacking'] as int
+              : int.tryParse(product['boxPacking'].toString()) ?? 0;
+          final boxRate = product['boxRate'] is num
+              ? (product['boxRate'] as num).toDouble()
+              : double.tryParse(product['boxRate'].toString()) ?? 0.0;
+          // Calculate CTN and Box for Opening Stock
+          int openingStockCtn = 0;
+          int openingStockUnits = 0;
+          if (boxPacking > 0) {
+            openingStockCtn = closingStockTotal ~/ boxPacking;
+            openingStockUnits = closingStockTotal % boxPacking;
+          } else {
+            openingStockCtn = 0;
+            openingStockUnits = closingStockTotal;
+          }
+          final openingStockValue = closingStockTotal * boxRate;
           await db.insert('stock_records', {
             'product_id': product['id'],
             'date': todayStr,
-            'opening_stock_ctn': latest['closing_stock_ctn'],
-            'opening_stock_units': latest['closing_stock_units'],
-            'opening_stock_total': latest['closing_stock_total'],
-            'opening_stock_value': latest['closing_stock_value'],
+            'opening_stock_ctn': openingStockCtn,
+            'opening_stock_units': openingStockUnits,
+            'opening_stock_total': closingStockTotal,
+            'opening_stock_value': openingStockValue,
             'received_ctn': 0,
             'received_units': 0,
             'received_total': 0,
