@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -513,6 +514,21 @@ class DatabaseHelper {
       whereArgs: [invoiceNumber],
     );
     return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<void> updateInvoice(Map<String, dynamic> invoice) async {
+    final Database db = await database;
+    debugPrint('updateInvoice: id value = ${invoice['id']}, type = ${invoice['id'].runtimeType}');
+    await db.update(
+      'invoices',
+      {
+        ...invoice,
+        'items': jsonEncode(invoice['items']),
+        'date': invoice['date'].toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [invoice['id']],
+    );
   }
 
   // Load Form Methods

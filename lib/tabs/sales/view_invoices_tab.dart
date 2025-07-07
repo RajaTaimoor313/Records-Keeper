@@ -1443,8 +1443,9 @@ class Invoice {
   });
 
   factory Invoice.fromMap(Map<String, dynamic> map) {
+    debugPrint('Invoice.fromMap incoming map: $map');
     return Invoice(
-      id: map['id'],
+      id: map['id'].toString(),
       invoiceNumber: map['invoiceNumber'],
       date: DateTime.parse(map['date']),
       shopName: map['shopName'],

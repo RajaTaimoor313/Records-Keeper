@@ -1190,62 +1190,14 @@ class _InvoiceTabState extends State<InvoiceTab> {
 
       // If editing, adjust available_stock for each product
       if (_editingInvoiceId != null) {
-        for (final item in _items) {
-          final key = '${item.description}|${item.company}';
-          final prevUnit = previousUnits[key] ?? 0;
-          Product? product;
-          try {
-            product = _products.firstWhere(
-              (p) => p.brand == item.description && p.company == item.company,
-            );
-          } catch (_) {
-            product = null;
-          }
-          if (product != null && prevUnit != 0) {
-            final diff = prevUnit - item.unit;
-            if (diff != 0) {
-              if (diff > 0) {
-                await DatabaseHelper.instance.incrementAvailableStock(
-                  product.id,
-                  diff.toDouble(),
-                );
-              } else {
-                await DatabaseHelper.instance.decrementAvailableStock(
-                  product.id,
-                  (-diff).toDouble(),
-                );
-              }
-            }
-          }
-        }
-        // Also handle products that were removed in the edit (add their units back)
-        for (final key in previousUnits.keys) {
-          final exists = _items.any(
-            (item) => '${item.description}|${item.company}' == key,
-          );
-          if (!exists) {
-            final prevUnit = previousUnits[key]!;
-            final parts = key.split('|');
-            Product? product;
-            try {
-              product = _products.firstWhere(
-                (p) => p.brand == parts[0] && p.company == parts[1],
-              );
-            } catch (_) {
-              product = null;
-            }
-            if (product != null) {
-              await DatabaseHelper.instance.incrementAvailableStock(
-                product.id,
-                prevUnit.toDouble(),
-              );
-            }
-          }
-        }
+        assert(_editingInvoiceId != null && _editingInvoiceId is String, 'Editing invoice but _editingInvoiceId is null or not a String');
+        invoice['id'] = _editingInvoiceId.toString();
+        debugPrint('Updating invoice with map: $invoice');
+        debugPrint('Type of invoice[\'id\'] before update: ${invoice['id'].runtimeType}');
+        await DatabaseHelper.instance.updateInvoice(invoice);
+      } else {
+        await DatabaseHelper.instance.insertInvoice(invoice);
       }
-
-      // Save or update invoice
-      await DatabaseHelper.instance.insertInvoice(invoice);
 
       // Decrement available_stock for each product (for new invoices)
       if (_editingInvoiceId == null) {
@@ -1343,7 +1295,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
                               _saveInvoice();
                             },
                             icon: const Icon(Icons.save),
-                            label: const Text('Create Invoice'),
+                            label: Text(_editingInvoiceId != null ? 'Update Invoice' : 'Create Invoice'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple,
                               foregroundColor: Colors.white,

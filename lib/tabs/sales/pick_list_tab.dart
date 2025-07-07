@@ -393,68 +393,7 @@ class _PickListTabState extends State<PickListTab> {
                                 children: [
                                   ElevatedButton.icon(
                                     onPressed: () async {
-                                      try {
-                                        // Update Load Form for all pending returns
-                                        for (final ret in _pendingReturns) {
-                                          await DatabaseHelper.instance
-                                              .updateLoadFormItemReturn(
-                                                ret['brandName'] as String,
-                                                ret['units'] as int,
-                                              );
-                                        }
-                                        _pendingReturns.clear();
-
-                                        // Recalculate all sales in Load Form to ensure consistency
-                                        await DatabaseHelper.instance
-                                            .recalculateAllLoadFormSales();
-
-                                        // Insert ledger records for credit
-                                        for (final item in _items) {
-                                          if ((item.credit) > 0) {
-                                            await DatabaseHelper.instance
-                                                .insertLedger({
-                                                  'shopName': item.shopName,
-                                                  'shopCode': item.code,
-                                                  'date': DateTime.now()
-                                                      .toIso8601String()
-                                                      .split('T')[0],
-                                                  'details': '',
-                                                  'debit': item
-                                                      .credit, // Credit value from Pick List goes to Debit in Ledger
-                                                  'credit': 0,
-                                                  'balance': null,
-                                                });
-                                          }
-                                        }
-
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Returns processed successfully and Load Form updated',
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-
-                                        _showNoteDialog();
-                                      } catch (e) {
-                                        if (mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Error processing returns: $e',
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      }
+                                      _showNoteDialog();
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.deepPurple,
@@ -795,6 +734,7 @@ class _PickListTabState extends State<PickListTab> {
                                     item.credit.toStringAsFixed(2),
                                     isNumeric: true,
                                     isEditable: true,
+                                    hintText: NumberFormat.decimalPattern('en_IN').format(item.billAmount - item.cash),
                                     onChanged: (value) {
                                       final credit =
                                           double.tryParse(value) ?? 0.0;
@@ -1038,12 +978,49 @@ class _PickListTabState extends State<PickListTab> {
                 ElevatedButton(
                   onPressed: matched
                       ? () async {
+                          try {
+                            // Update Load Form for all pending returns
+                            for (final ret in _pendingReturns) {
+                              await DatabaseHelper.instance
+                                  .updateLoadFormItemReturn(
+                                    ret['brandName'] as String,
+                                    ret['units'] as int,
+                                  );
+                            }
+                            _pendingReturns.clear();
+
+                            // Recalculate all sales in Load Form to ensure consistency
+                            await DatabaseHelper.instance
+                                .recalculateAllLoadFormSales();
+
+                            // Insert ledger records for credit
+                            for (final item in _items) {
+                              if ((item.credit) > 0) {
+                                await DatabaseHelper.instance.insertLedger({
+                                  'shopName': item.shopName,
+                                  'shopCode': item.code,
+                                  'date': DateTime.now().toIso8601String().split('T')[0],
+                                  'details': '',
+                                  'debit': item.credit, // Credit value from Pick List goes to Debit in Ledger
+                                  'credit': 0,
+                                  'balance': null,
+                                });
+                              }
+                            }
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Returns processed successfully and Load Form updated'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+
                           Navigator.of(context).pop();
                           // Insert income record
                           await DatabaseHelper.instance.insertIncome({
-                            'date': DateTime.now().toIso8601String().split(
-                              'T',
-                            )[0],
+                            'date': DateTime.now().toIso8601String().split('T')[0],
                             'category': 'Sales & Recovery',
                             'details': 'Sale',
                             'amount': cashSum,
@@ -1059,9 +1036,7 @@ class _PickListTabState extends State<PickListTab> {
                           });
                           final historyData = {
                             'items': _items.map((e) => e.toMap()).toList(),
-                            'manpower': _selectedManPowers
-                                .map((e) => e.toMap())
-                                .toList(),
+                            'manpower': _selectedManPowers.map((e) => e.toMap()).toList(),
                             'notes': notes,
                             'date': DateTime.now().toIso8601String(),
                           };
@@ -1076,9 +1051,7 @@ class _PickListTabState extends State<PickListTab> {
                             setState(() {
                               _items.clear();
                               _selectedManPowers.clear();
-                              _noteControllers.forEach(
-                                (key, value) => value.clear(),
-                              );
+                              _noteControllers.forEach((key, value) => value.clear());
                             });
                           }
                           await _loadItems(); // Refresh the list
@@ -1086,14 +1059,22 @@ class _PickListTabState extends State<PickListTab> {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                  'Pick List saved to history and form cleared.',
-                                ),
+                                content: Text('Pick List saved to history and form cleared.'),
                                 backgroundColor: Colors.green,
                               ),
                             );
                           }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error processing returns: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         }
+                      }
                       : null,
                   child: const Text('OK'),
                 ),

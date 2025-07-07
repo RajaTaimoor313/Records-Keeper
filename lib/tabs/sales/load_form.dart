@@ -151,7 +151,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                 'Units',
                 'Return',
                 'Sale',
-                'Saled Return',
+                'Sale Return',
               ],
               data: _items.asMap().entries.map((entry) {
                 final i = entry.key;
@@ -335,7 +335,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                           ),
                           Expanded(
                             flex: 1,
-                            child: _buildTableHeaderCell('Units'),
+                            child: _buildTableHeaderCell('Issue'),
                           ),
                           Expanded(
                             flex: 1,
@@ -347,7 +347,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                           ),
                           Expanded(
                             flex: 1,
-                            child: _buildTableHeaderCell('Saled Return'),
+                            child: _buildTableHeaderCell('Sale Return'),
                           ),
                         ],
                       ),

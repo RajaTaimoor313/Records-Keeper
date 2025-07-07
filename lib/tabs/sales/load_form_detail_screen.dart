@@ -86,7 +86,7 @@ class LoadFormDetailScreen extends StatelessWidget {
             ),
             DataColumn(
               label: Text(
-                'Units',
+                'Issue',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -104,7 +104,7 @@ class LoadFormDetailScreen extends StatelessWidget {
             ),
             DataColumn(
               label: Text(
-                'Saled Return',
+                'Sale Return',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),

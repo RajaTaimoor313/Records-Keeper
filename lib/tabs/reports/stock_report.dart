@@ -95,10 +95,10 @@ class _StockReportState extends State<StockReport> {
                               DataColumn(label: Text('No.')),
                               DataColumn(label: Text('Brand')),
                               DataColumn(label: Text('Company')),
+                              DataColumn(label: Text('Packing')),
                               DataColumn(label: Text('Available Stock')),
                               DataColumn(label: Text('Trade Rate')),
                               DataColumn(label: Text('Box Rate')),
-                              DataColumn(label: Text('Packing')),
                             ],
                             rows: List.generate(_filteredProducts.length, (i) {
                               final prod = _filteredProducts[i];
@@ -109,10 +109,10 @@ class _StockReportState extends State<StockReport> {
                                   DataCell(Text((i + 1).toString())),
                                   DataCell(Text(prod['brand'] ?? '')),
                                   DataCell(Text(prod['company'] ?? '')),
+                                  DataCell(Text(prod['boxPacking'].toString())),
                                   DataCell(Text(avail.toStringAsFixed(2))),
                                   DataCell(Text(prod['salePrice'].toString())),
                                   DataCell(Text(prod['boxRate'].toString())),
-                                  DataCell(Text(prod['boxPacking'].toString())),
                                 ],
                               );
                             }),

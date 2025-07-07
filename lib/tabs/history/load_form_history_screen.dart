@@ -123,11 +123,11 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
-                                _buildTotalItem('Units', totalUnits),
+                                _buildTotalItem('Issue', totalUnits),
                                 _buildTotalItem('Return', totalReturn),
                                 _buildTotalItem('Sale', totalSale),
                                 _buildTotalItem(
-                                  'Saled Return',
+                                  'Sale Return',
                                   totalSaledReturn,
                                 ),
                               ],
@@ -237,10 +237,10 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
               headers: [
                 'No.',
                 'Brand Name',
-                'Units',
+                'Issue',
                 'Return',
                 'Sale',
-                'Saled Return',
+                'Sale Return',
               ],
               data: items.asMap().entries.map((entry) {
                 final i = entry.key;

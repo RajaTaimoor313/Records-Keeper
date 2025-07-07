@@ -20,6 +20,7 @@ import 'package:records_keeper/tabs/suppliers/add_supplier_tab.dart';
 import 'package:records_keeper/tabs/suppliers/view_suppliers_tab.dart';
 import 'package:records_keeper/tabs/accounts/assets_screen.dart';
 import 'package:records_keeper/tabs/accounts/profit_loss_tab.dart';
+import 'tabs/cash_flow/day_end_summary_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -327,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: _cashFlowExpanded ? 144 : 0, // 48 pixels per item * 3 items
+          height: _cashFlowExpanded ? 192 : 0, // 48 pixels per item * 4 items
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
             child: Column(
@@ -335,6 +336,7 @@ class _HomeScreenState extends State<HomeScreen>
                 _buildCashFlowSubItem('Income'),
                 _buildCashFlowSubItem('Expenditure'),
                 _buildCashFlowSubItem('B/F'),
+                _buildCashFlowSubItem('Day end Summary'),
               ],
             ),
           ),
@@ -1144,6 +1146,9 @@ class _HomeScreenState extends State<HomeScreen>
         if (_cashFlowSubTab == null) {
           return _buildCashFlowEmptyState();
         }
+        if (_cashFlowSubTab == 'Day end Summary') {
+          return const DayEndSummaryTab();
+        }
         return CashFlowScreen(initialTab: _cashFlowSubTab);
       case 2:
         if (_stockSubTab == null) {
@@ -1273,7 +1278,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose Income, Expenditure, or B/F from the menu',
+            'Choose Income, Expenditure, B/F, or Day end Summary from the menu',
             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
         ],
