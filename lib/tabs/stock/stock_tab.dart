@@ -8,6 +8,7 @@ class Product {
   final String id;
   final String company;
   final String brand;
+  final String brandCategory;
   final double ctnRate;
   final double boxRate;
   final double salePrice;
@@ -19,6 +20,7 @@ class Product {
     required this.id,
     required this.company,
     required this.brand,
+    required this.brandCategory,
     required this.ctnRate,
     required this.boxRate,
     required this.salePrice,
@@ -32,6 +34,7 @@ class Product {
       'id': id,
       'company': company,
       'brand': brand,
+      'brandCategory': brandCategory,
       'ctnRate': ctnRate,
       'boxRate': boxRate,
       'salePrice': salePrice,
@@ -39,6 +42,21 @@ class Product {
       'boxPacking': boxPacking,
       'unitsPacking': unitsPacking,
     };
+  }
+
+  static Product fromMap(Map<String, dynamic> map) {
+    return Product(
+      id: map['id'],
+      company: map['company'],
+      brand: map['brand'],
+      brandCategory: map['brandCategory'] ?? '',
+      ctnRate: map['ctnRate'],
+      boxRate: map['boxRate'],
+      salePrice: map['salePrice'],
+      ctnPacking: map['ctnPacking'],
+      boxPacking: map['boxPacking'],
+      unitsPacking: map['unitsPacking'],
+    );
   }
 }
 
@@ -62,6 +80,7 @@ class _StockTabState extends State<StockTab> {
   // Form controllers
   final TextEditingController _companyController = TextEditingController();
   final TextEditingController _brandController = TextEditingController();
+  final TextEditingController _brandCategoryController = TextEditingController();
   final TextEditingController _ctnRateController = TextEditingController();
   final TextEditingController _boxRateController = TextEditingController();
   final TextEditingController _ctnPackingController = TextEditingController();
@@ -82,6 +101,7 @@ class _StockTabState extends State<StockTab> {
     searchController.dispose();
     _companyController.dispose();
     _brandController.dispose();
+    _brandCategoryController.dispose();
     _ctnRateController.dispose();
     _boxRateController.dispose();
     _ctnPackingController.dispose();
@@ -106,6 +126,7 @@ class _StockTabState extends State<StockTab> {
                 id: record['id'] as String,
                 company: record['company'] as String,
                 brand: record['brand'] as String,
+                brandCategory: record['brandCategory'] as String,
                 ctnRate: record['ctnRate'] as double,
                 boxRate: record['boxRate'] as double,
                 salePrice: record['salePrice'] as double,
@@ -137,6 +158,7 @@ class _StockTabState extends State<StockTab> {
   void _resetForm() {
     _companyController.clear();
     _brandController.clear();
+    _brandCategoryController.clear();
     _ctnRateController.clear();
     _boxRateController.clear();
     _salePriceController.clear();
@@ -176,6 +198,7 @@ class _StockTabState extends State<StockTab> {
   void _populateForm(Product product) {
     _companyController.text = product.company;
     _brandController.text = product.brand;
+    _brandCategoryController.text = product.brandCategory;
     _ctnRateController.text = product.ctnRate.toString();
     _boxRateController.text = product.boxRate.toString();
     _salePriceController.text = product.salePrice.toString();
@@ -197,6 +220,7 @@ class _StockTabState extends State<StockTab> {
           id: _generateProductId(),
           company: _companyController.text.trim(),
           brand: _brandController.text.trim(),
+          brandCategory: _brandCategoryController.text.trim(),
           ctnRate: double.parse(_ctnRateController.text),
           boxRate: double.parse(_boxRateController.text),
           salePrice: double.parse(_salePriceController.text),
@@ -235,6 +259,7 @@ class _StockTabState extends State<StockTab> {
           id: _editingProduct!.id,
           company: _companyController.text.trim(),
           brand: _brandController.text.trim(),
+          brandCategory: _brandCategoryController.text.trim(),
           ctnRate: double.parse(_ctnRateController.text),
           boxRate: double.parse(_boxRateController.text),
           salePrice: double.parse(_salePriceController.text),
@@ -399,6 +424,44 @@ class _StockTabState extends State<StockTab> {
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter brand name';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            // Brand Category Field
+            TextFormField(
+              controller: _brandCategoryController,
+              decoration: InputDecoration(
+                labelText: 'Brand Category',
+                labelStyle: const TextStyle(color: Colors.deepPurple),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.deepPurple),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.deepPurple.withOpacity(0.5),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Colors.deepPurple,
+                    width: 2,
+                  ),
+                ),
+                prefixIcon: const Icon(
+                  Icons.category,
+                  color: Colors.deepPurple,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter brand category';
                 }
                 return null;
               },

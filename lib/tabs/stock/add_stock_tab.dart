@@ -6,6 +6,7 @@ class Product {
   final String id;
   final String company;
   final String brand;
+  final String brandCategory;
   final double ctnRate;
   final double boxRate;
   final double salePrice;
@@ -17,6 +18,7 @@ class Product {
     required this.id,
     required this.company,
     required this.brand,
+    required this.brandCategory,
     required this.ctnRate,
     required this.boxRate,
     required this.salePrice,
@@ -30,6 +32,7 @@ class Product {
       'id': id,
       'company': company,
       'brand': brand,
+      'brandCategory': brandCategory,
       'ctnRate': ctnRate,
       'boxRate': boxRate,
       'salePrice': salePrice,
@@ -44,6 +47,7 @@ class Product {
       id: map['id'],
       company: map['company'],
       brand: map['brand'],
+      brandCategory: map['brandCategory'] ?? '',
       ctnRate: map['ctnRate'],
       boxRate: map['boxRate'],
       salePrice: map['salePrice'],
@@ -112,6 +116,8 @@ class _StockReportTabState extends State<StockReportTab> {
   final TextEditingController _saleTotalController = TextEditingController();
   final TextEditingController _saleValueController = TextEditingController();
 
+  final TextEditingController _brandCategoryController = TextEditingController();
+
   Product? _selectedProduct;
 
   @override
@@ -143,6 +149,7 @@ class _StockReportTabState extends State<StockReportTab> {
     _saleUnitsController.dispose();
     _saleTotalController.dispose();
     _saleValueController.dispose();
+    _brandCategoryController.dispose();
     super.dispose();
   }
 
@@ -771,6 +778,8 @@ class _StockReportTabState extends State<StockReportTab> {
                                   Text('Company: ${_selectedProduct!.company}'),
                                   const SizedBox(height: 4),
                                   Text('Brand: ${_selectedProduct!.brand}'),
+                                  const SizedBox(height: 4),
+                                  Text('Brand Category: ${_selectedProduct!.brandCategory}'),
                                 ],
                               ),
                             ),

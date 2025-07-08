@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:records_keeper/database_helper.dart';
 import 'package:records_keeper/tabs/shops/shop.dart';
+import 'package:intl/intl.dart';
 
 class AddShopTab extends StatefulWidget {
   const AddShopTab({super.key});
@@ -13,6 +14,7 @@ class _AddShopTabState extends State<AddShopTab> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ownerNameController = TextEditingController();
+  final TextEditingController _previousBalanceController = TextEditingController(text: '0');
   final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _areaController = TextEditingController();
@@ -23,6 +25,7 @@ class _AddShopTabState extends State<AddShopTab> {
   void dispose() {
     _nameController.dispose();
     _ownerNameController.dispose();
+    _previousBalanceController.dispose();
     _categoryController.dispose();
     _addressController.dispose();
     _areaController.dispose();
@@ -39,6 +42,7 @@ class _AddShopTabState extends State<AddShopTab> {
 
     try {
       final code = await DatabaseHelper.instance.generateShopCode();
+      final previousBalance = double.tryParse(_previousBalanceController.text.trim()) ?? 0.0;
 
       final shop = Shop(
         code: code,
@@ -48,9 +52,23 @@ class _AddShopTabState extends State<AddShopTab> {
         address: _addressController.text.trim(),
         area: _areaController.text.trim(),
         phone: _phoneController.text.trim(),
+        previousBalance: previousBalance,
       );
 
       final success = await DatabaseHelper.instance.insertShop(shop.toMap());
+
+      // If previousBalance is not zero, add to ledger
+      if (success && previousBalance != 0) {
+        await DatabaseHelper.instance.insertLedger({
+          'shopName': shop.name,
+          'shopCode': shop.code,
+          'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+          'details': 'Opening Balance',
+          'debit': previousBalance > 0 ? previousBalance : 0,
+          'credit': previousBalance < 0 ? -previousBalance : 0,
+          'balance': previousBalance,
+        });
+      }
 
       if (!mounted) return;
 
@@ -186,6 +204,34 @@ class _AddShopTabState extends State<AddShopTab> {
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please enter owner name';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _previousBalanceController,
+                        decoration: InputDecoration(
+                          labelText: 'Previous Balance',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          prefixIcon: const Icon(Icons.account_balance_wallet),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                        ),
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return null; // Allow empty, will default to 0
+                          }
+                          final parsed = double.tryParse(value.trim());
+                          if (parsed == null) {
+                            return 'Enter a valid number';
                           }
                           return null;
                         },

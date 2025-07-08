@@ -5,7 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
 import 'package:records_keeper/database_helper.dart';
-import 'package:records_keeper/tabs/sales/invoice_tab.dart';
+import 'package:records_keeper/tabs/sales/invoice_tab.dart'; // Added import for InvoiceTab
 
 class ViewInvoicesTab extends StatefulWidget {
   const ViewInvoicesTab({super.key});
@@ -1050,17 +1050,20 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed:
-                        _selectedInvoices.isEmpty ||
-                            _selectedInvoices.any(
-                              (id) =>
-                                  _filteredInvoices
-                                      .firstWhere((inv) => inv.id == id)
-                                      .generated ==
-                                  1,
-                            )
-                        ? null
-                        : _editSelectedInvoice,
+                    onPressed: _selectedInvoices.length == 1 &&
+                            _filteredInvoices.firstWhere((inv) => inv.id == _selectedInvoices.first).generated != 1
+                        ? () async {
+                            final selectedInvoice = _filteredInvoices.firstWhere((inv) => inv.id == _selectedInvoices.first);
+                            // Navigate to InvoiceTab for editing
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => InvoiceTab(invoiceToEdit: selectedInvoice),
+                              ),
+                            );
+                            // Refresh invoice list after editing
+                            await _loadInvoices();
+                          }
+                        : null,
                     icon: const Icon(Icons.edit),
                     label: const Text('Edit'),
                     style: ElevatedButton.styleFrom(
@@ -1207,39 +1210,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     );
   }
 
-  void _editSelectedInvoice() async {
-    if (_selectedInvoices.length == 1) {
-      final invoiceId = _selectedInvoices.first;
-      final invoiceMap = await DatabaseHelper.instance.getInvoice(invoiceId);
-      if (invoiceMap == null) return;
-      final invoice = Invoice.fromMap(invoiceMap);
-      if (invoice.generated == 1) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Generated invoices cannot be edited.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-      await showDialog(
-        context: context,
-        builder: (context) => Dialog(
-          child: SizedBox(
-            width: 800,
-            child: InvoiceTab(invoiceToEdit: invoice),
-          ),
-        ),
-      );
-      await _loadInvoices();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a single invoice to edit.'),
-        ),
-      );
-    }
-  }
 
   Future<void> _generateSelectedInvoices() async {
     // Transfer selected invoices to Pick List and Load Form, and mark as generated
@@ -1443,9 +1413,8 @@ class Invoice {
   });
 
   factory Invoice.fromMap(Map<String, dynamic> map) {
-    debugPrint('Invoice.fromMap incoming map: $map');
     return Invoice(
-      id: map['id'].toString(),
+      id: map['id'],
       invoiceNumber: map['invoiceNumber'],
       date: DateTime.parse(map['date']),
       shopName: map['shopName'],

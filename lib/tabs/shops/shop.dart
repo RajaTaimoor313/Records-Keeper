@@ -6,6 +6,7 @@ class Shop {
   final String? address;
   final String? area;
   final String? phone;
+  final double previousBalance;
 
   Shop({
     required this.code,
@@ -15,6 +16,7 @@ class Shop {
     this.address,
     this.area,
     this.phone,
+    this.previousBalance = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +28,7 @@ class Shop {
       'address': address,
       'area': area,
       'phone': phone,
+      'previousBalance': previousBalance,
     };
   }
 
@@ -38,6 +41,7 @@ class Shop {
       address: map['address'],
       area: map['area'],
       phone: map['phone'],
+      previousBalance: (map['previousBalance'] ?? 0) is int ? (map['previousBalance'] ?? 0).toDouble() : (map['previousBalance'] ?? 0) as double,
     );
   }
 }

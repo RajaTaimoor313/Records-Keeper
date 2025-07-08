@@ -61,10 +61,10 @@ class InvoiceItem {
 
   static InvoiceItem fromMap(Map<String, dynamic> map) {
     return InvoiceItem(
-      description: map['description'],
-      company: map['company'],
-      rate: map['rate'],
-      unit: map['unit'],
+      description: map['description'] ?? '',
+      company: map['company'] ?? '',
+      rate: (map['rate'] ?? 0).toDouble(),
+      unit: map['unit'] ?? 0,
     );
   }
 }
@@ -1163,19 +1163,20 @@ class _InvoiceTabState extends State<InvoiceTab> {
 
       final invoice = {
         'id':
-            _editingInvoiceId ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
+            (_editingInvoiceId ??
+            DateTime.now().millisecondsSinceEpoch.toString()),
         'invoiceNumber': _invoiceNumberController.text,
-        'date': _selectedDate,
-        'shopName': _selectedShop!.name,
-        'shopCode': _selectedShop!.code,
-        'ownerName': _selectedShop!.ownerName,
-        'category': _selectedShop!.category,
-        'address': _selectedShop!.address,
+        'date': _selectedDate is DateTime ? _selectedDate : DateTime.now(),
+        'shopName': _selectedShop?.name ?? '',
+        'shopCode': _selectedShop?.code ?? '',
+        'ownerName': _selectedShop?.ownerName ?? '',
+        'category': _selectedShop?.category ?? '',
+        'address': _selectedShop?.address ?? '',
         'items': _items
             .map(
               (item) => {
                 'description': item.description,
+                'company': item.company,
                 'rate': item.rate,
                 'unit': item.unit,
                 'amount': item.amount,
@@ -1190,14 +1191,62 @@ class _InvoiceTabState extends State<InvoiceTab> {
 
       // If editing, adjust available_stock for each product
       if (_editingInvoiceId != null) {
-        assert(_editingInvoiceId != null && _editingInvoiceId is String, 'Editing invoice but _editingInvoiceId is null or not a String');
-        invoice['id'] = _editingInvoiceId.toString();
-        debugPrint('Updating invoice with map: $invoice');
-        debugPrint('Type of invoice[\'id\'] before update: ${invoice['id'].runtimeType}');
-        await DatabaseHelper.instance.updateInvoice(invoice);
-      } else {
-        await DatabaseHelper.instance.insertInvoice(invoice);
+        for (final item in _items) {
+          final key = '${item.description}|${item.company}';
+          final prevUnit = previousUnits[key] ?? 0;
+          Product? product;
+          try {
+            product = _products.firstWhere(
+              (p) => p.brand == item.description && p.company == item.company,
+            );
+          } catch (_) {
+            product = null;
+          }
+          if (product != null && prevUnit != 0) {
+            final diff = prevUnit - item.unit;
+            if (diff != 0) {
+              if (diff > 0) {
+                await DatabaseHelper.instance.incrementAvailableStock(
+                  product.id,
+                  diff.toDouble(),
+                );
+              } else {
+                await DatabaseHelper.instance.decrementAvailableStock(
+                  product.id,
+                  (-diff).toDouble(),
+                );
+              }
+            }
+          }
+        }
+        // Also handle products that were removed in the edit (add their units back)
+        for (final key in previousUnits.keys) {
+          final exists = _items.any(
+            (item) => '${item.description}|${item.company}' == key,
+          );
+          if (!exists) {
+            final prevUnit = previousUnits[key]!;
+            final parts = key.split('|');
+            Product? product;
+            try {
+              product = _products.firstWhere(
+                (p) => p.brand == parts[0] && p.company == parts[1],
+              );
+            } catch (_) {
+              product = null;
+            }
+            if (product != null) {
+              await DatabaseHelper.instance.incrementAvailableStock(
+                product.id,
+                prevUnit.toDouble(),
+              );
+            }
+          }
+        }
       }
+
+      // Save or update invoice
+      await DatabaseHelper.instance.insertInvoice(invoice);
 
       // Decrement available_stock for each product (for new invoices)
       if (_editingInvoiceId == null) {
@@ -1263,61 +1312,79 @@ class _InvoiceTabState extends State<InvoiceTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
-              ),
-            )
-          : Form(
-              key: _formKey,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final double maxWidth = constraints.maxWidth;
-                  // Remove fixed width and centering for full screen usage
-                  final double scale = (maxWidth / 350).clamp(1.0, 1.25);
+      body: Stack(
+        children: [
+          _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.deepPurple,
+                    ),
+                  ),
+                )
+              : Form(
+                  key: _formKey,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final double maxWidth = constraints.maxWidth;
+                      // Remove fixed width and centering for full screen usage
+                      final double scale = (maxWidth / 350).clamp(1.0, 1.25);
 
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SizedBox(
-                          width: maxWidth,
-                          child: _buildInvoice(context, scale),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: 240,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              _saveInvoice();
-                            },
-                            icon: const Icon(Icons.save),
-                            label: Text(_editingInvoiceId != null ? 'Update Invoice' : 'Create Invoice'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(
+                              width: maxWidth,
+                              child: _buildInvoice(context, scale),
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: 240,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  _saveInvoice();
+                                },
+                                icon: const Icon(Icons.save),
+                                label: const Text('Create Invoice'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.deepPurple,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                      );
+                    },
+                  ),
+                ),
+          // Close button at top right
+          Positioned(
+            top: 16,
+            right: 16,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.grey, size: 28),
+              tooltip: 'Close',
+              onPressed: () {
+                Navigator.of(context).maybePop();
+              },
             ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -2,7 +2,6 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -53,6 +52,20 @@ class DatabaseHelper {
       version: 1,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {},
+      onOpen: (db) async {
+        // Migration: Add brandCategory column if it doesn't exist
+        final columns = await db.rawQuery("PRAGMA table_info(products)");
+        final hasBrandCategory = columns.any((col) => col['name'] == 'brandCategory');
+        if (!hasBrandCategory) {
+          await db.execute("ALTER TABLE products ADD COLUMN brandCategory TEXT");
+        }
+        // Migration: Add previousBalance column to shops if it doesn't exist
+        final shopColumns = await db.rawQuery("PRAGMA table_info(shops)");
+        final hasPreviousBalance = shopColumns.any((col) => col['name'] == 'previousBalance');
+        if (!hasPreviousBalance) {
+          await db.execute("ALTER TABLE shops ADD COLUMN previousBalance REAL NOT NULL DEFAULT 0");
+        }
+      },
     );
   }
 
@@ -83,6 +96,7 @@ class DatabaseHelper {
           id TEXT PRIMARY KEY,
           company TEXT NOT NULL,
           brand TEXT NOT NULL,
+          brandCategory TEXT,
           ctnRate REAL NOT NULL,
           boxRate REAL NOT NULL,
           salePrice REAL NOT NULL,
@@ -134,7 +148,8 @@ class DatabaseHelper {
           category TEXT NOT NULL,
           address TEXT,
           area TEXT,
-          phone TEXT
+          phone TEXT,
+          previousBalance REAL NOT NULL DEFAULT 0
         )
       ''');
 
@@ -344,30 +359,29 @@ class DatabaseHelper {
   }
 
   // Product operations
-  Future<String> insertProduct(Map<String, dynamic> product) async {
-    final db = await instance.database;
-    await db.insert('products', product);
-    return product['id'] as String;
-  }
-
   Future<List<Map<String, dynamic>>> getProducts() async {
     final db = await instance.database;
     return await db.query('products');
   }
 
-  Future<void> deleteProduct(String id) async {
+  Future<int> insertProduct(Map<String, dynamic> row) async {
     final db = await instance.database;
-    await db.delete('products', where: 'id = ?', whereArgs: [id]);
+    return await db.insert('products', row);
   }
 
-  Future<int> updateProduct(Map<String, dynamic> product) async {
+  Future<int> updateProduct(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.update(
       'products',
-      product,
+      row,
       where: 'id = ?',
-      whereArgs: [product['id']],
+      whereArgs: [row['id']],
     );
+  }
+
+  Future<void> deleteProduct(String id) async {
+    final db = await instance.database;
+    await db.delete('products', where: 'id = ?', whereArgs: [id]);
   }
 
   // Shop operations
@@ -466,7 +480,7 @@ class DatabaseHelper {
     await db.insert('invoices', {
       ...invoice,
       'items': jsonEncode(invoice['items']),
-      'date': invoice['date'].toIso8601String(),
+      'date': (invoice['date'] ?? DateTime.now()).toIso8601String(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -514,21 +528,6 @@ class DatabaseHelper {
       whereArgs: [invoiceNumber],
     );
     return result.isNotEmpty ? result.first : null;
-  }
-
-  Future<void> updateInvoice(Map<String, dynamic> invoice) async {
-    final Database db = await database;
-    debugPrint('updateInvoice: id value = ${invoice['id']}, type = ${invoice['id'].runtimeType}');
-    await db.update(
-      'invoices',
-      {
-        ...invoice,
-        'items': jsonEncode(invoice['items']),
-        'date': invoice['date'].toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [invoice['id']],
-    );
   }
 
   // Load Form Methods
@@ -1207,5 +1206,11 @@ class DatabaseHelper {
         );
       }
     }
+  }
+
+  Future<List<String>> getUniqueLedgerNames() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('SELECT DISTINCT shopName FROM ledger WHERE shopName IS NOT NULL AND shopName != ""');
+    return result.map((row) => row['shopName'] as String).toList();
   }
 }

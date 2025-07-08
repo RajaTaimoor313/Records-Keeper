@@ -37,19 +37,7 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
       if (!mounted) return;
       setState(() {
         productRecords = records
-            .map(
-              (record) => Product(
-                id: record['id'] as String,
-                company: record['company'] as String,
-                brand: record['brand'] as String,
-                ctnRate: record['ctnRate'] as double,
-                boxRate: record['boxRate'] as double,
-                salePrice: record['salePrice'] as double,
-                ctnPacking: record['ctnPacking'] as int,
-                boxPacking: record['boxPacking'] as int,
-                unitsPacking: record['unitsPacking'] as int,
-              ),
-            )
+            .map((record) => Product.fromMap(record))
             .toList();
         filteredRecords = List.from(productRecords);
         isLoading = false;
@@ -82,6 +70,7 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
   void _showEditProductDialog(Product product) {
     final companyController = TextEditingController(text: product.company);
     final brandController = TextEditingController(text: product.brand);
+    final brandCategoryController = TextEditingController(text: product.brandCategory);
     final ctnRateController = TextEditingController(
       text: product.ctnRate.toString(),
     );
@@ -117,6 +106,10 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                 TextField(
                   controller: brandController,
                   decoration: const InputDecoration(labelText: 'Brand'),
+                ),
+                TextField(
+                  controller: brandCategoryController,
+                  decoration: const InputDecoration(labelText: 'Brand Category'),
                 ),
                 TextField(
                   controller: ctnRateController,
@@ -162,6 +155,7 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                   id: product.id,
                   company: companyController.text.trim(),
                   brand: brandController.text.trim(),
+                  brandCategory: brandCategoryController.text.trim(),
                   ctnRate: double.tryParse(ctnRateController.text) ?? 0.0,
                   boxRate: double.tryParse(boxRateController.text) ?? 0.0,
                   salePrice: double.tryParse(salePriceController.text) ?? 0.0,
@@ -396,6 +390,15 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                             ),
                             const DataColumn(
                               label: Text(
+                                'Category',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepPurple,
+                                ),
+                              ),
+                            ),
+                            const DataColumn(
+                              label: Text(
                                 'Trade Rate',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -534,6 +537,14 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                 DataCell(
                                   Text(
                                     product.brand,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  Text(
+                                    product.brandCategory,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w500,
                                     ),
