@@ -49,7 +49,7 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
   final List<String> categoryOptions = [
     'Petrol & Fuel',
     'Payments',
-    'Bebtors',
+    'Debtors',
     'Offloads',
     'Supplies',
     'Stationary',
@@ -992,7 +992,7 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                                     Expanded(
                                       flex: 2,
                                       child: Text(
-                                        'Rs. ${_formatIndianNumber(record.amount)}',
+                                        'Rs. 	${_formatIndianNumber(record.amount)}',
                                         style: const TextStyle(
                                           color: Colors.red,
                                           fontWeight: FontWeight.w600,
@@ -1006,6 +1006,41 @@ class _ExpenditureTabState extends State<ExpenditureTab> {
                               ),
                             );
                           },
+                        ),
+                        // Add total row
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.shade100,
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                _buildDataCell('', flex: 2),
+                                _buildDataCell('', flex: 3),
+                                _buildDataCell('Total', flex: 4),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'Rs. 	${_formatIndianNumber(filteredRecords.fold(0, (sum, item) => sum + item.amount))}',
+                                    style: const TextStyle(
+                                      color: Colors.deepPurple,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),

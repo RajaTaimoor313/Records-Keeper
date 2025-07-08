@@ -21,6 +21,7 @@ import 'package:records_keeper/tabs/suppliers/view_suppliers_tab.dart';
 import 'package:records_keeper/tabs/accounts/assets_screen.dart';
 import 'package:records_keeper/tabs/accounts/profit_loss_tab.dart';
 import 'tabs/cash_flow/day_end_summary_tab.dart';
+import 'tabs/credit/add_creditors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -49,6 +50,8 @@ class _HomeScreenState extends State<HomeScreen>
   String? _creditSubTab;
   String? _reportsSubTab;
   String? _accountsSubTab;
+  bool _creditorsExpanded = false;
+  String? _creditorsSubTab;
   late AnimationController _animationController;
 
   @override
@@ -230,6 +233,7 @@ class _HomeScreenState extends State<HomeScreen>
                   _buildSupplierItem(),
                   _buildSalesItem(),
                   _buildReportsItem(),
+                  _buildCreditorsItem(),
                   _buildAccountsItem(),
                   _buildCreditItem(),
                   _buildHistoryItem(),
@@ -944,15 +948,13 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: _accountsExpanded ? 240 : 0,
+          height: _accountsExpanded ? 144 : 0,
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
             child: Column(
               children: [
                 _buildAccountsSubItem('Profit & Loss'),
                 _buildAccountsSubItem('Balance Sheet'),
-                _buildAccountsSubItem('Creditors'),
-                _buildAccountsSubItem('Debtors'),
                 _buildAccountsSubItem('Assets'),
               ],
             ),
@@ -1097,6 +1099,107 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _buildCreditorsItem() {
+    return Column(
+      children: [
+        ListTile(
+          horizontalTitleGap: 8,
+          minLeadingWidth: 20,
+          leading: SizedBox(
+            width: 24,
+            height: 24,
+            child: Icon(
+              Icons.people_alt_rounded,
+              size: 20,
+              color: (_selectedIndex == 18 && _creditorsSubTab != null)
+                  ? Colors.deepPurple
+                  : Colors.grey.shade700,
+            ),
+          ),
+          title: Row(
+            children: [
+              Text(
+                'Creditors',
+                style: TextStyle(
+                  color: (_selectedIndex == 18 && _creditorsSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                  fontWeight: (_selectedIndex == 18 && _creditorsSubTab != null)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+              const Spacer(),
+              AnimatedRotation(
+                turns: _creditorsExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 20,
+                  color: (_selectedIndex == 18 && _creditorsSubTab != null)
+                      ? Colors.deepPurple
+                      : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          onTap: () {
+            setState(() {
+              _creditorsExpanded = !_creditorsExpanded;
+            });
+          },
+        ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _creditorsExpanded ? 96 : 0,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildCreditorsSubItem('Add'),
+                _buildCreditorsSubItem('View'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCreditorsSubItem(String tabName) {
+    final isSelected = _selectedIndex == 18 && _creditorsSubTab == tabName;
+    return Container(
+      padding: const EdgeInsets.only(left: 32.0),
+      child: ListTile(
+        horizontalTitleGap: 8,
+        minLeadingWidth: 20,
+        leading: SizedBox(
+          width: 24,
+          height: 24,
+          child: Icon(
+            Icons.arrow_right_rounded,
+            size: 20,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
+          ),
+        ),
+        title: Text(
+          tabName,
+          style: TextStyle(
+            fontSize: 14,
+            color: isSelected ? Colors.deepPurple : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        onTap: () {
+          setState(() {
+            _selectedIndex = 18;
+            _creditorsSubTab = tabName;
+          });
+        },
+      ),
+    );
+  }
+
   Widget _buildDashItem() {
     return ListTile(
       horizontalTitleGap: 8,
@@ -1234,6 +1337,18 @@ class _HomeScreenState extends State<HomeScreen>
           default:
             return _buildPlaceholder('Reports - $_reportsSubTab');
         }
+      case 18:
+        if (_creditorsSubTab == null) {
+          return _buildPlaceholder('Creditors');
+        }
+        switch (_creditorsSubTab) {
+          case 'Add':
+            return const AddCreditors();
+          case 'View':
+            return _buildPlaceholder('Creditors - View');
+          default:
+            return _buildPlaceholder('Creditors -  [4m_creditorsSubTab [24m');
+        }
       case 17:
         if (_accountsSubTab == null) {
           return _buildPlaceholder('Accounts');
@@ -1243,14 +1358,10 @@ class _HomeScreenState extends State<HomeScreen>
             return const ProfitLossTab();
           case 'Balance Sheet':
             return _buildPlaceholder('Accounts - Balance Sheet');
-          case 'Creditors':
-            return _buildPlaceholder('Accounts - Creditors');
-          case 'Debtors':
-            return _buildPlaceholder('Accounts - Debtors');
           case 'Assets':
             return const AssetsScreen();
           default:
-            return _buildPlaceholder('Accounts - $_accountsSubTab');
+            return _buildPlaceholder('Accounts - 24_accountsSubTab');
         }
       default:
         return _buildPlaceholder('Dashboard');

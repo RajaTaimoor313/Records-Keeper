@@ -646,100 +646,123 @@ class _StockReportTabState extends State<StockReportTab> {
               const SizedBox(height: 24),
 
               // Product Search
-              Autocomplete<Product>(
-                optionsBuilder: (TextEditingValue textEditingValue) async {
-                  if (textEditingValue.text.isEmpty) {
-                    return const [];
-                  }
+              Row(
+                children: [
+                  // Search Bar
+                  Expanded(
+                    child: Autocomplete<Product>(
+                      optionsBuilder: (TextEditingValue textEditingValue) async {
+                        if (textEditingValue.text.isEmpty) {
+                          return const [];
+                        }
 
-                  final db = await DatabaseHelper.instance.database;
-                  final searchTerm = textEditingValue.text.toUpperCase();
+                        final db = await DatabaseHelper.instance.database;
+                        final searchTerm = textEditingValue.text.toUpperCase();
 
-                  final results = await db.query(
-                    'products',
-                    where: 'id LIKE ? OR company LIKE ? OR brand LIKE ?',
-                    whereArgs: [
-                      '%$searchTerm%',
-                      '%$searchTerm%',
-                      '%$searchTerm%',
-                    ],
-                  );
+                        final results = await db.query(
+                          'products',
+                          where: 'id LIKE ? OR company LIKE ? OR brand LIKE ?',
+                          whereArgs: [
+                            '%$searchTerm%',
+                            '%$searchTerm%',
+                            '%$searchTerm%',
+                          ],
+                        );
 
-                  return results.map((map) => Product.fromMap(map)).toList();
-                },
-                displayStringForOption: (Product product) {
-                  return '${product.company} - ${product.brand}';
-                },
-                fieldViewBuilder:
-                    (
-                      BuildContext context,
-                      TextEditingController controller,
-                      FocusNode focusNode,
-                      VoidCallback onFieldSubmitted,
-                    ) {
-                      if (_searchController != controller) {
-                        _searchController = controller;
-                      }
-                      return TextFormField(
-                        controller: controller,
-                        focusNode: focusNode,
-                        decoration: InputDecoration(
-                          labelText: 'Search Product',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          prefixIcon: const Icon(Icons.search),
-                        ),
-                        textCapitalization: TextCapitalization.characters,
-                      );
-                    },
-                onSelected: _onProductSelected,
-                optionsViewBuilder:
-                    (
-                      BuildContext context,
-                      AutocompleteOnSelected<Product> onSelected,
-                      Iterable<Product> options,
-                    ) {
-                      return Align(
-                        alignment: Alignment.topLeft,
-                        child: Material(
-                          elevation: 4.0,
-                          child: Container(
-                            constraints: const BoxConstraints(maxHeight: 200),
-                            width: MediaQuery.of(context).size.width - 64,
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              itemCount: options.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                final Product product = options.elementAt(
-                                  index,
-                                );
-                                return ListTile(
-                                  title: Text(
-                                    '${product.company} - ${product.brand}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
+                        return results.map((map) => Product.fromMap(map)).toList();
+                      },
+                      displayStringForOption: (Product product) {
+                        return '${product.company} - ${product.brand}';
+                      },
+                      fieldViewBuilder:
+                          (
+                            BuildContext context,
+                            TextEditingController controller,
+                            FocusNode focusNode,
+                            VoidCallback onFieldSubmitted,
+                          ) {
+                            if (_searchController != controller) {
+                              _searchController = controller;
+                            }
+                            return TextFormField(
+                              controller: controller,
+                              focusNode: focusNode,
+                              decoration: InputDecoration(
+                                labelText: 'Search Product',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                prefixIcon: const Icon(Icons.search),
+                              ),
+                              textCapitalization: TextCapitalization.characters,
+                            );
+                          },
+                      onSelected: _onProductSelected,
+                      optionsViewBuilder:
+                          (
+                            BuildContext context,
+                            AutocompleteOnSelected<Product> onSelected,
+                            Iterable<Product> options,
+                          ) {
+                            return Align(
+                              alignment: Alignment.topLeft,
+                              child: Material(
+                                elevation: 4.0,
+                                child: Container(
+                                  constraints: const BoxConstraints(maxHeight: 200),
+                                  width: MediaQuery.of(context).size.width - 64,
+                                  child: ListView.builder(
+                                    padding: EdgeInsets.zero,
+                                    shrinkWrap: true,
+                                    itemCount: options.length,
+                                    itemBuilder: (BuildContext context, int index) {
+                                      final Product product = options.elementAt(
+                                        index,
+                                      );
+                                      return ListTile(
+                                        title: Text(
+                                          '${product.company} - ${product.brand}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          'Box Rate: Rs. ${product.boxRate.toStringAsFixed(2)} | Trade Rate: Rs. ${product.salePrice.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          onSelected(product);
+                                        },
+                                      );
+                                    },
                                   ),
-                                  subtitle: Text(
-                                    'Box Rate: Rs. ${product.boxRate.toStringAsFixed(2)} | Trade Rate: Rs. ${product.salePrice.toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    onSelected(product);
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                                ),
+                              ),
+                            );
+                          },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Purchase Stock',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 

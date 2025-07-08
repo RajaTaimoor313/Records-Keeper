@@ -38,15 +38,21 @@ class LoadFormDetailScreen extends StatelessWidget {
             ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: _buildItemsTable(items),
+              child: LoadFormDetailTable(items: items),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildItemsTable(List<LoadFormItem> items) {
+class LoadFormDetailTable extends StatelessWidget {
+  final List<LoadFormItem> items;
+  const LoadFormDetailTable({Key? key, required this.items}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     // Calculate totals
     int totalUnits = 0;
     int totalReturn = 0;

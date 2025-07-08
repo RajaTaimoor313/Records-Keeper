@@ -246,10 +246,15 @@ class _LedgerTabState extends State<LedgerTab> {
                         ]),
                         headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
                         cellStyle: pw.TextStyle(fontSize: 9),
-                        cellAlignment: pw.Alignment.centerLeft,
+                        cellAlignment: pw.Alignment.center,
                         headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
                         border: pw.TableBorder.all(width: 0.5),
                         cellPadding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                        columnWidths: {
+                          0: const pw.FixedColumnWidth(16), // No. (narrower)
+                          1: const pw.FixedColumnWidth(40), // Date (narrower)
+                          // 2: const pw.FlexColumnWidth(3),   // Details (wider)
+                        },
                       ),
                     ),
                 ],

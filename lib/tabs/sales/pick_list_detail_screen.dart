@@ -50,7 +50,7 @@ class PickListDetailScreen extends StatelessWidget {
             ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: _buildItemsTable(items),
+              child: PickListDetailTable(items: items),
             ),
             const SizedBox(height: 16),
             const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -60,8 +60,14 @@ class PickListDetailScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildItemsTable(List<PickListItem> items) {
+class PickListDetailTable extends StatelessWidget {
+  final List<PickListItem> items;
+  const PickListDetailTable({Key? key, required this.items}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     final formatter = NumberFormat.currency(
       locale: 'en_IN',
       symbol: '',

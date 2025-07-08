@@ -143,6 +143,11 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
     }
   }
 
+  String _formatIndianNumberNoDecimal(double value) {
+    final formatter = NumberFormat.decimalPattern('en_IN');
+    return formatter.format(value.round());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -393,7 +398,7 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Rs. ${amount.toStringAsFixed(2)}',
+                    'Rs. ${_formatIndianNumberNoDecimal(amount)}',
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
@@ -449,7 +454,7 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Rs. ${amount.toStringAsFixed(2)}',
+                  'Rs. ${_formatIndianNumberNoDecimal(amount)}',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

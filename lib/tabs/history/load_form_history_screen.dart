@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
+import 'package:records_keeper/tabs/sales/load_form_detail_screen.dart';
 
 class LoadFormHistoryScreen extends StatefulWidget {
   const LoadFormHistoryScreen({super.key});
@@ -73,10 +74,37 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
                   ),
                   child: InkWell(
                     onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/load-form-detail',
-                        arguments: item,
+                      final notesMap = data['notes'] != null ? Map<String, dynamic>.from(data['notes']) : {};
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Load Form from ${date.toLocal().toString().split(' ')[0]}'),
+                            content: SizedBox(
+                              width: 700,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    LoadFormDetailTable(items: items),
+                                    const SizedBox(height: 16),
+                                    if (notesMap.isNotEmpty) ...[
+                                      const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ...notesMap.entries.map((e) => Text('Notes of ${e.key}: ${e.value}')),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
                     borderRadius: BorderRadius.circular(12),

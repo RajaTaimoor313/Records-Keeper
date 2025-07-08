@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:records_keeper/tabs/sales/pick_list_detail_screen.dart';
 
 class PickListHistoryScreen extends StatefulWidget {
   const PickListHistoryScreen({super.key});
@@ -81,10 +82,37 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
                   ),
                   child: InkWell(
                     onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/pick-list-detail',
-                        arguments: item,
+                      final Map<String, dynamic> notesMap = data['notes'] != null ? Map<String, dynamic>.from(data['notes']) : {};
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Pick List from ${date.toLocal().toString().split(' ')[0]}'),
+                            content: SizedBox(
+                              width: 700,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    PickListDetailTable(items: items),
+                                    const SizedBox(height: 16),
+                                    if (notesMap.isNotEmpty) ...[
+                                      const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ...notesMap.entries.map((e) => Text('Notes of ${e.key}: ${e.value}')),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     },
                     borderRadius: BorderRadius.circular(12),

@@ -1355,6 +1355,158 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
               ),
             ),
           ),
+          // Add visually distinct Total card at the end
+          Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            color: Colors.amber.shade100, // Visually distinct color
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  const totalKey = '__TOTAL__';
+                  if (_expandedCompanies.contains(totalKey)) {
+                    _expandedCompanies.remove(totalKey);
+                  } else {
+                    _expandedCompanies.add(totalKey);
+                  }
+                });
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Total Header
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade200,
+                      borderRadius: BorderRadius.vertical(
+                        top: const Radius.circular(8),
+                        bottom: _expandedCompanies.contains('__TOTAL__')
+                            ? Radius.zero
+                            : const Radius.circular(8),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Total',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepOrange,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          _expandedCompanies.contains('__TOTAL__')
+                              ? Icons.expand_less
+                              : Icons.expand_more,
+                          color: Colors.deepOrange,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Detailed Table (if expanded)
+                  if (_expandedCompanies.contains('__TOTAL__'))
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.orange.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Main Headers (remove Brands, Invoice Rate, Packing)
+                            IntrinsicHeight(
+                              child: Row(
+                                children: [
+                                  _buildMainHeaderCell('Opening Stock', 4),
+                                  _buildMainHeaderCell('Received', 4),
+                                  _buildMainHeaderCell('Total Stock', 4),
+                                  _buildMainHeaderCell('Closing Stock', 4),
+                                  _buildMainHeaderCell('Sale', 4),
+                                ],
+                              ),
+                            ),
+                            // Sub Headers (remove Brands, Invoice Rate, Packing)
+                            IntrinsicHeight(
+                              child: Row(
+                                children: [
+                                  // Opening Stock
+                                  _buildSubHeaderCell('CTN'),
+                                  _buildSubHeaderCell('Box'),
+                                  _buildSubHeaderCell('Total'),
+                                  _buildSubHeaderCell('Value'),
+                                  // Received
+                                  _buildSubHeaderCell('CTN'),
+                                  _buildSubHeaderCell('Box'),
+                                  _buildSubHeaderCell('Total'),
+                                  _buildSubHeaderCell('Value'),
+                                  // Total Stock
+                                  _buildSubHeaderCell('CTN'),
+                                  _buildSubHeaderCell('Box'),
+                                  _buildSubHeaderCell('Total'),
+                                  _buildSubHeaderCell('Value'),
+                                  // Closing Stock
+                                  _buildSubHeaderCell('CTN'),
+                                  _buildSubHeaderCell('Box'),
+                                  _buildSubHeaderCell('Total'),
+                                  _buildSubHeaderCell('Value'),
+                                  // Sale
+                                  _buildSubHeaderCell('CTN'),
+                                  _buildSubHeaderCell('Box'),
+                                  _buildSubHeaderCell('Total'),
+                                  _buildSubHeaderCell('Value'),
+                                ],
+                              ),
+                            ),
+                            // Only one row: the grand total (remove Brands, Invoice Rate, Packing cells)
+                            IntrinsicHeight(
+                              child: Row(
+                                children: [
+                                  // Opening Stock totals
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'opening_stock_ctn'))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'opening_stock_units'))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'opening_stock_total'))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'opening_stock_value'))), false, true),
+                                  // Received totals
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'received_ctn'))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'received_units'))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'received_total'))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'received_value'))), false, true),
+                                  // Total Stock totals
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateTotalStockCtn(s))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateTotalStockUnits(s))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateTotalStockTotal(s))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateTotalStockValue(s))), false, true),
+                                  // Closing Stock totals
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateClosingStockCtn(s))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateClosingStockUnits(s))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateClosingStockTotal(s))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateClosingStockValue(s))), false, true),
+                                  // Sale totals
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateSaleCtn(s))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _calculateSaleUnits(s))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'sale_total'))), false, true),
+                                  _buildDataCell(_formatIndianNumber(_companySummaries.fold(0.0, (sum, s) => sum + _getColumnTotal(s, 'sale_value'))), false, true),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

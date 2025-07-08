@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:records_keeper/database_helper.dart';
+import 'package:intl/intl.dart';
 
 class RealisationTab extends StatefulWidget {
   const RealisationTab({super.key});
@@ -146,12 +147,23 @@ class _RealisationTabState extends State<RealisationTab> {
     });
   }
 
-  void _handleShopSelection(RealisationFormRow row, Map<String, dynamic> shop) {
+  void _handleShopSelection(RealisationFormRow row, Map<String, dynamic> shop) async {
     setState(() {
       row.shopCode.text = shop['code'] as String;
       row.shopName.text = shop['name'] as String;
       row.address.text = shop['address'] as String? ?? '';
       row.isLocked = true;
+      row.balanceHint = null; // Reset before fetching
+    });
+    // Fetch balance for the selected shop
+    final db = await DatabaseHelper.instance.database;
+    final sumResult = await db.rawQuery(
+      'SELECT (SUM(debit) - SUM(credit)) as balance FROM ledger WHERE shopCode = ?',
+      [row.shopCode.text],
+    );
+    final currentBalance = (sumResult.first['balance'] as num?)?.toDouble() ?? 0.0;
+    setState(() {
+      row.balanceHint = currentBalance;
     });
     _removeSuggestionOverlay();
     FocusScope.of(context).requestFocus(FocusNode());
@@ -253,6 +265,13 @@ class _RealisationTabState extends State<RealisationTab> {
   ) {
     final bool isEditable =
         !row.isLocked || field == 'realisation' || field == 'discount';
+    String? hintText;
+    TextStyle? hintStyle;
+    if (field == 'realisation' && row.balanceHint != null) {
+      final formatter = NumberFormat.decimalPattern('en_IN');
+      hintText = formatter.format(row.balanceHint!.round());
+      hintStyle = const TextStyle(color: Colors.grey); // faded style
+    }
     return CompositedTransformTarget(
       link: field == _activeField && row == _activeRow
           ? _layerLink
@@ -269,10 +288,12 @@ class _RealisationTabState extends State<RealisationTab> {
             controller: controller,
             enabled: isEditable,
             textAlign: TextAlign.center,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
               isDense: true,
+              hintText: hintText,
+              hintStyle: hintStyle,
             ),
             style: TextStyle(
               color: isEditable ? Colors.black87 : Colors.grey.shade700,
@@ -513,6 +534,7 @@ class RealisationFormRow {
   final TextEditingController realisation = TextEditingController();
   final TextEditingController discount = TextEditingController();
   bool isLocked = false;
+  double? balanceHint; // Add this field to store the balance for hint text
   final Map<String, GlobalKey> _fieldKeys = {
     'code': GlobalKey(),
     'name': GlobalKey(),
