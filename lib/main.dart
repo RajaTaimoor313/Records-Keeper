@@ -16,7 +16,6 @@ void main() async {
   try {
     await DatabaseHelper.instance.deleteDatabase();
     await DatabaseConfig.initialize();
-    final db = await DatabaseHelper.instance.database;
     // await db.close(); // Removed to prevent closing the database at startup
   } catch (e) {
     debugPrint('Database initialization error: $e');
