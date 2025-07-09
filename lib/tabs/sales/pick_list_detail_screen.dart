@@ -64,7 +64,7 @@ class PickListDetailScreen extends StatelessWidget {
 
 class PickListDetailTable extends StatelessWidget {
   final List<PickListItem> items;
-  const PickListDetailTable({Key? key, required this.items}) : super(key: key);
+  const PickListDetailTable({super.key, required this.items});
 
   @override
   Widget build(BuildContext context) {

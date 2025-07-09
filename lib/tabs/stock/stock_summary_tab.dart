@@ -42,6 +42,7 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
   bool _isLoading = true;
   List<CompanyStockSummary> _companySummaries = [];
   final Set<String> _expandedCompanies = {};
+  String? _selectedBrandId; // Track selected brand for row highlight
 
   @override
   void initState() {
@@ -264,16 +265,24 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     }
   }
 
-  String _formatIndianNumber(double value) {
+  String _formatIndianNumber(num value) {
     final formatter = NumberFormat.currency(
       locale: 'en_IN',
       symbol: '',
       decimalDigits: 2,
     );
-    return formatter.format(value).trim();
+    String formatted = formatter.format(value).trim();
+    // Remove trailing .00, but keep decimals if nonzero
+    if (formatted.endsWith('.00')) {
+      formatted = formatted.substring(0, formatted.length - 3);
+    } else if (formatted.contains('.')) {
+      // Remove trailing zero if like .10 or .20, but keep .01, .02, etc.
+      formatted = formatted.replaceFirst(RegExp(r'(\.\d*?[1-9])0+ 0?$'), r' ');
+    }
+    return formatted;
   }
 
-  Widget _buildMainHeaderCell(String text, int columnSpan) {
+  Widget _buildMainHeaderCell(String text, double columnSpan) {
     return Container(
       width: columnSpan * 120.0,
       padding: const EdgeInsets.all(12),
@@ -291,7 +300,7 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
 
   Widget _buildSubHeaderCell(String text, [bool isBrand = false]) {
     return Container(
-      width: isBrand ? 240.0 : 120.0,
+      width: isBrand ? 300.0 : 90.0,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.deepPurple.shade50,
@@ -305,13 +314,13 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
     );
   }
 
-  Widget _buildDataCell(
+  Widget  _buildDataCell(
     String text, [
     bool isBrand = false,
     bool isBold = false,
   ]) {
     return Container(
-      width: isBrand ? 240.0 : 120.0,
+      width: isBrand ? 300.0 : 90.0,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
@@ -323,7 +332,7 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
           fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           overflow: isBrand ? TextOverflow.visible : TextOverflow.ellipsis,
         ),
-        textAlign: isBrand ? TextAlign.left : TextAlign.right,
+        textAlign: TextAlign.center,
       ),
     );
   }
@@ -807,7 +816,11 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: InkWell(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Company Header (only this is clickable)
+                  InkWell(
                 onTap: () {
                   setState(() {
                     if (_expandedCompanies.contains(summary.company)) {
@@ -817,11 +830,13 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                     }
                   });
                 },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Company Header
-                    Container(
+                    borderRadius: BorderRadius.vertical(
+                      top: const Radius.circular(8),
+                      bottom: _expandedCompanies.contains(summary.company)
+                          ? Radius.zero
+                          : const Radius.circular(8),
+                    ),
+                    child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.deepPurple.shade50,
@@ -853,7 +868,8 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                         ],
                       ),
                     ),
-                    // Detailed Table (if expanded)
+                  ),
+                  // Detailed Table (if expanded) - NOT clickable
                     if (_expandedCompanies.contains(summary.company))
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -870,14 +886,27 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                               IntrinsicHeight(
                                 child: Row(
                                   children: [
-                                    _buildMainHeaderCell('Brands', 2),
-                                    _buildMainHeaderCell('Invoice Rate', 2),
-                                    _buildMainHeaderCell('Packing', 3),
-                                    _buildMainHeaderCell('Opening Stock', 4),
-                                    _buildMainHeaderCell('Received', 4),
-                                    _buildMainHeaderCell('Total Stock', 4),
-                                    _buildMainHeaderCell('Closing Stock', 4),
-                                    _buildMainHeaderCell('Sale', 4),
+                                    Container(
+                                      width: 40, // Just enough for 'No. '
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.deepPurple.shade100,
+                                        border: Border.all(color: Colors.grey.shade300),
+                                      ),
+                                      child: const Text(
+                                        '#',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    _buildMainHeaderCell('Brands', 2.5),
+                                    _buildMainHeaderCell('Invoice Rate', 1.5),
+                                    _buildMainHeaderCell('Packing', 2.25),
+                                    _buildMainHeaderCell('Opening Stock', 3),
+                                    _buildMainHeaderCell('Received', 3),
+                                    _buildMainHeaderCell('Total Stock', 3),
+                                    _buildMainHeaderCell('Closing Stock', 3),
+                                    _buildMainHeaderCell('Sale', 3),
                                   ],
                                 ),
                               ),
@@ -885,6 +914,15 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                               IntrinsicHeight(
                                 child: Row(
                                   children: [
+                                    Container(
+                                      width: 40,
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.deepPurple.shade50,
+                                        border: Border.all(color: Colors.grey.shade300),
+                                      ),
+                                      child: const SizedBox.shrink(), // Empty for subheader
+                                    ),
                                     _buildSubHeaderCell('', true), // Brands
                                     // Invoice Rate
                                     _buildSubHeaderCell('CTN'),
@@ -922,7 +960,9 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                                 ),
                               ),
                               // Data Rows
-                              ...summary.products.map((product) {
+                              ...summary.products.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final product = entry.value;
                                 // Helper to parse values safely
                                 double getVal(String field) {
                                   return double.tryParse(
@@ -1039,16 +1079,38 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                                 }
 
                                 return IntrinsicHeight(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        if (_selectedBrandId == product['id'].toString()) {
+                                          _selectedBrandId = null; // Un-highlight if already selected
+                                        } else {
+                                          _selectedBrandId = product['id'].toString();
+                                        }
+                                      });
+                                    },
+                                    child: Container(
+                                      color: _selectedBrandId == product['id'].toString()
+                                          ? Colors.yellow.shade100 // Highlight color
+                                          : null,
                                   child: Row(
                                     children: [
-                                      _buildDataCell(product['brand'], true),
+                                          Container(
+                                            width: 40,
+                                            padding: const EdgeInsets.all(8),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              (index + 1).toString(),
+                                              style: const TextStyle(fontSize: 12),
+                                            ),
+                                          ),
+                                          Tooltip(
+                                            message: product['brandCategory'] ?? '',
+                                            child: _buildDataCell(product['brand'], true),
+                                          ),
                                       // Invoice Rate
-                                      _buildDataCell(
-                                        product['ctnRate'].toString(),
-                                      ),
-                                      _buildDataCell(
-                                        product['boxRate'].toString(),
-                                      ),
+                                      _buildDataCell(_formatIndianNumber(product['ctnRate'])),
+                                      _buildDataCell(_formatIndianNumber(product['boxRate'])),
                                       // Packing
                                       _buildDataCell(
                                         product['ctnPacking'].toString(),
@@ -1159,6 +1221,8 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                                         _formatIndianNumber(saleValue),
                                       ),
                                     ],
+                                      ),
+                                    ),
                                   ),
                                 );
                               }),
@@ -1166,6 +1230,15 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                               IntrinsicHeight(
                                 child: Row(
                                   children: [
+                                    Container(
+                                      width: 40,
+                                      padding: const EdgeInsets.all(8),
+                                      alignment: Alignment.center,
+                                      child: const Text(
+                                        '•',
+                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
                                     _buildDataCell('Total', true, true),
                                     // Empty cells for Invoice Rate
                                     _buildDataCell('', false, true),
@@ -1351,7 +1424,6 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                         ),
                       ),
                   ],
-                ),
               ),
             ),
           ),
@@ -1427,11 +1499,11 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
                             IntrinsicHeight(
                               child: Row(
                                 children: [
-                                  _buildMainHeaderCell('Opening Stock', 4),
-                                  _buildMainHeaderCell('Received', 4),
-                                  _buildMainHeaderCell('Total Stock', 4),
-                                  _buildMainHeaderCell('Closing Stock', 4),
-                                  _buildMainHeaderCell('Sale', 4),
+                                  _buildMainHeaderCell('Opening Stock', 3),
+                                  _buildMainHeaderCell('Received', 3),
+                                  _buildMainHeaderCell('Total Stock', 3),
+                                  _buildMainHeaderCell('Closing Stock', 3),
+                                  _buildMainHeaderCell('Sale', 3),
                                 ],
                               ),
                             ),

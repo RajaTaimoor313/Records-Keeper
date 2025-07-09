@@ -49,7 +49,7 @@ class LoadFormDetailScreen extends StatelessWidget {
 
 class LoadFormDetailTable extends StatelessWidget {
   final List<LoadFormItem> items;
-  const LoadFormDetailTable({Key? key, required this.items}) : super(key: key);
+  const LoadFormDetailTable({super.key, required this.items});
 
   @override
   Widget build(BuildContext context) {

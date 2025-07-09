@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:records_keeper/database_helper.dart';
 import 'stock_tab.dart';
+import 'package:intl/intl.dart';
 
 class ViewProductsTab extends StatefulWidget {
   const ViewProductsTab({super.key});
@@ -175,6 +176,19 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
         );
       },
     );
+  }
+
+  String _formatIndianNumber(num value) {
+    final formatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 2,
+    );
+    String formatted = formatter.format(value).trim();
+    if (formatted.endsWith('.00')) {
+      formatted = formatted.substring(0, formatted.length - 3);
+    }
+    return formatted;
   }
 
   @override
@@ -552,7 +566,7 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                 ),
                                 DataCell(
                                   Text(
-                                    'Rs. ${product.salePrice.toStringAsFixed(2)}',
+                                    'Rs. 	${_formatIndianNumber(product.salePrice)}',
                                     style: TextStyle(
                                       color: Colors.blue.shade700,
                                       fontWeight: FontWeight.w500,
@@ -565,7 +579,7 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                         MainAxisAlignment.spaceEvenly,
                                     children: [
                                       Text(
-                                        'Rs. ${product.ctnRate.toStringAsFixed(2)}',
+                                        'Rs. ${_formatIndianNumber(product.ctnRate)}',
                                         style: TextStyle(
                                           color: Colors.green.shade700,
                                           fontWeight: FontWeight.w500,
@@ -573,7 +587,7 @@ class _ViewProductsTabState extends State<ViewProductsTab> {
                                       ),
                                       const SizedBox(width: 16),
                                       Text(
-                                        'Rs. ${product.boxRate.toStringAsFixed(2)}',
+                                        'Rs. ${_formatIndianNumber(product.boxRate)}',
                                         style: TextStyle(
                                           color: Colors.green.shade700,
                                           fontWeight: FontWeight.w500,
