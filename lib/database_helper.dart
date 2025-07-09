@@ -8,6 +8,8 @@ class DatabaseHelper {
   static Database? _database;
   static bool _isDeleting = false;
   static bool _isInitialized = false;
+  static const int schemaVersion = 1; // Update this when schema changes
+  static const String appVersion = '1.0.0'; // Update this with app version
 
   DatabaseHelper._init();
 
@@ -265,6 +267,17 @@ class DatabaseHelper {
           name TEXT NOT NULL,
           value REAL NOT NULL,
           details TEXT
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE creditors (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          company TEXT NOT NULL,
+          balance REAL NOT NULL,
+          phone TEXT,
+          concern TEXT,
+          person TEXT
         )
       ''');
     });
@@ -1212,5 +1225,59 @@ class DatabaseHelper {
     final db = await instance.database;
     final result = await db.rawQuery('SELECT DISTINCT shopName FROM ledger WHERE shopName IS NOT NULL AND shopName != ""');
     return result.map((row) => row['shopName'] as String).toList();
+  }
+
+  // Creditor operations
+  Future<int> insertCreditor(Map<String, dynamic> creditor) async {
+    final db = await instance.database;
+    return await db.insert('creditors', creditor);
+  }
+
+  Future<List<Map<String, dynamic>>> getCreditors() async {
+    final db = await instance.database;
+    return await db.query('creditors', orderBy: 'company ASC');
+  }
+
+  // --- BACKUP & RESTORE ---
+  Future<Map<String, dynamic>> exportDatabaseToJson() async {
+    final db = await database;
+    // Get all user tables (skip sqlite_sequence, etc.)
+    final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+    final Map<String, dynamic> exportData = {};
+    for (final table in tables) {
+      final tableName = table['name'] as String;
+      final rows = await db.query(tableName);
+      exportData[tableName] = rows;
+    }
+    exportData['backup_meta'] = {
+      'schema_version': schemaVersion,
+      'app_version': appVersion,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+    return exportData;
+  }
+
+  /// Returns backup meta if present, else null
+  Future<Map<String, dynamic>?> importDatabaseFromJson(Map<String, dynamic> data) async {
+    final db = await database;
+    final batch = db.batch();
+    await db.execute('PRAGMA foreign_keys = OFF');
+    try {
+      for (final tableName in data.keys) {
+        if (tableName == 'backup_meta') continue;
+        batch.delete(tableName);
+      }
+      await batch.commit(noResult: true);
+      for (final tableName in data.keys) {
+        if (tableName == 'backup_meta') continue;
+        final rows = data[tableName] as List<dynamic>;
+        for (final row in rows) {
+          await db.insert(tableName, Map<String, dynamic>.from(row), conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+    } finally {
+      await db.execute('PRAGMA foreign_keys = ON');
+    }
+    return data['backup_meta'] as Map<String, dynamic>?;
   }
 }

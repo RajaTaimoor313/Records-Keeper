@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:records_keeper/tabs/cash_flow/cash_flow_screen.dart';
 import 'package:records_keeper/tabs/credit/ledger_tab.dart';
 import 'package:records_keeper/tabs/credit/realisation_tab.dart';
+import 'package:records_keeper/tabs/creditors/add_creditors.dart';
 import 'package:records_keeper/tabs/dashboard/dashboard_screen.dart';
 import 'package:records_keeper/tabs/history/history_tab.dart';
 import 'package:records_keeper/tabs/reports/sale_report.dart';
@@ -21,7 +22,8 @@ import 'package:records_keeper/tabs/suppliers/view_suppliers_tab.dart';
 import 'package:records_keeper/tabs/accounts/assets_screen.dart';
 import 'package:records_keeper/tabs/accounts/profit_loss_tab.dart';
 import 'tabs/cash_flow/day_end_summary_tab.dart';
-import 'tabs/credit/add_creditors.dart';
+import 'package:records_keeper/tabs/creditors/view_creditors.dart';
+import 'package:records_keeper/tabs/backup/backup_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -237,6 +239,7 @@ class _HomeScreenState extends State<HomeScreen>
                   _buildAccountsItem(),
                   _buildCreditItem(),
                   _buildHistoryItem(),
+                  _buildBackupItem(),
                 ],
               ),
             ),
@@ -1234,6 +1237,35 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _buildBackupItem() {
+    return ListTile(
+      horizontalTitleGap: 8,
+      minLeadingWidth: 20,
+      leading: SizedBox(
+        width: 24,
+        height: 24,
+        child: Icon(
+          Icons.backup,
+          size: 20,
+          color: Colors.grey.shade700,
+        ),
+      ),
+      title: Text(
+        'Backup',
+        style: TextStyle(
+          color: Colors.grey.shade700,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (ctx) => BackupDialog(),
+        );
+      },
+    );
+  }
+
   Widget _buildSelectedScreen() {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -1345,7 +1377,7 @@ class _HomeScreenState extends State<HomeScreen>
           case 'Add':
             return const AddCreditors();
           case 'View':
-            return _buildPlaceholder('Creditors - View');
+            return const ViewCreditors();
           default:
             return _buildPlaceholder('Creditors -  [4m_creditorsSubTab [24m');
         }
