@@ -1243,6 +1243,26 @@ class _InvoiceTabState extends State<InvoiceTab> {
             }
           }
         }
+        // Handle products newly added in the edit (decrement their stock)
+        for (final item in _items) {
+          final key = '${item.description}|${item.company}';
+          if (!previousUnits.containsKey(key)) {
+            Product? product;
+            try {
+              product = _products.firstWhere(
+                (p) => p.brand == item.description && p.company == item.company,
+              );
+            } catch (_) {
+              product = null;
+            }
+            if (product != null) {
+              await DatabaseHelper.instance.decrementAvailableStock(
+                product.id,
+                item.unit.toDouble(),
+              );
+            }
+          }
+        }
       }
 
       // Save or update invoice
