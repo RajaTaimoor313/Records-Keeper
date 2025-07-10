@@ -20,7 +20,6 @@ class _LedgerTabState extends State<LedgerTab> {
   final Map<String, bool> _expandedShops = {};
   bool _isLoading = true;
 
-  // Add for search functionality
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -161,7 +160,6 @@ class _LedgerTabState extends State<LedgerTab> {
           final balance = row['balance'] ?? 0.0;
           return balance != 0.0;
         }).toList();
-    // Fetch all transactions for each party
     final db = DatabaseHelper.instance;
     final dbInstance = await db.database;
     List<List<Map<String, dynamic>>> allTransactions = [];
@@ -251,9 +249,8 @@ class _LedgerTabState extends State<LedgerTab> {
                         border: pw.TableBorder.all(width: 0.5),
                         cellPadding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
                         columnWidths: {
-                          0: const pw.FixedColumnWidth(16), // No. (narrower)
-                          1: const pw.FixedColumnWidth(40), // Date (narrower)
-                          // 2: const pw.FlexColumnWidth(3),   // Details (wider)
+                          0: const pw.FixedColumnWidth(16),
+                          1: const pw.FixedColumnWidth(40),
                         },
                       ),
                     ),
@@ -273,11 +270,9 @@ class _LedgerTabState extends State<LedgerTab> {
   String _formatLedgerDate(dynamic dateValue, dynamic details) {
     final dateStr = (dateValue ?? '').toString();
     if (dateStr.isEmpty) return '';
-    // If details contains 'Opening Balance', show full date/time
     if ((details ?? '').toString().toLowerCase().contains('opening balance')) {
       return dateStr;
     }
-    // Otherwise, show only yyyy-MM-dd
     if (dateStr.length >= 10) {
       return dateStr.substring(0, 10);
     }
@@ -413,7 +408,6 @@ class _LedgerTabState extends State<LedgerTab> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Search Bar
                   TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
@@ -807,7 +801,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
     }).toList();
     _ledgerNames.where((name) => name.toLowerCase().contains(input)).toList();
     setState(() {
-// Keep free text entry
       _selectedShopForAutocomplete = matches.length == 1 && matches[0]['name'].toString().toLowerCase() == input ? matches[0] : null;
     });
   }
@@ -913,7 +906,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // Date Picker
                       GestureDetector(
                         onTap: _pickDate,
                         child: AbsorbPointer(
@@ -935,7 +927,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      // Modern Autocomplete for Name
                       Autocomplete<_NameSuggestion>(
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           final input = textEditingValue.text.trim().toLowerCase();
@@ -948,7 +939,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                               .where((name) => name.toLowerCase().contains(input))
                               .map((name) => _NameSuggestion(name, isShop: false))
                               .toList();
-                          // Remove duplicates (shop names already in ledger)
                           final allNames = <String>{};
                           final suggestions = <_NameSuggestion>[];
                           for (final s in shopSuggestions + ledgerSuggestions) {
@@ -957,7 +947,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                               allNames.add(s.name.toLowerCase());
                             }
                           }
-                          // Always allow free text entry
                           if (!allNames.contains(input)) {
                             suggestions.add(_NameSuggestion(textEditingValue.text, isShop: false));
                           }
@@ -965,7 +954,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                         },
                         displayStringForOption: (option) => option.name,
                         fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                          // Do NOT assign _nameController.text = controller.text here!
                           return TextFormField(
                             controller: controller,
                             focusNode: focusNode,
@@ -1060,7 +1048,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                           ),
                         ),
                       const SizedBox(height: 18),
-                      // Details
                       TextFormField(
                         controller: _detailsController,
                         decoration: InputDecoration(
@@ -1074,7 +1061,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                         validator: (v) => v == null || v.trim().isEmpty ? 'Enter details' : null,
                       ),
                       const SizedBox(height: 18),
-                      // Debit
                       TextFormField(
                         controller: _debitController,
                         decoration: InputDecoration(
@@ -1093,7 +1079,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                         },
                       ),
                       const SizedBox(height: 18),
-                      // Credit
                       TextFormField(
                         controller: _creditController,
                         decoration: InputDecoration(

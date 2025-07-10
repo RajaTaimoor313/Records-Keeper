@@ -14,7 +14,8 @@ class _AddShopTabState extends State<AddShopTab> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ownerNameController = TextEditingController();
-  final TextEditingController _previousBalanceController = TextEditingController(text: '0');
+  final TextEditingController _previousBalanceController =
+      TextEditingController(text: '0');
   final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _areaController = TextEditingController();
@@ -42,7 +43,8 @@ class _AddShopTabState extends State<AddShopTab> {
 
     try {
       final code = await DatabaseHelper.instance.generateShopCode();
-      final previousBalance = double.tryParse(_previousBalanceController.text.trim()) ?? 0.0;
+      final previousBalance =
+          double.tryParse(_previousBalanceController.text.trim()) ?? 0.0;
 
       final shop = Shop(
         code: code,
@@ -57,7 +59,6 @@ class _AddShopTabState extends State<AddShopTab> {
 
       final success = await DatabaseHelper.instance.insertShop(shop.toMap());
 
-      // If previousBalance is not zero, add to ledger
       if (success && previousBalance != 0) {
         await DatabaseHelper.instance.insertLedger({
           'shopName': shop.name,
@@ -121,7 +122,6 @@ class _AddShopTabState extends State<AddShopTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
                       Row(
                         children: [
                           Container(
@@ -162,7 +162,6 @@ class _AddShopTabState extends State<AddShopTab> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Form Fields
                       TextFormField(
                         controller: _nameController,
                         decoration: InputDecoration(
@@ -224,10 +223,12 @@ class _AddShopTabState extends State<AddShopTab> {
                             vertical: 16,
                           ),
                         ),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return null; // Allow empty, will default to 0
+                            return null;
                           }
                           final parsed = double.tryParse(value.trim());
                           if (parsed == null) {
@@ -331,7 +332,6 @@ class _AddShopTabState extends State<AddShopTab> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Save Button
                       SizedBox(
                         width: double.infinity,
                         height: 50,

@@ -16,7 +16,6 @@ class _RealisationTabState extends State<RealisationTab> {
   double _totalRealisation = 0;
   double _totalDiscount = 0;
 
-  // For suggestion overlay
   OverlayEntry? _suggestionOverlay;
   final LayerLink _layerLink = LayerLink();
   RealisationFormRow? _activeRow;
@@ -153,9 +152,8 @@ class _RealisationTabState extends State<RealisationTab> {
       row.shopName.text = shop['name'] as String;
       row.address.text = shop['address'] as String? ?? '';
       row.isLocked = true;
-      row.balanceHint = null; // Reset before fetching
+      row.balanceHint = null;
     });
-    // Fetch balance for the selected shop
     final db = await DatabaseHelper.instance.database;
     final sumResult = await db.rawQuery(
       'SELECT (SUM(debit) - SUM(credit)) as balance FROM ledger WHERE shopCode = ?',
@@ -270,7 +268,7 @@ class _RealisationTabState extends State<RealisationTab> {
     if (field == 'realisation' && row.balanceHint != null) {
       final formatter = NumberFormat.decimalPattern('en_IN');
       hintText = formatter.format(row.balanceHint!.round());
-      hintStyle = const TextStyle(color: Colors.grey); // faded style
+      hintStyle = const TextStyle(color: Colors.grey);
     }
     return CompositedTransformTarget(
       link: field == _activeField && row == _activeRow
@@ -534,7 +532,7 @@ class RealisationFormRow {
   final TextEditingController realisation = TextEditingController();
   final TextEditingController discount = TextEditingController();
   bool isLocked = false;
-  double? balanceHint; // Add this field to store the balance for hint text
+  double? balanceHint;
   final Map<String, GlobalKey> _fieldKeys = {
     'code': GlobalKey(),
     'name': GlobalKey(),

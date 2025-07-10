@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:records_keeper/database_helper.dart';
 import 'package:intl/intl.dart';
@@ -36,7 +34,6 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
   DateTime? endDate;
   bool isDateRange = false;
 
-  // Financial summary data
   double salesRecoveryTotal = 0;
   double otherIncomeTotal = 0;
   double totalIncome = 0;
@@ -44,10 +41,8 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
   double personalExpenses = 0;
   double otherExpenses = 0;
 
-  // Quick date selection
   List<DateTime> quickDates = [];
 
-  // Add a new variable to track all-time totals
   double allTimeIncome = 0;
   double allTimeExpenditure = 0;
 
@@ -63,7 +58,6 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
     });
 
     try {
-      // Load income records
       final incomeRecords = await DatabaseHelper.instance.getIncomes();
       final incomeData = incomeRecords
           .map(
@@ -77,7 +71,6 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
           )
           .toList();
 
-      // Load expenditure records
       final expenditureRecords = await DatabaseHelper.instance
           .getExpenditures();
       final expenditureData = expenditureRecords
@@ -92,17 +85,14 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
           )
           .toList();
 
-      // Get today's date in yyyy-MM-dd format
       final now = DateTime.now();
       final todayStr = DateFormat('yyyy-MM-dd').format(now);
 
-      // Filter for today only
       final todayIncome = incomeData.where((r) => r.date == todayStr).toList();
       final todayExpenditure = expenditureData
           .where((r) => r.date == todayStr)
           .toList();
 
-      // Calculate financial summaries for today
       salesRecoveryTotal = todayIncome
           .where((r) => r.category == 'Sales & Recovery')
           .fold(0.0, (sum, r) => sum + r.amount);
@@ -118,7 +108,6 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
           .where((r) => r.category != 'Personal')
           .fold(0.0, (sum, r) => sum + r.amount);
 
-      // Save summary to bf_summary table (use yyyy-MM-dd for key)
       final todayDbKey =
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       await DatabaseHelper.instance.upsertBFSummary(
@@ -468,4 +457,4 @@ class _DayEndSummaryTabState extends State<DayEndSummaryTab> {
       ),
     );
   }
-} 
+}

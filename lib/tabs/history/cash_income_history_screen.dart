@@ -82,20 +82,17 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
     final incomes = await DatabaseHelper.instance.getIncomes();
     final expenditures = await DatabaseHelper.instance.getExpenditures();
     final bfSummaries = <String, Map<String, dynamic>>{};
-    // Get all bf_summary records for expenditure
     final db = await DatabaseHelper.instance.database;
     final bfRows = await db.query('bf_summary');
     for (final row in bfRows) {
       bfSummaries[row['date'] as String] = row;
     }
-    // Collect all unique dates
     final Set<String> dateSet = {
       ...incomes.map((e) => e['date'] as String),
       ...expenditures.map((e) => e['date'] as String),
       ...bfSummaries.keys,
     };
     final List<String> dates = dateSet.toList()..sort((a, b) => b.compareTo(a));
-    // Build summary for each date
     final Map<String, Map<String, double>> summary = {};
     for (final date in dates) {
       double sales = 0;
@@ -112,7 +109,6 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
           otherIncome += (inc['amount'] as num).toDouble();
         }
       }
-      // Prefer bf_summary for expenditure if available
       if (bfSummaries.containsKey(date)) {
         expenditure =
             (bfSummaries[date]?['total_expenditure'] as num?)?.toDouble() ??
@@ -122,7 +118,6 @@ class _CashIncomeHistoryScreenState extends State<CashIncomeHistoryScreen> {
             .where((e) => e['date'] == date)
             .fold(0.0, (sum, e) => sum + (e['amount'] as num).toDouble());
       }
-      // Calculate gross/net profit
       final profit = await _getProfitForDate(date);
       summary[date] = {
         'sales': sales,

@@ -5,7 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
 import 'package:records_keeper/database_helper.dart';
-import 'package:records_keeper/tabs/sales/invoice_tab.dart'; // Added import for InvoiceTab
+import 'package:records_keeper/tabs/sales/invoice_tab.dart';
 
 class ViewInvoicesTab extends StatefulWidget {
   const ViewInvoicesTab({super.key});
@@ -93,7 +93,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
   }
 
   Future<void> _deleteSelectedInvoices() async {
-    // Show confirmation dialog
     final bool confirm =
         await showDialog(
           context: context,
@@ -120,12 +119,10 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     if (!confirm) return;
 
     try {
-      // Delete invoices from database
       for (final invoiceId in _selectedInvoices) {
         await DatabaseHelper.instance.deleteInvoice(invoiceId);
       }
 
-      // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -135,7 +132,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
         );
       }
 
-      // Clear selection and reload invoices
       setState(() {
         _selectedInvoices.clear();
       });
@@ -163,21 +159,16 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       return;
     }
 
-    // Create PDF document
     final pdf = pw.Document();
 
-    // Get selected invoices
     final selectedInvoices = _invoices
         .where((invoice) => _selectedInvoices.contains(invoice.id))
         .toList();
 
-    // Calculate number of pages needed
     final int totalPages = (selectedInvoices.length / 4).ceil();
 
-    // Create logo image if available
     final logoImage = _logoImage != null ? pw.MemoryImage(_logoImage!) : null;
 
-    // Generate pages
     for (var pageIndex = 0; pageIndex < totalPages; pageIndex++) {
       final startIdx = pageIndex * 4;
       final endIdx = (startIdx + 4 > selectedInvoices.length)
@@ -188,15 +179,12 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       pdf.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.symmetric(
-            horizontal: 40,
-            vertical: 20,
-          ), // Wider margins for better appearance
+          margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 20),
           build: (pw.Context context) {
             return pw.GridView(
               crossAxisCount: 2,
-              mainAxisSpacing: 20, // More space between rows
-              crossAxisSpacing: 20, // More space between columns
+              mainAxisSpacing: 20,
+              crossAxisSpacing: 20,
               children: pageInvoices.map((invoice) {
                 return pw.Container(
                   padding: const pw.EdgeInsets.all(8),
@@ -215,7 +203,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       );
     }
 
-    // Show print preview
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
       name: 'Invoices_${DateTime.now().millisecondsSinceEpoch}.pdf',
@@ -228,7 +215,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       mainAxisSize: pw.MainAxisSize.min,
       children: [
-        // Header with Logo
         pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
@@ -283,7 +269,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
         ),
         pw.SizedBox(height: 10),
 
-        // Shop Details
         pw.Row(
           children: [
             pw.Expanded(
@@ -307,7 +292,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           ],
         ),
         pw.SizedBox(height: 10),
-        // Items Table
         pw.Container(
           decoration: pw.BoxDecoration(
             border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
@@ -316,7 +300,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           child: pw.Column(
             mainAxisSize: pw.MainAxisSize.min,
             children: [
-              // Table Header
               pw.Container(
                 padding: const pw.EdgeInsets.symmetric(vertical: 4),
                 decoration: pw.BoxDecoration(
@@ -335,7 +318,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                   ],
                 ),
               ),
-              // Table Rows
               ...invoice.items.asMap().entries.map((entry) {
                 final index = entry.key;
                 final item = entry.value;
@@ -366,7 +348,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
         ),
         pw.SizedBox(height: 10),
 
-        // Totals Section
         pw.Container(
           padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: pw.BoxDecoration(
@@ -391,7 +372,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
         ),
         pw.SizedBox(height: 20),
 
-        // Signature Section
         pw.Row(
           children: [
             pw.Expanded(
@@ -533,7 +513,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header with Logo
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -620,7 +599,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Shop Details
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -654,7 +632,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Items Table
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade300),
@@ -662,7 +639,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                         ),
                         child: Column(
                           children: [
-                            // Table Header
                             Container(
                               decoration: BoxDecoration(
                                 color: Colors.grey.shade50,
@@ -702,7 +678,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                                 ],
                               ),
                             ),
-                            // Table Rows
                             ...invoice.items.asMap().entries.map((entry) {
                               final index = entry.key;
                               final item = entry.value;
@@ -753,7 +728,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Totals Section
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -777,8 +751,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // Signature Section
                       Row(
                         children: [
                           Expanded(
@@ -955,7 +927,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
       );
     }
 
-    // Categorize invoices
     final unGeneratedInvoices = _filteredInvoices
         .where((inv) => inv.generated != 1)
         .toList();
@@ -979,7 +950,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           ),
           child: Column(
             children: [
-              // Search Bar
               Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
@@ -1018,7 +988,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Action Buttons
               Row(
                 children: [
                   ElevatedButton.icon(
@@ -1050,17 +1019,26 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed: _selectedInvoices.length == 1 &&
-                            _filteredInvoices.firstWhere((inv) => inv.id == _selectedInvoices.first).generated != 1
+                    onPressed:
+                        _selectedInvoices.length == 1 &&
+                            _filteredInvoices
+                                    .firstWhere(
+                                      (inv) =>
+                                          inv.id == _selectedInvoices.first,
+                                    )
+                                    .generated !=
+                                1
                         ? () async {
-                            final selectedInvoice = _filteredInvoices.firstWhere((inv) => inv.id == _selectedInvoices.first);
-                            // Navigate to InvoiceTab for editing
+                            final selectedInvoice = _filteredInvoices
+                                .firstWhere(
+                                  (inv) => inv.id == _selectedInvoices.first,
+                                );
                             await Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => InvoiceTab(invoiceToEdit: selectedInvoice),
+                                builder: (context) =>
+                                    InvoiceTab(invoiceToEdit: selectedInvoice),
                               ),
                             );
-                            // Refresh invoice list after editing
                             await _loadInvoices();
                           }
                         : null,
@@ -1134,7 +1112,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
               : SingleChildScrollView(
                   child: Column(
                     children: [
-                      // Un-Generated Invoices
                       if (unGeneratedInvoices.isNotEmpty) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -1168,7 +1145,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
                           },
                         ),
                       ],
-                      // Generated Invoices
                       if (generatedInvoices.isNotEmpty) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -1210,11 +1186,8 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
     );
   }
 
-
   Future<void> _generateSelectedInvoices() async {
-    // Transfer selected invoices to Pick List and Load Form, and mark as generated
     if (_selectedInvoices.isEmpty) return;
-    // Prevent generating already generated invoices
     final alreadyGenerated = _selectedInvoices
         .where(
           (id) =>
@@ -1236,15 +1209,13 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
         final invoiceMap = await DatabaseHelper.instance.getInvoice(invoiceId);
         if (invoiceMap == null) continue;
         final invoice = Invoice.fromMap(invoiceMap);
-        if (invoice.generated == 1) continue; // Skip already generated
-        // Transfer to Load Form
+        if (invoice.generated == 1) continue;
         for (final item in invoice.items) {
           await DatabaseHelper.instance.insertLoadFormItem({
             'brandName': item.description,
             'units': item.unit,
           });
         }
-        // Transfer to Pick List
         await DatabaseHelper.instance.insertOrUpdatePickListItem({
           'code': invoice.shopCode,
           'shopName': invoice.shopName,
@@ -1257,7 +1228,6 @@ class _ViewInvoicesTabState extends State<ViewInvoicesTab> {
           'credit': 0,
           'invoiceNumber': invoice.invoiceNumber,
         });
-        // Mark as generated
         await DatabaseHelper.instance.updateInvoiceGenerated(invoiceId, 1);
       }
       if (mounted) {

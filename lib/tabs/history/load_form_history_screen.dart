@@ -53,7 +53,6 @@ class _LoadFormHistoryScreenState extends State<LoadFormHistoryScreen> {
                     .map((item) => LoadFormItem.fromMap(item))
                     .toList();
 
-                // Calculate totals
                 int totalUnits = 0;
                 int totalReturn = 0;
                 int totalSale = 0;

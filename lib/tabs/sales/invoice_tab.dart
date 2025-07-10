@@ -89,7 +89,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
       TextEditingController();
   List<Product> _products = [];
 
-  // Initialize with empty list
   final List<InvoiceItem> _items = [];
 
   final TextEditingController _invoiceNumberController =
@@ -137,7 +136,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
         _shops = shopsData.map((data) => Shop.fromMap(data)).toList();
       });
     } catch (e) {
-      // Handle error
+      // catch
     }
   }
 
@@ -195,7 +194,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
         ),
       ),
     );
-    // Set selected shop
     final shop = _shops.firstWhere(
       (s) => s.code == invoice.shopCode,
       orElse: () => Shop(
@@ -370,7 +368,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
       onSelected: (Product product) {
         setState(() {
           _isSearchingProduct = false;
-          // Check if product already exists in items (match by brand, company, and rate)
           final existingItemIndex = _items.indexWhere(
             (item) =>
                 item.description == product.brand &&
@@ -378,17 +375,15 @@ class _InvoiceTabState extends State<InvoiceTab> {
                 item.rate == product.salePrice,
           );
           if (existingItemIndex != -1) {
-            // Increment unit if product already exists
             _items[existingItemIndex].unit++;
             _items[existingItemIndex].amount =
                 _items[existingItemIndex].rate * _items[existingItemIndex].unit;
           } else {
-            // Add new item if product doesn't exist
             _items.add(
               InvoiceItem(
                 description: product.brand,
                 company: product.company,
-                rate: product.salePrice, // Use sale price instead of ctn rate
+                rate: product.salePrice,
                 unit: 1,
               ),
             );
@@ -518,7 +513,7 @@ class _InvoiceTabState extends State<InvoiceTab> {
             isHeader: true,
             scale: scale,
             isLast: true,
-          ), // For actions
+          ),
         ],
       ),
     );
@@ -844,23 +839,20 @@ class _InvoiceTabState extends State<InvoiceTab> {
   }
 
   Widget _buildInvoice(BuildContext context, double scale) {
-    // Calculate height for each section
-    final double headerHeight = 80 * scale; // Logo, invoice number, date
+    final double headerHeight = 80 * scale;
     final double shopDetailsHeight = _selectedShop != null
         ? 80 * scale
-        : 40 * scale; // Shop details section
-    final double itemHeaderHeight = 40 * scale; // Item details header
-    final double itemRowHeight = 32 * scale; // Height per item row
-    final double minItemsHeight =
-        3 * itemRowHeight; // Minimum height for 3 items
+        : 40 * scale;
+    final double itemHeaderHeight = 40 * scale;
+    final double itemRowHeight = 32 * scale;
+    final double minItemsHeight = 3 * itemRowHeight;
     final double itemsHeight = _items.length > 3
         ? _items.length * itemRowHeight
-        : minItemsHeight; // Actual items height
-    final double totalsSectionHeight = 100 * scale; // Totals section
-    final double signatureSectionHeight = 60 * scale; // Signature section
-    final double paddingHeight = 48 * scale; // Total padding (12 * 4)
+        : minItemsHeight;
+    final double totalsSectionHeight = 100 * scale;
+    final double signatureSectionHeight = 60 * scale;
+    final double paddingHeight = 48 * scale;
 
-    // Calculate total height
     final double totalHeight =
         headerHeight +
         shopDetailsHeight +
@@ -890,7 +882,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with Logo
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -963,7 +954,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
           ),
           SizedBox(height: 8 * scale),
 
-          // Shop Details Section
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -995,7 +985,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
           ),
           SizedBox(height: 8 * scale),
 
-          // Add Item Section
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1023,7 +1012,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
           ),
           SizedBox(height: 8 * scale),
 
-          // Items Table
           Expanded(
             child: Column(
               children: [
@@ -1061,12 +1049,10 @@ class _InvoiceTabState extends State<InvoiceTab> {
   }
 
   Future<void> _saveInvoice() async {
-    // Validate form fields
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Validate shop selection and items
     if (_selectedShop == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1088,7 +1074,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
     }
 
     try {
-      // Validate available_stock for each item
       List<String> insufficientStock = [];
       for (final item in _items) {
         Product? product;
@@ -1102,7 +1087,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
         if (product != null) {
           final available =
               await DatabaseHelper.instance.getAvailableStock(product.id) ?? 0;
-          // If editing, add back the previous units for this item (since they will be replaced)
           int previousUnits = 0;
           if (_editingInvoiceId != null) {
             final prevInvoiceMap = await DatabaseHelper.instance.getInvoice(
@@ -1145,7 +1129,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
         return;
       }
 
-      // If editing, fetch previous invoice items for stock adjustment
       Map<String, int> previousUnits = {};
       if (_editingInvoiceId != null) {
         final prevInvoiceMap = await DatabaseHelper.instance.getInvoice(
@@ -1189,7 +1172,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
         'generated': widget.invoiceToEdit?.generated ?? 0,
       };
 
-      // If editing, adjust available_stock for each product
       if (_editingInvoiceId != null) {
         for (final item in _items) {
           final key = '${item.description}|${item.company}';
@@ -1219,7 +1201,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
             }
           }
         }
-        // Also handle products that were removed in the edit (add their units back)
         for (final key in previousUnits.keys) {
           final exists = _items.any(
             (item) => '${item.description}|${item.company}' == key,
@@ -1243,7 +1224,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
             }
           }
         }
-        // Handle products newly added in the edit (decrement their stock)
         for (final item in _items) {
           final key = '${item.description}|${item.company}';
           if (!previousUnits.containsKey(key)) {
@@ -1265,10 +1245,8 @@ class _InvoiceTabState extends State<InvoiceTab> {
         }
       }
 
-      // Save or update invoice
       await DatabaseHelper.instance.insertInvoice(invoice);
 
-      // Decrement available_stock for each product (for new invoices)
       if (_editingInvoiceId == null) {
         for (final item in _items) {
           Product? product;
@@ -1301,7 +1279,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
         );
       }
 
-      // Clear form
       _clearForm();
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
@@ -1347,7 +1324,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final double maxWidth = constraints.maxWidth;
-                      // Remove fixed width and centering for full screen usage
                       final double scale = (maxWidth / 350).clamp(1.0, 1.25);
 
                       return SingleChildScrollView(
@@ -1391,7 +1367,6 @@ class _InvoiceTabState extends State<InvoiceTab> {
                     },
                   ),
                 ),
-          // Close button at top right
           Positioned(
             top: 16,
             right: 16,

@@ -17,7 +17,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _totalShops = 0;
   int _totalManPower = 0;
 
-  // Date picker state
   bool _isRange = false;
   DateTime? _selectedDate;
   DateTimeRange? _selectedRange;
@@ -42,14 +41,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final db = DatabaseHelper.instance;
 
-      // Load summary data
       final products = await db.getProducts();
       final shops = await db.getShops();
       final manPowers = await db.getSuppliers();
       double totalIncome = 0;
       double totalExpenditure = 0;
       if (_isRange && _selectedRange != null) {
-        // Range mode
         final start = _selectedRange!.start;
         final end = _selectedRange!.end;
         final startStr =
@@ -63,7 +60,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               (row['total_expenditure'] as num?)?.toDouble() ?? 0.0;
         }
       } else if (!_isRange && _selectedDate != null) {
-        // Single date mode
         final d = _selectedDate!;
         final dateStr =
             '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -253,7 +249,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          // Responsive: Income & Expenditure cards in one row, date filter only for these
           Row(
             children: [
               Expanded(
@@ -278,7 +273,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          // Separator
           Row(
             children: const [
               Expanded(child: Divider(thickness: 2)),
@@ -296,7 +290,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          // Other cards in a single row
           Row(
             children: [
               Expanded(

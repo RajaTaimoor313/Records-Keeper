@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:records_keeper/tabs/sales/load_form.dart'; // For LoadFormItem
+import 'package:records_keeper/tabs/sales/load_form.dart';
 
 class LoadFormDetailScreen extends StatelessWidget {
   const LoadFormDetailScreen({super.key});
@@ -53,7 +53,6 @@ class LoadFormDetailTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate totals
     int totalUnits = 0;
     int totalReturn = 0;
     int totalSale = 0;
@@ -127,7 +126,6 @@ class LoadFormDetailTable extends StatelessWidget {
                 ],
               );
             }),
-            // Total row
             DataRow(
               color: MaterialStateProperty.all(Colors.deepPurple.shade50),
               cells: [

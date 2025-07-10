@@ -11,7 +11,8 @@ class AddCreditors extends StatefulWidget {
 class _AddCreditorsState extends State<AddCreditors> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _companyController = TextEditingController();
-  final TextEditingController _previousBalanceController = TextEditingController(text: '0');
+  final TextEditingController _previousBalanceController =
+      TextEditingController(text: '0');
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _concernController = TextEditingController();
   final TextEditingController _personController = TextEditingController();
@@ -34,7 +35,8 @@ class _AddCreditorsState extends State<AddCreditors> {
     });
     try {
       final company = _companyController.text.trim();
-      final balance = double.tryParse(_previousBalanceController.text.trim()) ?? 0.0;
+      final balance =
+          double.tryParse(_previousBalanceController.text.trim()) ?? 0.0;
       final phone = _phoneController.text.trim();
       final concern = _concernController.text.trim();
       final person = _personController.text.trim();
@@ -93,7 +95,6 @@ class _AddCreditorsState extends State<AddCreditors> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
                       Row(
                         children: [
                           Container(
@@ -133,7 +134,6 @@ class _AddCreditorsState extends State<AddCreditors> {
                         ],
                       ),
                       const SizedBox(height: 32),
-                      // Form Fields
                       TextFormField(
                         controller: _companyController,
                         decoration: InputDecoration(
@@ -172,10 +172,12 @@ class _AddCreditorsState extends State<AddCreditors> {
                             vertical: 16,
                           ),
                         ),
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return null; // Allow empty, will default to 0
+                            return null;
                           }
                           final parsed = double.tryParse(value.trim());
                           if (parsed == null) {
@@ -280,7 +282,10 @@ class _AddCreditorsState extends State<AddCreditors> {
                                 )
                               : const Text(
                                   'Save',
-                                  style: TextStyle(fontSize: 18, color: Colors.white),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                  ),
                                 ),
                         ),
                       ),
@@ -294,4 +299,4 @@ class _AddCreditorsState extends State<AddCreditors> {
       ),
     );
   }
-} 
+}

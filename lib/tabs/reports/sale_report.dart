@@ -113,45 +113,109 @@ class _SaleReportState extends State<SaleReport> {
                               scrollDirection: Axis.horizontal,
                               child: Builder(
                                 builder: (context) {
-                                  // Calculate rows and totals
                                   int totalUnits = 0;
                                   double totalAmount = 0;
                                   double totalProfit = 0;
                                   final dataRows = items.map((item) {
-                                    final boxRate = double.tryParse(item['boxRate'].toString()) ?? 0;
-                                    final tradeRate = double.tryParse(item['tradeRate'].toString()) ?? 0;
-                                    final unitsSaled = int.tryParse(item['unitsSaled'].toString()) ?? 0;
+                                    final boxRate =
+                                        double.tryParse(
+                                          item['boxRate'].toString(),
+                                        ) ??
+                                        0;
+                                    final tradeRate =
+                                        double.tryParse(
+                                          item['tradeRate'].toString(),
+                                        ) ??
+                                        0;
+                                    final unitsSaled =
+                                        int.tryParse(
+                                          item['unitsSaled'].toString(),
+                                        ) ??
+                                        0;
                                     final amount = tradeRate * unitsSaled;
-                                    final profit = amount - (boxRate * unitsSaled);
+                                    final profit =
+                                        amount - (boxRate * unitsSaled);
                                     totalUnits += unitsSaled;
                                     totalAmount += amount;
                                     totalProfit += profit;
                                     return DataRow(
                                       cells: [
-                                        DataCell(Text(item['brandName'].toString())),
-                                        DataCell(Text(item['company'].toString())),
-                                        DataCell(Text(indianFormat.format(boxRate))),
-                                        DataCell(Text(indianFormat.format(tradeRate))),
-                                        DataCell(Text(indianFormat.format(unitsSaled))),
-                                        DataCell(Text(indianFormat.format(amount.round()))),
-                                        DataCell(Text(indianFormat.format(profit.round()))),
+                                        DataCell(
+                                          Text(item['brandName'].toString()),
+                                        ),
+                                        DataCell(
+                                          Text(item['company'].toString()),
+                                        ),
+                                        DataCell(
+                                          Text(indianFormat.format(boxRate)),
+                                        ),
+                                        DataCell(
+                                          Text(indianFormat.format(tradeRate)),
+                                        ),
+                                        DataCell(
+                                          Text(indianFormat.format(unitsSaled)),
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            indianFormat.format(amount.round()),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            indianFormat.format(profit.round()),
+                                          ),
+                                        ),
                                       ],
                                     );
                                   }).toList();
-                                  // Add totals row
                                   dataRows.add(
                                     DataRow(
-                                      color: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
-                                        return Colors.grey[200];
-                                      }),
+                                      color:
+                                          MaterialStateProperty.resolveWith<
+                                            Color?
+                                          >((Set<MaterialState> states) {
+                                            return Colors.grey[200];
+                                          }),
                                       cells: [
-                                        const DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+                                        const DataCell(
+                                          Text(
+                                            'Total',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
                                         const DataCell(Text('')),
                                         const DataCell(Text('')),
                                         const DataCell(Text('')),
-                                        DataCell(Text(indianFormat.format(totalUnits), style: const TextStyle(fontWeight: FontWeight.bold))),
-                                        DataCell(Text(indianFormat.format(totalAmount.round()), style: const TextStyle(fontWeight: FontWeight.bold))),
-                                        DataCell(Text(indianFormat.format(totalProfit.round()), style: const TextStyle(fontWeight: FontWeight.bold))),
+                                        DataCell(
+                                          Text(
+                                            indianFormat.format(totalUnits),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            indianFormat.format(
+                                              totalAmount.round(),
+                                            ),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            indianFormat.format(
+                                              totalProfit.round(),
+                                            ),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   );

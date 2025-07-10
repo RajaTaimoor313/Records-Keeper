@@ -42,66 +42,91 @@ class _ViewCreditorsState extends State<ViewCreditors> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _creditors.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No creditors found.',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: _creditors.length,
-                          itemBuilder: (context, index) {
-                            final creditor = _creditors[index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              child: ExpansionTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.deepPurple.withOpacity(0.1),
-                                  child: Text(
-                                    (creditor['company'] ?? '?').toString().isNotEmpty
-                                        ? creditor['company'][0].toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(color: Colors.deepPurple),
-                                  ),
-                                ),
-                                title: Text(
-                                  creditor['company'] ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                                subtitle: Text(
-                                  creditor['phone'] ?? '-',
-                                  style: const TextStyle(color: Colors.grey, fontSize: 14),
-                                ),
-                                trailing: Text(
-                                  'Rs. \\${(creditor['balance'] ?? 0).toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                    child: Row(
-                                      children: [
-                                        const Text('Concern: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                                        Text(creditor['concern'] ?? '-'),
-                                        const SizedBox(width: 24),
-                                        const Text('Person: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                                        Text(creditor['person'] ?? '-'),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                  ? const Center(
+                      child: Text(
+                        'No creditors found.',
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _creditors.length,
+                      itemBuilder: (context, index) {
+                        final creditor = _creditors[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ExpansionTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.deepPurple.withOpacity(
+                                0.1,
                               ),
-                            );
-                          },
-                        ),
+                              child: Text(
+                                (creditor['company'] ?? '?')
+                                        .toString()
+                                        .isNotEmpty
+                                    ? creditor['company'][0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: Colors.deepPurple,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              creditor['company'] ?? '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            subtitle: Text(
+                              creditor['phone'] ?? '-',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14,
+                              ),
+                            ),
+                            trailing: Text(
+                              'Rs. \\${(creditor['balance'] ?? 0).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 8.0,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Text(
+                                      'Concern: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(creditor['concern'] ?? '-'),
+                                    const SizedBox(width: 24),
+                                    const Text(
+                                      'Person: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(creditor['person'] ?? '-'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
             ),
           ),
         ),
       ),
     );
   }
-} 
+}

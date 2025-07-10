@@ -5,7 +5,7 @@ class Supplier {
   final String address;
   final String cnic;
   final String phone;
-  final String type; // 'Supplier' or 'Order Booker'
+  final String type;
 
   Supplier({
     this.id,

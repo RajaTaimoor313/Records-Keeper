@@ -53,7 +53,6 @@ class _PickListHistoryScreenState extends State<PickListHistoryScreen> {
                     .map((item) => PickListItem.fromMap(item))
                     .toList();
 
-                // Calculate totals
                 double totalBillAmount = 0;
                 double totalCash = 0;
                 double totalCredit = 0;

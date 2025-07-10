@@ -79,7 +79,7 @@ class _PickListTabState extends State<PickListTab> {
   Future<void> _updateItem(PickListItem item) async {
     try {
       await DatabaseHelper.instance.updatePickListItem(item.toMap());
-      await _loadItems(); // Reload to ensure data consistency
+      await _loadItems();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -290,7 +290,6 @@ class _PickListTabState extends State<PickListTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -308,7 +307,6 @@ class _PickListTabState extends State<PickListTab> {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           if (constraints.maxWidth < 600) {
-                            // Mobile layout
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -363,7 +361,6 @@ class _PickListTabState extends State<PickListTab> {
                             );
                           }
 
-                          // Desktop layout
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -571,7 +568,6 @@ class _PickListTabState extends State<PickListTab> {
                         ),
                       ),
                     const SizedBox(height: 24),
-                    // Table
                     _buildTable(),
                   ],
                 ),
@@ -605,7 +601,6 @@ class _PickListTabState extends State<PickListTab> {
                 width: math.max(constraints.maxWidth, 850.0),
                 child: Column(
                   children: [
-                    // Header Row
                     Row(
                       children: [
                         Expanded(
@@ -641,7 +636,6 @@ class _PickListTabState extends State<PickListTab> {
                         ),
                       ],
                     ),
-                    // Table Body
                     if (_items.isEmpty)
                       Container(
                         height: 200,
@@ -734,7 +728,9 @@ class _PickListTabState extends State<PickListTab> {
                                     item.credit.toStringAsFixed(2),
                                     isNumeric: true,
                                     isEditable: true,
-                                    hintText: NumberFormat.decimalPattern('en_IN').format(item.billAmount - item.cash),
+                                    hintText: NumberFormat.decimalPattern(
+                                      'en_IN',
+                                    ).format(item.billAmount - item.cash),
                                     onChanged: (value) {
                                       final credit =
                                           double.tryParse(value) ?? 0.0;
@@ -979,7 +975,6 @@ class _PickListTabState extends State<PickListTab> {
                   onPressed: matched
                       ? () async {
                           try {
-                            // Update Load Form for all pending returns
                             for (final ret in _pendingReturns) {
                               await DatabaseHelper.instance
                                   .updateLoadFormItemReturn(
@@ -989,19 +984,19 @@ class _PickListTabState extends State<PickListTab> {
                             }
                             _pendingReturns.clear();
 
-                            // Recalculate all sales in Load Form to ensure consistency
                             await DatabaseHelper.instance
                                 .recalculateAllLoadFormSales();
 
-                            // Insert ledger records for credit
                             for (final item in _items) {
                               if ((item.credit) > 0) {
                                 await DatabaseHelper.instance.insertLedger({
                                   'shopName': item.shopName,
                                   'shopCode': item.code,
-                                  'date': DateTime.now().toIso8601String().split('T')[0],
+                                  'date': DateTime.now()
+                                      .toIso8601String()
+                                      .split('T')[0],
                                   'details': '',
-                                  'debit': item.credit, // Credit value from Pick List goes to Debit in Ledger
+                                  'debit': item.credit,
                                   'credit': 0,
                                   'balance': null,
                                 });
@@ -1011,70 +1006,77 @@ class _PickListTabState extends State<PickListTab> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Returns processed successfully and Load Form updated'),
+                                  content: Text(
+                                    'Returns processed successfully and Load Form updated',
+                                  ),
                                   backgroundColor: Colors.green,
                                 ),
                               );
                             }
 
-                          Navigator.of(context).pop();
-                          // Insert income record
-                          await DatabaseHelper.instance.insertIncome({
-                            'date': DateTime.now().toIso8601String().split('T')[0],
-                            'category': 'Sales & Recovery',
-                            'details': 'Sale',
-                            'amount': cashSum,
-                          });
-                          await _showPickListPrintPreview();
-
-                          // Save to history
-                          final notes = <String, String>{};
-                          _noteControllers.forEach((key, value) {
-                            if (value.text.isNotEmpty) {
-                              notes[key.toString()] = value.text;
-                            }
-                          });
-                          final historyData = {
-                            'items': _items.map((e) => e.toMap()).toList(),
-                            'manpower': _selectedManPowers.map((e) => e.toMap()).toList(),
-                            'notes': notes,
-                            'date': DateTime.now().toIso8601String(),
-                          };
-                          await DatabaseHelper.instance.addPickListHistory(
-                            DateTime.now().toIso8601String().split('T')[0],
-                            jsonEncode(historyData),
-                          );
-
-                          // Clear form
-                          await DatabaseHelper.instance.clearPickList();
-                          if (mounted) {
-                            setState(() {
-                              _items.clear();
-                              _selectedManPowers.clear();
-                              _noteControllers.forEach((key, value) => value.clear());
+                            Navigator.of(context).pop();
+                            await DatabaseHelper.instance.insertIncome({
+                              'date': DateTime.now().toIso8601String().split(
+                                'T',
+                              )[0],
+                              'category': 'Sales & Recovery',
+                              'details': 'Sale',
+                              'amount': cashSum,
                             });
-                          }
-                          await _loadItems(); // Refresh the list
+                            await _showPickListPrintPreview();
 
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Pick List saved to history and form cleared.'),
-                                backgroundColor: Colors.green,
-                              ),
+                            final notes = <String, String>{};
+                            _noteControllers.forEach((key, value) {
+                              if (value.text.isNotEmpty) {
+                                notes[key.toString()] = value.text;
+                              }
+                            });
+                            final historyData = {
+                              'items': _items.map((e) => e.toMap()).toList(),
+                              'manpower': _selectedManPowers
+                                  .map((e) => e.toMap())
+                                  .toList(),
+                              'notes': notes,
+                              'date': DateTime.now().toIso8601String(),
+                            };
+                            await DatabaseHelper.instance.addPickListHistory(
+                              DateTime.now().toIso8601String().split('T')[0],
+                              jsonEncode(historyData),
                             );
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error processing returns: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
+
+                            await DatabaseHelper.instance.clearPickList();
+                            if (mounted) {
+                              setState(() {
+                                _items.clear();
+                                _selectedManPowers.clear();
+                                _noteControllers.forEach(
+                                  (key, value) => value.clear(),
+                                );
+                              });
+                            }
+                            await _loadItems();
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Pick List saved to history and form cleared.',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error processing returns: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
                           }
                         }
-                      }
                       : null,
                   child: const Text('OK'),
                 ),
@@ -1095,7 +1097,6 @@ class _PickListTabState extends State<PickListTab> {
     final numberFormat = NumberFormat('#,##0', 'en_US');
     final moneyFormat = NumberFormat('#,##0.00', 'en_US');
 
-    // Calculate totals
     final double totalBillAmount = _items.fold(
       0.0,
       (sum, item) => sum + item.billAmount,
@@ -1150,7 +1151,7 @@ class _PickListTabState extends State<PickListTab> {
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
-                pw.SizedBox(width: 10), // For spacing
+                pw.SizedBox(width: 10),
               ],
             ),
             pw.SizedBox(height: 10),
@@ -1181,7 +1182,7 @@ class _PickListTabState extends State<PickListTab> {
                     _buildInfoRow('Day:', day),
                     _buildInfoRow('Total Cash:', formatNumber(totalCash)),
                     _buildInfoRow('Total Return:', formatNumber(totalReturn)),
-                    _buildInfoRow('Total Pages:', '1'), // Placeholder
+                    _buildInfoRow('Total Pages:', '1'),
                   ],
                 ),
               ],
@@ -1259,7 +1260,6 @@ class _PickListTabState extends State<PickListTab> {
   Future<void> _handleReturn(PickListItem item, double returnValue) async {
     if (returnValue <= 0) return;
 
-    // Get the invoice details
     final invoice = await DatabaseHelper.instance.getInvoiceByNumber(
       item.invoiceNumber ?? '',
     );
@@ -1292,15 +1292,12 @@ class _PickListTabState extends State<PickListTab> {
       final total = invoice['total'] as double;
 
       if ((returnValue - total).abs() < 0.01) {
-        // Using abs() to handle floating point comparison
-        // Full return - store all products as pending returns
         for (final invoiceItem in invoiceItems) {
           _pendingReturns.add({
             'brandName': invoiceItem['brandName'],
             'units': invoiceItem['units'],
           });
         }
-        // Show the invoice
         if (mounted) {
           final returnedProducts = invoiceItems
               .map((item) => {...item, 'units': item['units']})
@@ -1312,7 +1309,6 @@ class _PickListTabState extends State<PickListTab> {
           );
         }
       } else {
-        // Partial return - show product selection dialog
         if (mounted) {
           await _showReturnProductDialog(invoice, returnValue);
         }
@@ -1341,8 +1337,7 @@ class _PickListTabState extends State<PickListTab> {
                   'brandName': item['description'] as String,
                   'units': item['unit'] as int,
                   'rate': item['rate'] as double,
-                  'maxUnits':
-                      item['unit'] as int, // Store original units as max limit
+                  'maxUnits': item['unit'] as int,
                 },
               )
               .toList(),
@@ -1367,8 +1362,8 @@ class _PickListTabState extends State<PickListTab> {
             return AlertDialog(
               title: const Text('Select Products to Return'),
               content: SizedBox(
-                width: 800, // Increased width for better visibility
-                height: 600, // Fixed height for better visibility
+                width: 800,
+                height: 600,
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1514,7 +1509,6 @@ class _PickListTabState extends State<PickListTab> {
                             return units > 0;
                           })
                       ? () async {
-                          // Store selected products as pending returns
                           for (var i = 0; i < invoiceItems.length; i++) {
                             final item = invoiceItems[i];
                             if (selectedProducts.contains(item)) {
@@ -1529,7 +1523,6 @@ class _PickListTabState extends State<PickListTab> {
                             }
                           }
                           if (mounted) {
-                            // Build returnedProducts list
                             final returnedProducts = <Map<String, dynamic>>[];
                             for (var i = 0; i < invoiceItems.length; i++) {
                               if (selectedProducts.contains(invoiceItems[i])) {

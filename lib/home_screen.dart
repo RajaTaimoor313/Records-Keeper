@@ -335,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: _cashFlowExpanded ? 192 : 0, // 48 pixels per item * 4 items
+          height: _cashFlowExpanded ? 192 : 0,
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
             child: Column(
@@ -438,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: _stockExpanded ? 192 : 0, // 48 pixels per item * 4 items
+          height: _stockExpanded ? 192 : 0,
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
             child: Column(
@@ -1244,11 +1244,7 @@ class _HomeScreenState extends State<HomeScreen>
       leading: SizedBox(
         width: 24,
         height: 24,
-        child: Icon(
-          Icons.backup,
-          size: 20,
-          color: Colors.grey.shade700,
-        ),
+        child: Icon(Icons.backup, size: 20, color: Colors.grey.shade700),
       ),
       title: Text(
         'Backup',
@@ -1258,10 +1254,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
       onTap: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => BackupDialog(),
-        );
+        showDialog(context: context, builder: (ctx) => BackupDialog());
       },
     );
   }

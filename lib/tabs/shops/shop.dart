@@ -41,7 +41,9 @@ class Shop {
       address: map['address'],
       area: map['area'],
       phone: map['phone'],
-      previousBalance: (map['previousBalance'] ?? 0) is int ? (map['previousBalance'] ?? 0).toDouble() : (map['previousBalance'] ?? 0) as double,
+      previousBalance: (map['previousBalance'] ?? 0) is int
+          ? (map['previousBalance'] ?? 0).toDouble()
+          : (map['previousBalance'] ?? 0) as double,
     );
   }
 }

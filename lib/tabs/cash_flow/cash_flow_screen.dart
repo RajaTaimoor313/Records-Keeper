@@ -10,7 +10,6 @@ class CashFlowScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Return the appropriate screen based on the selected option
     switch (initialTab) {
       case 'Income':
         return const IncomeTab(isViewMode: false);
@@ -19,7 +18,6 @@ class CashFlowScreen extends StatelessWidget {
       case 'B/F':
         return const BFTab();
       default:
-        // This case should never happen as we only navigate here with a selected option
         return const Center(
           child: Text(
             'Please select an option from the menu',

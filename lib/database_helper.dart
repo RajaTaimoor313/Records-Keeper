@@ -8,8 +8,8 @@ class DatabaseHelper {
   static Database? _database;
   static bool _isDeleting = false;
   static bool _isInitialized = false;
-  static const int schemaVersion = 1; // Update this when schema changes
-  static const String appVersion = '1.0.0'; // Update this with app version
+  static const int schemaVersion = 1;
+  static const String appVersion = '1.0.0';
 
   DatabaseHelper._init();
 
@@ -55,17 +55,23 @@ class DatabaseHelper {
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {},
       onOpen: (db) async {
-        // Migration: Add brandCategory column if it doesn't exist
         final columns = await db.rawQuery("PRAGMA table_info(products)");
-        final hasBrandCategory = columns.any((col) => col['name'] == 'brandCategory');
+        final hasBrandCategory = columns.any(
+          (col) => col['name'] == 'brandCategory',
+        );
         if (!hasBrandCategory) {
-          await db.execute("ALTER TABLE products ADD COLUMN brandCategory TEXT");
+          await db.execute(
+            "ALTER TABLE products ADD COLUMN brandCategory TEXT",
+          );
         }
-        // Migration: Add previousBalance column to shops if it doesn't exist
         final shopColumns = await db.rawQuery("PRAGMA table_info(shops)");
-        final hasPreviousBalance = shopColumns.any((col) => col['name'] == 'previousBalance');
+        final hasPreviousBalance = shopColumns.any(
+          (col) => col['name'] == 'previousBalance',
+        );
         if (!hasPreviousBalance) {
-          await db.execute("ALTER TABLE shops ADD COLUMN previousBalance REAL NOT NULL DEFAULT 0");
+          await db.execute(
+            "ALTER TABLE shops ADD COLUMN previousBalance REAL NOT NULL DEFAULT 0",
+          );
         }
       },
     );
@@ -293,7 +299,6 @@ class DatabaseHelper {
     ''');
   }
 
-  // Income operations
   Future<int> insertIncome(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('income', row);
@@ -340,7 +345,6 @@ class DatabaseHelper {
     return result.first['total'] as double? ?? 0.0;
   }
 
-  // Expenditure operations
   Future<int> insertExpenditure(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('expenditure', row);
@@ -371,7 +375,6 @@ class DatabaseHelper {
     return result.first['total'] as double? ?? 0.0;
   }
 
-  // Product operations
   Future<List<Map<String, dynamic>>> getProducts() async {
     final db = await instance.database;
     return await db.query('products');
@@ -397,7 +400,6 @@ class DatabaseHelper {
     await db.delete('products', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Shop operations
   Future<String> generateShopCode() async {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const digits = '0123456789';
@@ -405,24 +407,20 @@ class DatabaseHelper {
     bool isUnique = false;
 
     do {
-      // Ensure at least 2 letters and 2 digits
       final List<String> codeChars = [];
 
-      // Add 2 random letters
       for (var i = 0; i < 2; i++) {
         codeChars.add(
           letters[DateTime.now().microsecondsSinceEpoch % letters.length],
         );
       }
 
-      // Add 2 random digits
       for (var i = 0; i < 2; i++) {
         codeChars.add(
           digits[DateTime.now().microsecondsSinceEpoch % digits.length],
         );
       }
 
-      // Add 2 more random characters (can be either letter or digit)
       const allChars = letters + digits;
       for (var i = 0; i < 2; i++) {
         codeChars.add(
@@ -430,11 +428,9 @@ class DatabaseHelper {
         );
       }
 
-      // Shuffle the characters to make the pattern less predictable
       codeChars.shuffle();
       code = codeChars.join();
 
-      // Check if code is unique
       final db = await instance.database;
       final result = await db.query(
         'shops',
@@ -487,7 +483,6 @@ class DatabaseHelper {
     );
   }
 
-  // Invoice methods
   Future<void> insertInvoice(Map<String, dynamic> invoice) async {
     final Database db = await database;
     await db.insert('invoices', {
@@ -543,11 +538,9 @@ class DatabaseHelper {
     return result.isNotEmpty ? result.first : null;
   }
 
-  // Load Form Methods
   Future<int> insertLoadFormItem(Map<String, dynamic> row) async {
     final db = await instance.database;
 
-    // Check if brand already exists
     final List<Map<String, dynamic>> existing = await db.query(
       'load_form',
       where: 'brandName = ?',
@@ -555,7 +548,6 @@ class DatabaseHelper {
     );
 
     if (existing.isNotEmpty) {
-      // Update existing record by adding units
       final existingUnits = existing.first['units'] as int;
       final newUnits = existingUnits + (row['units'] as int);
 
@@ -567,7 +559,6 @@ class DatabaseHelper {
       );
       return existing.first['id'] as int;
     } else {
-      // Insert new record
       return await db.insert('load_form', row);
     }
   }
@@ -593,7 +584,6 @@ class DatabaseHelper {
   ) async {
     final db = await database;
 
-    // Get current return quantity
     final List<Map<String, dynamic>> result = await db.query(
       'load_form',
       columns: ['id', 'returnQty', 'units'],
@@ -606,34 +596,27 @@ class DatabaseHelper {
       final totalUnits = result.first['units'] as int? ?? 0;
       final newReturnQty = currentReturnQty + returnUnits;
 
-      // Validate that return quantity doesn't exceed total units
       if (newReturnQty > totalUnits) {
         throw Exception(
           'Return quantity ($newReturnQty) cannot exceed total units ($totalUnits) for brand: $brandName',
         );
       }
 
-      // Calculate new sale value
       final newSale = totalUnits - newReturnQty;
 
       await db.update(
         'load_form',
-        {
-          'returnQty': newReturnQty,
-          'sale': newSale, // Update sale field with calculated value
-        },
+        {'returnQty': newReturnQty, 'sale': newSale},
         where: 'brandName = ?',
         whereArgs: [brandName],
       );
     } else {
-      // If brand doesn't exist in load_form, create a new entry with return quantity
       await db.insert('load_form', {
         'brandName': brandName,
-        'units': 0, // No original units since this is a return-only entry
+        'units': 0,
         'issue': 0,
         'returnQty': returnUnits,
-        'sale':
-            0 - returnUnits, // Sale will be negative for return-only entries
+        'sale': 0 - returnUnits,
         'saledReturn': 0,
       });
     }
@@ -642,7 +625,6 @@ class DatabaseHelper {
   Future<void> recalculateAllLoadFormSales() async {
     final db = await database;
 
-    // Get all items from load_form
     final List<Map<String, dynamic>> items = await db.query('load_form');
 
     for (final item in items) {
@@ -650,7 +632,6 @@ class DatabaseHelper {
       final returnQty = item['returnQty'] as int? ?? 0;
       final calculatedSale = units - returnQty;
 
-      // Update the sale field if it's different from calculated value
       if (item['sale'] != calculatedSale) {
         await db.update(
           'load_form',
@@ -665,7 +646,6 @@ class DatabaseHelper {
   Future<void> updateStockRecordsFromLoadForm() async {
     final db = await database;
 
-    // Get all items from load_form with sale > 0 or saledReturn > 0
     final List<Map<String, dynamic>> loadFormItems = await db.query(
       'load_form',
       where: 'sale > 0 OR saledReturn > 0',
@@ -676,7 +656,6 @@ class DatabaseHelper {
       final saleQuantity = loadFormItem['sale'] as int;
       final saledReturnQuantity = loadFormItem['saledReturn'] as int;
 
-      // Find the product by brand name
       final List<Map<String, dynamic>> products = await db.query(
         'products',
         where: 'brand = ?',
@@ -689,11 +668,9 @@ class DatabaseHelper {
         final tradeRate = product['salePrice'] as double;
         final boxPacking = product['boxPacking'] as int;
 
-        // Calculate sale values
         final saleValue = saleQuantity * tradeRate;
         final saledReturnValue = saledReturnQuantity * tradeRate;
 
-        // Get the latest stock record for this product
         final List<Map<String, dynamic>> stockRecords = await db.query(
           'stock_records',
           where: 'product_id = ?',
@@ -703,7 +680,6 @@ class DatabaseHelper {
         );
 
         if (stockRecords.isNotEmpty) {
-          // Update the latest stock record with sale and saled return data
           final latestRecord = stockRecords.first;
           final currentSaleUnits = latestRecord['sale_units'] as int? ?? 0;
           final currentSaleValue = latestRecord['sale_value'] as double? ?? 0.0;
@@ -712,7 +688,6 @@ class DatabaseHelper {
           final currentSaledReturnValue =
               latestRecord['saled_return_value'] as double? ?? 0.0;
 
-          // Add the new sale and saled return to existing data
           final newSaleUnits = currentSaleUnits + saleQuantity;
           final newSaleValue = currentSaleValue + saleValue;
           final newSaledReturnUnits =
@@ -720,65 +695,49 @@ class DatabaseHelper {
           final newSaledReturnValue =
               currentSaledReturnValue + saledReturnValue;
 
-          // Calculate sale CTN and Box based on packing strategy
           int saleCtn;
           int saleBox;
 
           if (newSaleUnits <= boxPacking) {
-            // If total is less than or equal to box packing, no CTN needed
             saleCtn = 0;
             saleBox = newSaleUnits;
           } else {
-            // If total exceeds box packing, calculate CTN and Box
-            saleCtn = newSaleUnits ~/ boxPacking; // Integer division for CTN
-            saleBox = newSaleUnits % boxPacking; // Remainder for Box
+            saleCtn = newSaleUnits ~/ boxPacking;
+            saleBox = newSaleUnits % boxPacking;
           }
 
-          final saleTotal = newSaleUnits.toDouble(); // Total boxes sold
+          final saleTotal = newSaleUnits.toDouble();
 
-          // Calculate saled return CTN and Box based on packing strategy
           int saledReturnCtn;
           int saledReturnBox;
 
           if (newSaledReturnUnits <= boxPacking) {
-            // If total is less than or equal to box packing, no CTN needed
             saledReturnCtn = 0;
             saledReturnBox = newSaledReturnUnits;
           } else {
-            // If total exceeds box packing, calculate CTN and Box
-            saledReturnCtn =
-                newSaledReturnUnits ~/ boxPacking; // Integer division for CTN
-            saledReturnBox =
-                newSaledReturnUnits % boxPacking; // Remainder for Box
+            saledReturnCtn = newSaledReturnUnits ~/ boxPacking;
+            saledReturnBox = newSaledReturnUnits % boxPacking;
           }
 
-          final saledReturnTotal = newSaledReturnUnits
-              .toDouble(); // Total boxes returned
+          final saledReturnTotal = newSaledReturnUnits.toDouble();
 
-          // Calculate closing stock values
           final totalStockTotal = latestRecord['total_stock_total'] as double;
           final totalStockValue = latestRecord['total_stock_value'] as double;
 
-          // Updated formula: Closing Stock = Total Stock - Sale + Saled Return
           final closingStockTotal =
               totalStockTotal - saleTotal + saledReturnTotal;
           final closingStockValue =
               totalStockValue - newSaleValue + newSaledReturnValue;
 
-          // Calculate proper CTN and Box for Closing Stock based on packing strategy
           int closingStockCtn;
           int closingStockBox;
 
           if (closingStockTotal <= boxPacking) {
-            // If total is less than or equal to box packing, no CTN needed
             closingStockCtn = 0;
             closingStockBox = closingStockTotal.toInt();
           } else {
-            // If total exceeds box packing, calculate CTN and Box
-            closingStockCtn =
-                closingStockTotal ~/ boxPacking; // Integer division for CTN
-            closingStockBox =
-                closingStockTotal.toInt() % boxPacking; // Remainder for Box
+            closingStockCtn = closingStockTotal ~/ boxPacking;
+            closingStockBox = closingStockTotal.toInt() % boxPacking;
           }
 
           await db.update(
@@ -792,7 +751,6 @@ class DatabaseHelper {
               'saled_return_units': saledReturnBox,
               'saled_return_total': saledReturnTotal,
               'saled_return_value': newSaledReturnValue,
-              // Update closing stock with new formula
               'closing_stock_ctn': closingStockCtn,
               'closing_stock_units': closingStockBox,
               'closing_stock_total': closingStockTotal,
@@ -802,43 +760,31 @@ class DatabaseHelper {
             whereArgs: [latestRecord['id']],
           );
         } else {
-          // Create a new stock record if none exists
-
-          // Calculate sale CTN and Box based on packing strategy
           int saleCtn;
           int saleBox;
 
           if (saleQuantity <= boxPacking) {
-            // If total is less than or equal to box packing, no CTN needed
             saleCtn = 0;
             saleBox = saleQuantity;
           } else {
-            // If total exceeds box packing, calculate CTN and Box
-            saleCtn = saleQuantity ~/ boxPacking; // Integer division for CTN
-            saleBox = saleQuantity % boxPacking; // Remainder for Box
+            saleCtn = saleQuantity ~/ boxPacking;
+            saleBox = saleQuantity % boxPacking;
           }
 
-          // Calculate saled return CTN and Box based on packing strategy
           int saledReturnCtn;
           int saledReturnBox;
 
           if (saledReturnQuantity <= boxPacking) {
-            // If total is less than or equal to box packing, no CTN needed
             saledReturnCtn = 0;
             saledReturnBox = saledReturnQuantity;
           } else {
-            // If total exceeds box packing, calculate CTN and Box
-            saledReturnCtn =
-                saledReturnQuantity ~/ boxPacking; // Integer division for CTN
-            saledReturnBox =
-                saledReturnQuantity % boxPacking; // Remainder for Box
+            saledReturnCtn = saledReturnQuantity ~/ boxPacking;
+            saledReturnBox = saledReturnQuantity % boxPacking;
           }
 
-          // For new records, closing stock will be: 0 - Sale + Saled Return
           final closingStockTotal = 0.0 - saleQuantity + saledReturnQuantity;
           final closingStockValue = 0.0 - saleValue + saledReturnValue;
 
-          // Calculate proper CTN and Box for Closing Stock (will be based on saled return for new records)
           int closingStockCtn = 0;
           int closingStockBox = 0;
 
@@ -885,11 +831,9 @@ class DatabaseHelper {
     }
   }
 
-  // Pick List operations
   Future<void> insertOrUpdatePickListItem(Map<String, dynamic> item) async {
     final db = await database;
 
-    // Check if shop already exists in pick list
     final List<Map<String, dynamic>> existingItems = await db.query(
       'pick_list',
       where: 'shopName = ?',
@@ -897,7 +841,6 @@ class DatabaseHelper {
     );
 
     if (existingItems.isNotEmpty) {
-      // Update existing record by adding to billAmount
       final existingItem = existingItems.first;
       final newBillAmount =
           (existingItem['billAmount'] as double) +
@@ -910,7 +853,6 @@ class DatabaseHelper {
         whereArgs: [existingItem['id']],
       );
     } else {
-      // Insert new record
       await db.insert('pick_list', item);
     }
   }
@@ -930,7 +872,6 @@ class DatabaseHelper {
     );
   }
 
-  // Supplier operations
   Future<List<Map<String, dynamic>>> getSuppliers() async {
     final db = await instance.database;
     return await db.query('suppliers', orderBy: 'name ASC');
@@ -956,13 +897,11 @@ class DatabaseHelper {
     return await db.delete('suppliers', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Ledger operations
   Future<int> insertLedger(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('ledger', row);
   }
 
-  // Close database
   Future<void> close() async {
     final db = await instance.database;
     db.close();
@@ -989,7 +928,6 @@ class DatabaseHelper {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  // B/F summary operations
   Future<void> upsertBFSummary({
     required String date,
     required double salesRecovery,
@@ -1035,7 +973,6 @@ class DatabaseHelper {
     );
   }
 
-  // Pick List History
   Future<int> addPickListHistory(String date, String data) async {
     final db = await instance.database;
     return await db.insert('pick_list_history', {'date': date, 'data': data});
@@ -1064,7 +1001,6 @@ class DatabaseHelper {
     await db.delete('pick_list');
   }
 
-  // Load Form History
   Future<int> addLoadFormHistory(String date, String data) async {
     final db = await instance.database;
     return await db.insert('load_form_history', {'date': date, 'data': data});
@@ -1080,7 +1016,6 @@ class DatabaseHelper {
     await db.delete('load_form');
   }
 
-  // Available Stock operations
   Future<double?> getAvailableStock(String productId) async {
     final db = await database;
     final result = await db.query(
@@ -1109,7 +1044,6 @@ class DatabaseHelper {
     final products = await db.query('products');
     for (final product in products) {
       final productId = product['id'] as String;
-      // Get latest stock record for this product
       final records = await db.query(
         'stock_records',
         where: 'product_id = ?',
@@ -1139,7 +1073,6 @@ class DatabaseHelper {
 
   Future<void> resetAvailableStockForProduct(String productId) async {
     final db = await database;
-    // Get latest stock record for this product
     final records = await db.query(
       'stock_records',
       where: 'product_id = ?',
@@ -1153,16 +1086,13 @@ class DatabaseHelper {
     }
   }
 
-  /// One-time migration: Normalize all income and expenditure dates to yyyy-MM-dd if possible
   Future<void> normalizeIncomeAndExpenditureDates() async {
     final db = await database;
-    // Normalize income
     final incomeRows = await db.query('income');
     for (final row in incomeRows) {
       final id = row['id'];
       final date = row['date'] as String;
       DateTime? parsed;
-      // Try parsing common formats
       try {
         if (date.contains('-')) {
           parsed = DateTime.tryParse(date);
@@ -1188,7 +1118,6 @@ class DatabaseHelper {
         );
       }
     }
-    // Normalize expenditure
     final expRows = await db.query('expenditure');
     for (final row in expRows) {
       final id = row['id'];
@@ -1223,11 +1152,12 @@ class DatabaseHelper {
 
   Future<List<String>> getUniqueLedgerNames() async {
     final db = await instance.database;
-    final result = await db.rawQuery('SELECT DISTINCT shopName FROM ledger WHERE shopName IS NOT NULL AND shopName != ""');
+    final result = await db.rawQuery(
+      'SELECT DISTINCT shopName FROM ledger WHERE shopName IS NOT NULL AND shopName != ""',
+    );
     return result.map((row) => row['shopName'] as String).toList();
   }
 
-  // Creditor operations
   Future<int> insertCreditor(Map<String, dynamic> creditor) async {
     final db = await instance.database;
     return await db.insert('creditors', creditor);
@@ -1238,11 +1168,11 @@ class DatabaseHelper {
     return await db.query('creditors', orderBy: 'company ASC');
   }
 
-  // --- BACKUP & RESTORE ---
   Future<Map<String, dynamic>> exportDatabaseToJson() async {
     final db = await database;
-    // Get all user tables (skip sqlite_sequence, etc.)
-    final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    );
     final Map<String, dynamic> exportData = {};
     for (final table in tables) {
       final tableName = table['name'] as String;
@@ -1257,8 +1187,9 @@ class DatabaseHelper {
     return exportData;
   }
 
-  /// Returns backup meta if present, else null
-  Future<Map<String, dynamic>?> importDatabaseFromJson(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>?> importDatabaseFromJson(
+    Map<String, dynamic> data,
+  ) async {
     final db = await database;
     final batch = db.batch();
     await db.execute('PRAGMA foreign_keys = OFF');
@@ -1272,7 +1203,11 @@ class DatabaseHelper {
         if (tableName == 'backup_meta') continue;
         final rows = data[tableName] as List<dynamic>;
         for (final row in rows) {
-          await db.insert(tableName, Map<String, dynamic>.from(row), conflictAlgorithm: ConflictAlgorithm.replace);
+          await db.insert(
+            tableName,
+            Map<String, dynamic>.from(row),
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
         }
       }
     } finally {

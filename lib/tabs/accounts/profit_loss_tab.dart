@@ -33,7 +33,7 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
       final currentDate = DateTime.now();
       final dateString =
           '${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}-${currentDate.day.toString().padLeft(2, '0')}';
-      // Fetch all products and build a map for quick lookup
+
       final products = await db.query('products');
       final Map<String, Map<String, dynamic>> productRates = {};
       for (var p in products) {
@@ -44,7 +44,6 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
       }
       double totalBox = 0.0;
       double totalTrade = 0.0;
-      // Get today's load_form_history
       final loadFormHistory = await db.query(
         'load_form_history',
         where: 'date = ?',
@@ -157,7 +156,6 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  // Header
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -207,7 +205,6 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  // Gross Profit Card
                   Card(
                     elevation: 8,
                     shape: RoundedRectangleBorder(
@@ -289,7 +286,6 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Net Profit Card
                   Card(
                     elevation: 8,
                     shape: RoundedRectangleBorder(
@@ -371,7 +367,6 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Summary Card
                   Card(
                     elevation: 4,
                     shape: RoundedRectangleBorder(
@@ -426,7 +421,6 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Refresh Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(

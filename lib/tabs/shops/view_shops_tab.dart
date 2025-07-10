@@ -223,7 +223,6 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Row(
                     children: [
                       Container(
@@ -261,7 +260,6 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                         ],
                       ),
                       const Spacer(),
-                      // Search Field
                       SizedBox(
                         width: 300,
                         child: TextField(
@@ -284,7 +282,6 @@ class _ViewShopsTabState extends State<ViewShopsTab> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Table
                   Expanded(
                     child: Card(
                       elevation: 4,

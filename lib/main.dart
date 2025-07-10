@@ -9,24 +9,18 @@ import 'database_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Ensure databaseFactory is set for sqflite_common_ffi
   await DatabaseHelper.instance.initialize();
-
   try {
     await DatabaseHelper.instance.deleteDatabase();
     await DatabaseConfig.initialize();
-    // await db.close(); // Removed to prevent closing the database at startup
   } catch (e) {
     debugPrint('Database initialization error: $e');
   }
-
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Accounts Holder',

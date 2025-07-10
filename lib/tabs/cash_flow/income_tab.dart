@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:records_keeper/database_helper.dart';
 import 'package:intl/intl.dart';
@@ -996,7 +994,6 @@ class _IncomeTabState extends State<IncomeTab> {
                             );
                           },
                         ),
-                        // Add total row
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.deepPurple.shade100,

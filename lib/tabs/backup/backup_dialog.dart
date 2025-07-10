@@ -44,40 +44,66 @@ class _BackupDialogState extends State<BackupDialog> {
   Future<void> _importData(BuildContext context) async {
     setState(() => _loading = true);
     try {
-      final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
       if (result != null && result.files.single.path != null) {
         final file = File(result.files.single.path!);
         final jsonStr = await file.readAsString();
         final data = jsonDecode(jsonStr) as Map<String, dynamic>;
         final backupMeta = data['backup_meta'] as Map<String, dynamic>?;
         final currentSchema = DatabaseHelper.schemaVersion;
-        final backupSchema = backupMeta != null ? backupMeta['schema_version'] : null;
-        final versionMismatch = backupSchema != null && backupSchema != currentSchema;
+        final backupSchema = backupMeta != null
+            ? backupMeta['schema_version']
+            : null;
+        final versionMismatch =
+            backupSchema != null && backupSchema != currentSchema;
         bool proceed = true;
         if (versionMismatch) {
-          proceed = await showDialog<bool>(
+          proceed =
+              await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   title: const Text('Version Mismatch'),
-                  content: Text('Backup schema version: \\$backupSchema\nCurrent schema version: \\$currentSchema\n\nImporting may cause data loss or errors. Proceed?'),
+                  content: Text(
+                    'Backup schema version: \\$backupSchema\nCurrent schema version: \\$currentSchema\n\nImporting may cause data loss or errors. Proceed?',
+                  ),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Proceed')),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: const Text('Proceed'),
+                    ),
                   ],
                 ),
-              ) ?? false;
+              ) ??
+              false;
         } else {
-          proceed = await showDialog<bool>(
+          proceed =
+              await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   title: const Text('Confirm Import'),
-                  content: const Text('Importing will overwrite all current data. Continue?'),
+                  content: const Text(
+                    'Importing will overwrite all current data. Continue?',
+                  ),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Import')),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: const Text('Import'),
+                    ),
                   ],
                 ),
-              ) ?? false;
+              ) ??
+              false;
         }
         if (!proceed) {
           setState(() => _loading = false);
@@ -120,7 +146,10 @@ class _BackupDialogState extends State<BackupDialog> {
         ],
       ),
       content: _loading
-          ? const SizedBox(height: 80, child: Center(child: CircularProgressIndicator()))
+          ? const SizedBox(
+              height: 80,
+              child: Center(child: CircularProgressIndicator()),
+            )
           : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -128,14 +157,18 @@ class _BackupDialogState extends State<BackupDialog> {
                   icon: const Icon(Icons.download),
                   label: const Text('Export'),
                   onPressed: () => _exportData(context),
-                  style: ElevatedButton.styleFrom(minimumSize: const Size(160, 48)),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(160, 48),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.upload),
                   label: const Text('Import'),
                   onPressed: () => _importData(context),
-                  style: ElevatedButton.styleFrom(minimumSize: const Size(160, 48)),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(160, 48),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -147,4 +180,4 @@ class _BackupDialogState extends State<BackupDialog> {
             ),
     );
   }
-} 
+}

@@ -84,7 +84,6 @@ class _AddAssetTabState extends State<AddAssetTab> {
           ),
         );
 
-        // Clear form
         _nameController.clear();
         _valueController.clear();
         _detailsController.clear();
@@ -153,7 +152,6 @@ class _AddAssetTabState extends State<AddAssetTab> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Date Field
                     TextFormField(
                       readOnly: true,
                       decoration: InputDecoration(
@@ -187,7 +185,6 @@ class _AddAssetTabState extends State<AddAssetTab> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Name Field
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
@@ -213,7 +210,6 @@ class _AddAssetTabState extends State<AddAssetTab> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Value Field
                     TextFormField(
                       controller: _valueController,
                       keyboardType: TextInputType.number,
@@ -246,7 +242,6 @@ class _AddAssetTabState extends State<AddAssetTab> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Details Field
                     TextFormField(
                       controller: _detailsController,
                       maxLines: 3,
@@ -268,7 +263,6 @@ class _AddAssetTabState extends State<AddAssetTab> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Save Button
                     SizedBox(
                       width: double.infinity,
                       height: 50,

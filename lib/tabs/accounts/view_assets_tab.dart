@@ -139,7 +139,6 @@ class _ViewAssetsTabState extends State<ViewAssetsTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Search Bar
         Padding(
           padding: const EdgeInsets.all(16),
           child: TextField(
@@ -169,7 +168,6 @@ class _ViewAssetsTabState extends State<ViewAssetsTab> {
           ),
         ),
 
-        // Assets List
         Expanded(
           child: _isLoading
               ? const Center(

@@ -78,7 +78,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
 
     final updatedItem = item.copyWith(returnQty: returnVal, sale: saleVal);
 
-    // Update state to show immediate change
     setState(() {
       final index = _items.indexWhere((i) => i.id == item.id);
       if (index != -1) {
@@ -86,7 +85,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
       }
     });
 
-    // Persist changes to the database
     await _updateItem(updatedItem);
   }
 
@@ -140,7 +138,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 ),
                 pw.SizedBox(width: 4),
-                pw.Text('1'), // Placeholder
+                pw.Text('1'),
               ],
             ),
             pw.SizedBox(height: 10),
@@ -185,7 +183,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
     TextAlign align = TextAlign.center,
   }) {
     return Container(
-      height: 60, // Fixed height for header cells
+      height: 60,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.deepPurple.shade50,
@@ -223,7 +221,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
     final displayValue = isEditable ? item.getDisplayValue(field) : value;
 
     return Container(
-      height: 44, // Fixed height for data cells
+      height: 44,
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
       decoration: BoxDecoration(
         color: isEditable ? Colors.white : Colors.grey.shade50,
@@ -307,13 +305,9 @@ class _LoadFormTabState extends State<LoadFormTab> {
               scrollDirection: Axis.horizontal,
               controller: _horizontalScrollController,
               child: SizedBox(
-                width: math.max(
-                  constraints.maxWidth,
-                  650.0,
-                ), // Minimum width with scroll
+                width: math.max(constraints.maxWidth, 650.0),
                 child: Column(
                   children: [
-                    // Header Row
                     Container(
                       decoration: BoxDecoration(
                         border: Border(
@@ -352,10 +346,9 @@ class _LoadFormTabState extends State<LoadFormTab> {
                         ],
                       ),
                     ),
-                    // Table Body
                     if (_items.isEmpty)
                       Container(
-                        height: 200, // Reduced empty state height
+                        height: 200,
                         decoration: BoxDecoration(color: Colors.grey.shade50),
                         child: Center(
                           child: Column(
@@ -363,7 +356,7 @@ class _LoadFormTabState extends State<LoadFormTab> {
                             children: [
                               Icon(
                                 Icons.inventory_2_outlined,
-                                size: 48, // Reduced icon size
+                                size: 48,
                                 color: Colors.grey.shade400,
                               ),
                               const SizedBox(height: 12),
@@ -469,7 +462,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -487,7 +479,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         if (constraints.maxWidth < 600) {
-                          // Mobile layout
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -521,14 +512,11 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                   ElevatedButton.icon(
                                     onPressed: () async {
                                       try {
-                                        // 1. Print first
                                         await _showLoadFormPrintPreview();
 
-                                        // 2. Update stock records with sale data from Load Form
                                         await DatabaseHelper.instance
                                             .updateStockRecordsFromLoadForm();
 
-                                        // 3. Save to history
                                         final historyData = {
                                           'items': _items
                                               .map((e) => e.toMap())
@@ -544,13 +532,12 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                               jsonEncode(historyData),
                                             );
 
-                                        // 4. Clear form
                                         await DatabaseHelper.instance
                                             .clearLoadForm();
                                         setState(() {
                                           _items.clear();
                                         });
-                                        await _loadItems(); // Refresh the list
+                                        await _loadItems();
 
                                         if (mounted) {
                                           ScaffoldMessenger.of(
@@ -631,7 +618,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                           );
                         }
 
-                        // Desktop layout
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -662,14 +648,11 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                 ElevatedButton.icon(
                                   onPressed: () async {
                                     try {
-                                      // 1. Print first
                                       await _showLoadFormPrintPreview();
 
-                                      // 2. Update stock records with sale data from Load Form
                                       await DatabaseHelper.instance
                                           .updateStockRecordsFromLoadForm();
 
-                                      // 3. Save to history
                                       final historyData = {
                                         'items': _items
                                             .map((e) => e.toMap())
@@ -685,13 +668,12 @@ class _LoadFormTabState extends State<LoadFormTab> {
                                             jsonEncode(historyData),
                                           );
 
-                                      // 4. Clear form
                                       await DatabaseHelper.instance
                                           .clearLoadForm();
                                       setState(() {
                                         _items.clear();
                                       });
-                                      await _loadItems(); // Refresh the list
+                                      await _loadItems();
 
                                       if (mounted) {
                                         ScaffoldMessenger.of(
@@ -775,7 +757,6 @@ class _LoadFormTabState extends State<LoadFormTab> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Table
                   Expanded(child: _buildTable()),
                 ],
               ),
@@ -814,7 +795,7 @@ class LoadFormItem {
       units: units,
       issue: map['issue'] ?? 0,
       returnQty: returnQty,
-      sale: calculatedSale, // Auto-calculate sale as units - returnQty
+      sale: calculatedSale,
       saledReturn: map['saledReturn'] ?? 0,
     );
   }

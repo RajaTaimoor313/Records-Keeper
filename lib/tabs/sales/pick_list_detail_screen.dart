@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:records_keeper/tabs/sales/pick_list_tab.dart'; // For PickListItem
-import 'package:records_keeper/tabs/suppliers/supplier.dart'; // For Supplier
+import 'package:records_keeper/tabs/sales/pick_list_tab.dart';
+import 'package:records_keeper/tabs/suppliers/supplier.dart';
 import 'package:intl/intl.dart';
 
 class PickListDetailScreen extends StatelessWidget {
@@ -74,7 +74,6 @@ class PickListDetailTable extends StatelessWidget {
       decimalDigits: 2,
     );
 
-    // Calculate totals
     double totalBillAmount = 0;
     double totalCash = 0;
     double totalCredit = 0;
@@ -157,7 +156,6 @@ class PickListDetailTable extends StatelessWidget {
                 ],
               );
             }),
-            // Total row
             DataRow(
               color: MaterialStateProperty.all(Colors.deepPurple.shade50),
               cells: [
