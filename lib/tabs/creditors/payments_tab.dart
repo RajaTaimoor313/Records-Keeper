@@ -167,15 +167,6 @@ class _PaymentsTabState extends State<PaymentsTab> {
                                     return;
                                   }
                                   final currentBalance = (creditor['balance'] as num?)?.toDouble() ?? 0.0;
-                                  if (amount > currentBalance) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Insufficient balance. Current balance: Rs. ${currentBalance.toStringAsFixed(2)}'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                    return;
-                                  }
                                   final newBalance = currentBalance - amount;
                                   await DatabaseHelper.instance.updateCreditorBalance(name, newBalance);
                                   await DatabaseHelper.instance.insertExpenditure({
@@ -183,6 +174,15 @@ class _PaymentsTabState extends State<PaymentsTab> {
                                     'category': 'Payments',
                                     'details': 'Paid to Creditor $name',
                                     'amount': amount,
+                                  });
+                                  // Add transaction to creditor_transactions
+                                  await DatabaseHelper.instance.insertCreditorTransaction({
+                                    'creditor_id': creditor['id'],
+                                    'date': '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                                    'details': 'Payment made',
+                                    'debit': 0,
+                                    'credit': amount,
+                                    'balance': newBalance,
                                   });
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(

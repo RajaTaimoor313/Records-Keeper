@@ -50,20 +50,26 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _handleDateChangeAndNavigate() async {
-    final db = DatabaseHelper.instance;
-    final today = DateTime.now();
-    final todayStr = DateFormat('yyyy-MM-dd').format(today);
-    final lastDate = await db.getAppMetadata('last_open_date');
-    if (lastDate == null || lastDate != todayStr) {
-      await db.deleteTodayExpenditure(todayStr);
-      await db.deleteTodayIncome(todayStr);
-      await db.setAppMetadata('last_open_date', todayStr);
+    try {
+      final db = DatabaseHelper.instance;
+      final today = DateTime.now();
+      final todayStr = DateFormat('yyyy-MM-dd').format(today);
+      final lastDate = await db.getAppMetadata('last_open_date');
+      if (lastDate == null || lastDate != todayStr) {
+        print('Splash: Deleting today\'s expenditure and income');
+        await db.deleteTodayExpenditure(todayStr);
+        await db.deleteTodayIncome(todayStr);
+        await db.setAppMetadata('last_open_date', todayStr);
+        print('Splash: Updated last_open_date');
+      }
+      Timer(const Duration(seconds: 2), () {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      });
+    } catch (e, stack) {
+      print(stack);
     }
-    Timer(const Duration(seconds: 2), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    });
   }
 
   @override

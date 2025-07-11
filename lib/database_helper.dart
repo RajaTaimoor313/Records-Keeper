@@ -6,12 +6,16 @@ import 'dart:convert';
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static bool _isDeleting = false;
   static bool _isInitialized = false;
   static const int schemaVersion = 1;
   static const String appVersion = '1.0.0';
+  static String? _customDbPath; // <-- Add this line
 
   DatabaseHelper._init();
+
+  static void setDatabasePath(String path) {
+    _customDbPath = path;
+  }
 
   Future<void> initialize() async {
     if (!_isInitialized) {
@@ -23,24 +27,6 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> deleteDatabase() async {
-    if (_isDeleting) return;
-    _isDeleting = true;
-
-    try {
-      if (_database != null) {
-        await _database!.close();
-        _database = null;
-      }
-
-      final dbPath = await getDatabasesPath();
-      final path = join(dbPath, 'accounts.db');
-      await databaseFactory.deleteDatabase(path);
-    } finally {
-      _isDeleting = false;
-    }
-  }
-
   Future<Database> get database async {
     await initialize();
     _database ??= await _initDatabase();
@@ -48,7 +34,12 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    final String path = join(await getDatabasesPath(), 'haider_traders.db');
+    String path;
+    if (_customDbPath != null) {
+      path = _customDbPath!;
+    } else {
+      path = join(await getDatabasesPath(), 'haider_traders.db');
+    }
     return await openDatabase(
       path,
       version: 1,
@@ -1175,10 +1166,9 @@ class DatabaseHelper {
     final result = await db.rawQuery(
       'SELECT DISTINCT shopName, shopCode FROM ledger WHERE shopName IS NOT NULL AND shopName != ""',
     );
-    return result.map((row) => {
-      'name': row['shopName'],
-      'code': row['shopCode'],
-    }).toList();
+    return result
+        .map((row) => {'name': row['shopName'], 'code': row['shopCode']})
+        .toList();
   }
 
   Future<int> insertCreditor(Map<String, dynamic> creditor) async {
@@ -1264,7 +1254,9 @@ class DatabaseHelper {
     return await db.insert('creditor_transactions', txn);
   }
 
-  Future<List<Map<String, dynamic>>> getCreditorTransactions(int creditorId) async {
+  Future<List<Map<String, dynamic>>> getCreditorTransactions(
+    int creditorId,
+  ) async {
     final db = await instance.database;
     return await db.query(
       'creditor_transactions',
@@ -1276,7 +1268,11 @@ class DatabaseHelper {
 
   Future<int> insertCustomDebitor(Map<String, dynamic> debitor) async {
     final db = await instance.database;
-    return await db.insert('custom_debitors', debitor, conflictAlgorithm: ConflictAlgorithm.ignore);
+    return await db.insert(
+      'custom_debitors',
+      debitor,
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   Future<List<Map<String, dynamic>>> getCustomDebitors() async {
@@ -1286,24 +1282,21 @@ class DatabaseHelper {
 
   Future<Map<String, dynamic>?> getCustomDebitorByName(String name) async {
     final db = await instance.database;
-    final result = await db.query('custom_debitors', where: 'name = ?', whereArgs: [name]);
+    final result = await db.query(
+      'custom_debitors',
+      where: 'name = ?',
+      whereArgs: [name],
+    );
     return result.isNotEmpty ? result.first : null;
   }
+
   Future<int> deleteTodayExpenditure(String date) async {
     final db = await instance.database;
-    return await db.delete(
-      'expenditure',
-      where: 'date = ?',
-      whereArgs: [date],
-    );
+    return await db.delete('expenditure', where: 'date = ?', whereArgs: [date]);
   }
 
   Future<int> deleteTodayIncome(String date) async {
     final db = await instance.database;
-    return await db.delete(
-      'income',
-      where: 'date = ?',
-      whereArgs: [date],
-    );
+    return await db.delete('income', where: 'date = ?', whereArgs: [date]);
   }
 }

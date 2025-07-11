@@ -426,7 +426,7 @@ class _CreditorsSummaryState extends State<CreditorsSummary> {
                                     ),
                                   ),
                                   subtitle: Text(
-                                    'Person: ${creditor['person'] ?? '-'} | Phone: ${creditor['phone'] ?? '-'}',
+                                    'Person: ${creditor['person'] ?? '-'} | Concern: ${creditor['concern'] ?? '-'} | Phone: ${creditor['phone'] ?? '-'}',
                                     style: const TextStyle(
                                       color: Colors.grey,
                                       fontSize: 14,

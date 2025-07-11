@@ -13,7 +13,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper.instance.initialize();
   try {
-    await DatabaseHelper.instance.deleteDatabase();
     await DatabaseConfig.initialize();
   } catch (e) {
     debugPrint('Database initialization error: $e');
