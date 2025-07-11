@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 
@@ -14,6 +14,7 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
   double? grossProfit;
   double? netProfit;
   double? totalExpenditure;
+  double? otherExpenses;
   bool isLoading = true;
   String? error;
 
@@ -69,14 +70,14 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
       }
       final gross = totalTrade - totalBox;
       final expResult = await db.rawQuery(
-        'SELECT SUM(amount) as total FROM expenditure WHERE date = ?',
+        "SELECT SUM(amount) as total FROM expenditure WHERE date = ? AND category != 'Personal'",
         [dateString],
       );
-      final exp = (expResult.first['total'] as num?)?.toDouble() ?? 0.0;
+      final otherExp = (expResult.first['total'] as num?)?.toDouble() ?? 0.0;
       setState(() {
         grossProfit = gross;
-        totalExpenditure = exp;
-        netProfit = gross - exp;
+        otherExpenses = otherExp;
+        netProfit = gross - otherExp;
         isLoading = false;
       });
     } catch (e) {
@@ -340,7 +341,7 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Gross Profit minus Total Expenditure',
+                                      'Gross Profit minus Other Expenses',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey.shade600,
@@ -399,8 +400,8 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
                             children: [
                               Expanded(
                                 child: _buildSummaryItem(
-                                  'Total Expenditure',
-                                  currency.format(totalExpenditure ?? 0),
+                                  'Expenses',
+                                  currency.format(otherExpenses ?? 0),
                                   Icons.money_off_rounded,
                                   Colors.red.shade400,
                                 ),
@@ -409,7 +410,7 @@ class _ProfitLossTabState extends State<ProfitLossTab> {
                               Expanded(
                                 child: _buildSummaryItem(
                                   'Profit Margin',
-                                  '${((grossProfit ?? 0) > 0 && (totalExpenditure ?? 0) > 0) ? (((grossProfit ?? 0) / (totalExpenditure ?? 1)) * 100).toStringAsFixed(1) : '0.0'}%',
+                                  '${((grossProfit ?? 0) > 0 && (otherExpenses ?? 0) > 0) ? (((grossProfit ?? 0) / (otherExpenses ?? 1)) * 100).toStringAsFixed(1) : '0.0'}%',
                                   Icons.percent_rounded,
                                   Colors.green.shade400,
                                 ),

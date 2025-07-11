@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 import 'dart:math';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -99,33 +99,6 @@ class _LedgerTabState extends State<LedgerTab> {
     });
   }
 
-  Future<void> _updateLedgerRecord(int id, Map<String, dynamic> updates) async {
-    final db = DatabaseHelper.instance;
-    final dbInstance = await db.database;
-
-    if (updates.containsKey('debit') || updates.containsKey('credit')) {
-      final record = await dbInstance.query(
-        'ledger',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-      if (record.isNotEmpty) {
-        final currentRecord = record.first;
-        final debit = updates['debit'] ?? currentRecord['debit'] ?? 0.0;
-        final credit = updates['credit'] ?? currentRecord['credit'] ?? 0.0;
-        updates['balance'] = (debit as double) - (credit as double);
-      }
-    }
-
-    await dbInstance.update(
-      'ledger',
-      updates,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    await _loadShopBalances();
-  }
 
   void _toggleShopExpansion(String shopName, String? shopCode) {
     final key = shopCode == null || shopCode.isEmpty ? shopName : '$shopName-$shopCode';
@@ -234,14 +207,27 @@ class _LedgerTabState extends State<LedgerTab> {
                     pw.Container(
                       margin: const pw.EdgeInsets.only(left: 12, bottom: 8),
                       child: pw.Table.fromTextArray(
-                        headers: ['No.', 'Date', 'Details', 'Debit', 'Credit'],
-                        data: List.generate(txns.length, (j) => [
-                          (j + 1).toString(),
-                          _formatLedgerDate(txns[j]['date'], txns[j]['details']),
-                          (txns[j]['details'] ?? '').toString(),
-                          formatNumber(txns[j]['debit'] ?? 0),
-                          formatNumber(txns[j]['credit'] ?? 0),
-                        ]),
+                        headers: ['No.', 'Date', 'Details', 'Debit', 'Credit', 'Balance'],
+                        data: List.generate(txns.length, (j) {
+                          num runningBalance = 0;
+                          for (int k = 0; k <= j; k++) {
+                            final debit = (txns[k]['debit'] ?? 0) as num;
+                            final credit = (txns[k]['credit'] ?? 0) as num;
+                            if (k == 0) {
+                              runningBalance = debit - credit;
+                            } else {
+                              runningBalance += debit - credit;
+                            }
+                          }
+                          return [
+                            (j + 1).toString(),
+                            _formatLedgerDate(txns[j]['date'], txns[j]['details']),
+                            (txns[j]['details'] ?? '').toString(),
+                            formatNumber(txns[j]['debit'] ?? 0),
+                            formatNumber(txns[j]['credit'] ?? 0),
+                            formatNumber(runningBalance),
+                          ];
+                        }),
                         headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
                         cellStyle: pw.TextStyle(fontSize: 9),
                         cellAlignment: pw.Alignment.center,
@@ -282,6 +268,8 @@ class _LedgerTabState extends State<LedgerTab> {
 
   @override
   Widget build(BuildContext context) {
+    final totalDebtors = _shopBalances.fold<double>(0.0, (sum, shop) => sum + (shop['balance'] ?? 0.0));
+    final formattedTotalDebtors = NumberFormat.currency(locale: 'en_IN', symbol: 'Rs. ', decimalDigits: 2).format(totalDebtors);
     return Scaffold(
       body: Center(
         child: Container(
@@ -297,6 +285,40 @@ class _LedgerTabState extends State<LedgerTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Card(
+                    color: Colors.deepPurple.shade50,
+                    elevation: 0,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.people_alt_rounded, color: Colors.deepPurple, size: 32),
+                          const SizedBox(width: 16),
+                          Text(
+                            'Total Debtors',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple.shade700,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            formattedTotalDebtors,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   Row(
                     children: [
                       Container(
@@ -580,9 +602,19 @@ class _LedgerTabState extends State<LedgerTab> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
+          SizedBox(
+            width: 80,
+            child: Text(
+              'Balance',
+              style: TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );
+
+    num runningBalance = 0.0;
 
     return Container(
       padding: const EdgeInsets.all(8),
@@ -608,11 +640,15 @@ class _LedgerTabState extends State<LedgerTab> {
             final index = entry.key;
             final txn = entry.value;
             final transaction = txn['data'] as Map<String, dynamic>;
-            final controller = txn['controller'] as TextEditingController;
-            final notifier = txn['notifier'] as ValueNotifier<String>;
 
-            final debit = transaction['debit'] ?? 0.0;
-            final credit = transaction['credit'] ?? 0.0;
+            final debit = (transaction['debit'] ?? 0.0) as num;
+            final credit = (transaction['credit'] ?? 0.0) as num;
+
+            if (index == 0) {
+              runningBalance = debit - credit;
+            } else {
+              runningBalance += debit - credit;
+            }
 
             return [
               Padding(
@@ -643,64 +679,9 @@ class _LedgerTabState extends State<LedgerTab> {
                       ),
                     ),
                     Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: ValueListenableBuilder<String>(
-                              valueListenable: notifier,
-                              builder: (context, value, _) {
-                                return TextFormField(
-                                  controller: controller,
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                  ),
-                                  maxLines: null,
-                                  onChanged: (val) {
-                                    notifier.value = val;
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                          ValueListenableBuilder<String>(
-                            valueListenable: notifier,
-                            builder: (context, value, _) {
-                              final initial =
-                                  transaction['details']?.toString() ?? '';
-                              final changed = value != initial;
-
-                              return changed
-                                  ? Padding(
-                                      padding: const EdgeInsets.only(left: 4.0),
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.deepPurple,
-                                          foregroundColor: Colors.white,
-                                          minimumSize: const Size(48, 36),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 0,
-                                          ),
-                                        ),
-                                        onPressed: () async {
-                                          await _updateLedgerRecord(
-                                            transaction['id'] as int,
-                                            {'details': value},
-                                          );
-                                          controller.text = value;
-                                          notifier.value = value;
-                                        },
-                                        child: const Text(
-                                          'Save',
-                                          style: TextStyle(fontSize: 12),
-                                        ),
-                                      ),
-                                    )
-                                  : const SizedBox.shrink();
-                            },
-                          ),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12.0, left: 12.0),
+                        child: Text(transaction['details']?.toString() ?? ''),
                       ),
                     ),
                     SizedBox(
@@ -722,6 +703,20 @@ class _LedgerTabState extends State<LedgerTab> {
                           formatCurrency.format(credit),
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 80,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: Text(
+                          formatCurrency.format(runningBalance),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: runningBalance >= 0 ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -752,20 +747,35 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
   bool _isSaving = false;
 
   List<Map<String, dynamic>> _shops = [];
-  List<String> _ledgerNames = [];
-  Map<String, dynamic>? _selectedShopForAutocomplete;
+  List<Map<String, dynamic>> _customDebitors = [];
+  String? _selectedShopCode;
 
   @override
   void initState() {
     super.initState();
     _fetchShops();
     _fetchLedgerNames();
-    _nameController.addListener(_onNameChanged);
+    _fetchCustomDebitors();
+    _nameController.addListener(() {
+      final input = _nameController.text.trim();
+      final matchShop = _shops.any((shop) => shop['name'] == input);
+      final matchCustom = _customDebitors.any((debitor) => debitor['name'] == input);
+      if (!matchShop && !matchCustom) {
+        _selectedShopCode = null;
+      } else {
+        final custom = _customDebitors.firstWhere(
+          (debitor) => debitor['name'] == input,
+          orElse: () => <String, dynamic>{},
+        );
+        if (custom.isNotEmpty) {
+          _selectedShopCode = custom['code'];
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
-    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _detailsController.dispose();
     _debitController.dispose();
@@ -781,27 +791,14 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
   }
 
   Future<void> _fetchLedgerNames() async {
-    final names = await DatabaseHelper.instance.getUniqueLedgerNames();
     setState(() {
-      _ledgerNames = names;
     });
   }
 
-  void _onNameChanged() {
-    final input = _nameController.text.trim().toLowerCase();
-    if (input.isEmpty) {
-      setState(() {
-        _selectedShopForAutocomplete = null;
-      });
-      return;
-    }
-    final matches = _shops.where((shop) {
-      final shopName = (shop['name'] ?? '').toString().toLowerCase();
-      return shopName.contains(input);
-    }).toList();
-    _ledgerNames.where((name) => name.toLowerCase().contains(input)).toList();
+  Future<void> _fetchCustomDebitors() async {
+    final debitors = await DatabaseHelper.instance.getCustomDebitors();
     setState(() {
-      _selectedShopForAutocomplete = matches.length == 1 && matches[0]['name'].toString().toLowerCase() == input ? matches[0] : null;
+      _customDebitors = debitors;
     });
   }
 
@@ -842,19 +839,18 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate() || _selectedDate == null) return;
     setState(() { _isSaving = true; });
-    final isShop = _selectedShopForAutocomplete != null && _selectedShopForAutocomplete!.isNotEmpty;
-    final shopName = isShop ? _selectedShopForAutocomplete!['name'] : _nameController.text.trim();
-    String? shopCode;
-    if (isShop) {
-      shopCode = _selectedShopForAutocomplete!['code'];
-    } else {
+    final shopNameRaw = _nameController.text.trim();
+    final shopName = shopNameRaw.isNotEmpty ? shopNameRaw : 'Unknown';
+    String shopCode = _selectedShopCode ?? '';
+    if (shopCode.isEmpty) {
       shopCode = _generateCustomValueCode();
+      await DatabaseHelper.instance.insertCustomDebitor({'name': shopName, 'code': shopCode});
+      await _fetchCustomDebitors();
     }
     final details = _detailsController.text.trim();
     final debit = double.tryParse(_debitController.text.trim()) ?? 0.0;
     final credit = double.tryParse(_creditController.text.trim()) ?? 0.0;
     final date = _selectedDate != null ? _selectedDate!.toIso8601String().split('T')[0] : '';
-    final balance = debit - credit;
     await DatabaseHelper.instance.insertLedger({
       'shopName': shopName,
       'shopCode': shopCode,
@@ -862,7 +858,6 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
       'details': details,
       'debit': debit,
       'credit': credit,
-      'balance': balance,
     });
     setState(() { _isSaving = false; });
     Navigator.of(context).pop();
@@ -927,33 +922,52 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      Autocomplete<_NameSuggestion>(
+                      Autocomplete<String>(
                         optionsBuilder: (TextEditingValue textEditingValue) {
-                          final input = textEditingValue.text.trim().toLowerCase();
-                          if (input.isEmpty) return const Iterable<_NameSuggestion>.empty();
-                          final shopSuggestions = _shops
-                              .where((shop) => (shop['name'] ?? '').toString().toLowerCase().contains(input))
-                              .map((shop) => _NameSuggestion(shop['name'], isShop: true, shop: shop))
-                              .toList();
-                          final ledgerSuggestions = _ledgerNames
-                              .where((name) => name.toLowerCase().contains(input))
-                              .map((name) => _NameSuggestion(name, isShop: false))
-                              .toList();
-                          final allNames = <String>{};
-                          final suggestions = <_NameSuggestion>[];
-                          for (final s in shopSuggestions + ledgerSuggestions) {
-                            if (!allNames.contains(s.name.toLowerCase())) {
-                              suggestions.add(s);
-                              allNames.add(s.name.toLowerCase());
-                            }
+                          if (textEditingValue.text == '') {
+                            return const Iterable<String>.empty();
                           }
-                          if (!allNames.contains(input)) {
-                            suggestions.add(_NameSuggestion(textEditingValue.text, isShop: false));
-                          }
-                          return suggestions;
+                          final allNames = [
+                            ..._shops.map((s) => s['name'] as String),
+                            ..._customDebitors.map((d) => d['name'] as String),
+                          ];
+                          return allNames.where((name) =>
+                            name.toLowerCase().contains(textEditingValue.text.toLowerCase())
+                          );
                         },
-                        displayStringForOption: (option) => option.name,
+                        onSelected: (String selection) {
+                          _nameController.text = selection;
+                          final shop = _shops.firstWhere(
+                            (s) => s['name'] == selection,
+                            orElse: () => <String, dynamic>{},
+                          );
+                          if (shop.isNotEmpty) {
+                            _selectedShopCode = shop['code'];
+                            return;
+                          }
+                          final custom = _customDebitors.firstWhere(
+                            (d) => d['name'] == selection,
+                            orElse: () => <String, dynamic>{},
+                          );
+                          if (custom.isNotEmpty) {
+                            _selectedShopCode = custom['code'];
+                          }
+                        },
                         fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                          controller.text = _nameController.text;
+                          controller.selection = _nameController.selection;
+                          _nameController.addListener(() {
+                            if (controller.text != _nameController.text) {
+                              controller.text = _nameController.text;
+                              controller.selection = _nameController.selection;
+                            }
+                          });
+                          controller.addListener(() {
+                            if (_nameController.text != controller.text) {
+                              _nameController.text = controller.text;
+                              _nameController.selection = controller.selection;
+                            }
+                          });
                           return TextFormField(
                             controller: controller,
                             focusNode: focusNode,
@@ -965,88 +979,9 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
                               fillColor: Colors.grey.shade50,
                             ),
                             validator: (v) => v == null || v.trim().isEmpty ? 'Enter name' : null,
-                            onChanged: (val) {
-                              Future.microtask(() {
-                                if (!mounted) return;
-                                setState(() {
-                                  final found = _shops.firstWhere(
-                                    (shop) => (shop['name'] ?? '').toString().toLowerCase() == val.trim().toLowerCase(),
-                                    orElse: () => <String, dynamic>{},
-                                  );
-                                  _selectedShopForAutocomplete = found.isNotEmpty ? found : null;
-                                });
-                              });
-                            },
-                          );
-                        },
-                        onSelected: (option) {
-                          setState(() {
-                            if (option.isShop) {
-                              _selectedShopForAutocomplete = option.shop;
-                              _nameController.text = option.name;
-                            } else {
-                              _selectedShopForAutocomplete = null;
-                              _nameController.text = option.name;
-                            }
-                          });
-                        },
-                        optionsViewBuilder: (context, onSelected, options) {
-                          final shopOptions = options.where((o) => o.isShop).toList();
-                          final ledgerOptions = options.where((o) => !o.isShop).toList();
-                          return Align(
-                            alignment: Alignment.topLeft,
-                            child: Material(
-                              elevation: 4.0,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                constraints: const BoxConstraints(maxHeight: 260, minWidth: 300),
-                                child: ListView(
-                                  padding: EdgeInsets.zero,
-                                  children: [
-                                    if (shopOptions.isNotEmpty) ...[
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                        child: Text('Shops', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                                      ),
-                                      ...shopOptions.map((option) => ListTile(
-                                            leading: Icon(Icons.store, color: Colors.deepPurple),
-                                            title: Text(option.name),
-                                            subtitle: option.shop != null
-                                                ? Text('Shop Code: ${option.shop!['code']}', style: TextStyle(color: Colors.deepPurple))
-                                                : null,
-                                            onTap: () => onSelected(option),
-                                          )),
-                                    ],
-                                    if (ledgerOptions.isNotEmpty) ...[
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                        child: Text('Other Names in Ledger', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700])),
-                                      ),
-                                      ...ledgerOptions.map((option) => ListTile(
-                                            leading: Icon(Icons.person_outline, color: Colors.grey[700]),
-                                            title: Text(option.name),
-                                            onTap: () => onSelected(option),
-                                          )),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
                           );
                         },
                       ),
-                      if (_selectedShopForAutocomplete != null && _selectedShopForAutocomplete!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                          child: Row(
-                            children: [
-                              Icon(Icons.qr_code, color: Colors.deepPurple),
-                              const SizedBox(width: 8),
-                              Text('Code: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Text(_selectedShopForAutocomplete!['code'] ?? '', style: TextStyle(color: Colors.deepPurple)),
-                            ],
-                          ),
-                        ),
                       const SizedBox(height: 18),
                       TextFormField(
                         controller: _detailsController,
@@ -1141,11 +1076,4 @@ class _AddCustomValueDialogState extends State<_AddCustomValueDialog> {
       ),
     );
   }
-}
-
-class _NameSuggestion {
-  final String name;
-  final bool isShop;
-  final Map<String, dynamic>? shop;
-  _NameSuggestion(this.name, {this.isShop = false, this.shop});
 }

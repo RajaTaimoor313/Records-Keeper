@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/database_helper.dart';
-import 'package:records_keeper/tabs/shops/shop.dart';
+import 'package:haider_traders/database_helper.dart';
+import 'package:haider_traders/tabs/shops/shop.dart';
 import 'package:intl/intl.dart';
 
 class AddShopTab extends StatefulWidget {

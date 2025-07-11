@@ -48,7 +48,7 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    final String path = join(await getDatabasesPath(), 'records_keeper.db');
+    final String path = join(await getDatabasesPath(), 'haider_traders.db');
     return await openDatabase(
       path,
       version: 1,
@@ -284,6 +284,26 @@ class DatabaseHelper {
           phone TEXT,
           concern TEXT,
           person TEXT
+        )
+      ''');
+      await txn.execute('''
+        CREATE TABLE creditor_transactions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          creditor_id INTEGER NOT NULL,
+          date TEXT NOT NULL,
+          details TEXT NOT NULL,
+          debit REAL NOT NULL,
+          credit REAL NOT NULL,
+          balance REAL NOT NULL,
+          FOREIGN KEY (creditor_id) REFERENCES creditors(id) ON DELETE CASCADE
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE custom_debitors (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          code TEXT NOT NULL UNIQUE
         )
       ''');
     });
@@ -1150,12 +1170,15 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<String>> getUniqueLedgerNames() async {
+  Future<List<Map<String, dynamic>>> getUniqueLedgerNames() async {
     final db = await instance.database;
     final result = await db.rawQuery(
-      'SELECT DISTINCT shopName FROM ledger WHERE shopName IS NOT NULL AND shopName != ""',
+      'SELECT DISTINCT shopName, shopCode FROM ledger WHERE shopName IS NOT NULL AND shopName != ""',
     );
-    return result.map((row) => row['shopName'] as String).toList();
+    return result.map((row) => {
+      'name': row['shopName'],
+      'code': row['shopCode'],
+    }).toList();
   }
 
   Future<int> insertCreditor(Map<String, dynamic> creditor) async {
@@ -1166,6 +1189,26 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getCreditors() async {
     final db = await instance.database;
     return await db.query('creditors', orderBy: 'company ASC');
+  }
+
+  Future<int> updateCreditorBalance(String company, double newBalance) async {
+    final db = await instance.database;
+    return await db.update(
+      'creditors',
+      {'balance': newBalance},
+      where: 'company = ?',
+      whereArgs: [company],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getCreditorPayments(String company) async {
+    final db = await instance.database;
+    return await db.query(
+      'expenditure',
+      where: 'category = ? AND details LIKE ?',
+      whereArgs: ['Payments', '%$company%'],
+      orderBy: 'date DESC',
+    );
   }
 
   Future<Map<String, dynamic>> exportDatabaseToJson() async {
@@ -1214,5 +1257,53 @@ class DatabaseHelper {
       await db.execute('PRAGMA foreign_keys = ON');
     }
     return data['backup_meta'] as Map<String, dynamic>?;
+  }
+
+  Future<int> insertCreditorTransaction(Map<String, dynamic> txn) async {
+    final db = await instance.database;
+    return await db.insert('creditor_transactions', txn);
+  }
+
+  Future<List<Map<String, dynamic>>> getCreditorTransactions(int creditorId) async {
+    final db = await instance.database;
+    return await db.query(
+      'creditor_transactions',
+      where: 'creditor_id = ?',
+      whereArgs: [creditorId],
+      orderBy: 'id ASC',
+    );
+  }
+
+  Future<int> insertCustomDebitor(Map<String, dynamic> debitor) async {
+    final db = await instance.database;
+    return await db.insert('custom_debitors', debitor, conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+  Future<List<Map<String, dynamic>>> getCustomDebitors() async {
+    final db = await instance.database;
+    return await db.query('custom_debitors', orderBy: 'name ASC');
+  }
+
+  Future<Map<String, dynamic>?> getCustomDebitorByName(String name) async {
+    final db = await instance.database;
+    final result = await db.query('custom_debitors', where: 'name = ?', whereArgs: [name]);
+    return result.isNotEmpty ? result.first : null;
+  }
+  Future<int> deleteTodayExpenditure(String date) async {
+    final db = await instance.database;
+    return await db.delete(
+      'expenditure',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
+  }
+
+  Future<int> deleteTodayIncome(String date) async {
+    final db = await instance.database;
+    return await db.delete(
+      'income',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
   }
 }

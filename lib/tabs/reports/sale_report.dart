@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
@@ -24,8 +24,9 @@ class _SaleReportState extends State<SaleReport> {
   Future<void> _loadData() async {
     setState(() => isLoading = true);
     final history = await DatabaseHelper.instance.getLoadFormHistory();
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     setState(() {
-      loadFormHistory = history;
+      loadFormHistory = history.where((entry) => entry['date'] == today).toList();
       isLoading = false;
     });
   }
@@ -67,180 +68,87 @@ class _SaleReportState extends State<SaleReport> {
   Widget build(BuildContext context) {
     final indianFormat = NumberFormat.decimalPattern('en_IN');
     return Scaffold(
-      appBar: AppBar(title: const Text('Sale Report')),
+      appBar: AppBar(title: const Text('Secondary Sale Summary')),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: loadFormHistory.length,
-              itemBuilder: (context, idx) {
-                final entry = loadFormHistory[idx];
-                final date = entry['date'];
-                final data = entry['data'];
-                final isExpanded = expandedIndexes.contains(idx);
-                return Card(
-                  margin: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        title: Text('Date: $date'),
-                        trailing: Icon(
-                          isExpanded ? Icons.expand_less : Icons.expand_more,
-                        ),
-                        onTap: () async {
-                          setState(() {
-                            if (isExpanded) {
-                              expandedIndexes.remove(idx);
-                            } else {
-                              expandedIndexes.add(idx);
-                            }
-                          });
-                        },
-                      ),
-                      if (isExpanded)
-                        FutureBuilder<List<Map<String, dynamic>>>(
-                          future: _getDetailedItems(data),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData) {
-                              return const Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-                            final items = snapshot.data!;
-                            return SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Builder(
-                                builder: (context) {
-                                  int totalUnits = 0;
-                                  double totalAmount = 0;
-                                  double totalProfit = 0;
-                                  final dataRows = items.map((item) {
-                                    final boxRate =
-                                        double.tryParse(
-                                          item['boxRate'].toString(),
-                                        ) ??
-                                        0;
-                                    final tradeRate =
-                                        double.tryParse(
-                                          item['tradeRate'].toString(),
-                                        ) ??
-                                        0;
-                                    final unitsSaled =
-                                        int.tryParse(
-                                          item['unitsSaled'].toString(),
-                                        ) ??
-                                        0;
-                                    final amount = tradeRate * unitsSaled;
-                                    final profit =
-                                        amount - (boxRate * unitsSaled);
-                                    totalUnits += unitsSaled;
-                                    totalAmount += amount;
-                                    totalProfit += profit;
-                                    return DataRow(
-                                      cells: [
-                                        DataCell(
-                                          Text(item['brandName'].toString()),
-                                        ),
-                                        DataCell(
-                                          Text(item['company'].toString()),
-                                        ),
-                                        DataCell(
-                                          Text(indianFormat.format(boxRate)),
-                                        ),
-                                        DataCell(
-                                          Text(indianFormat.format(tradeRate)),
-                                        ),
-                                        DataCell(
-                                          Text(indianFormat.format(unitsSaled)),
-                                        ),
-                                        DataCell(
-                                          Text(
-                                            indianFormat.format(amount.round()),
-                                          ),
-                                        ),
-                                        DataCell(
-                                          Text(
-                                            indianFormat.format(profit.round()),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList();
-                                  dataRows.add(
-                                    DataRow(
-                                      color:
-                                          MaterialStateProperty.resolveWith<
-                                            Color?
-                                          >((Set<MaterialState> states) {
-                                            return Colors.grey[200];
-                                          }),
-                                      cells: [
-                                        const DataCell(
-                                          Text(
-                                            'Total',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        const DataCell(Text('')),
-                                        const DataCell(Text('')),
-                                        const DataCell(Text('')),
-                                        DataCell(
-                                          Text(
-                                            indianFormat.format(totalUnits),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(
-                                          Text(
-                                            indianFormat.format(
-                                              totalAmount.round(),
-                                            ),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(
-                                          Text(
-                                            indianFormat.format(
-                                              totalProfit.round(),
-                                            ),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  return DataTable(
-                                    columns: const [
-                                      DataColumn(label: Text('Brand Name')),
-                                      DataColumn(label: Text('Company Name')),
-                                      DataColumn(label: Text('Box Rate')),
-                                      DataColumn(label: Text('Trade Rate')),
-                                      DataColumn(label: Text('Units Sale')),
-                                      DataColumn(label: Text('Amount')),
-                                      DataColumn(label: Text('Profit')),
-                                    ],
-                                    rows: dataRows,
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                    ],
-                  ),
-                );
-              },
-            ),
+          : loadFormHistory.isEmpty
+              ? const Center(child: Text('No data for today.'))
+              : ListView.builder(
+                  itemCount: loadFormHistory.length,
+                  itemBuilder: (context, idx) {
+                    final entry = loadFormHistory[idx];
+                    final data = entry['data'];
+                    return FutureBuilder<List<Map<String, dynamic>>>(
+                      future: _getDetailedItems(data),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        final items = snapshot.data!;
+                        int totalUnits = 0;
+                        double totalAmount = 0;
+                        double totalProfit = 0;
+                        final dataRows = items.map((item) {
+                          final boxRate = double.tryParse(item['boxRate'].toString()) ?? 0;
+                          final tradeRate = double.tryParse(item['tradeRate'].toString()) ?? 0;
+                          final unitsSaled = int.tryParse(item['unitsSaled'].toString()) ?? 0;
+                          final amount = tradeRate * unitsSaled;
+                          final profit = amount - (boxRate * unitsSaled);
+                          totalUnits += unitsSaled;
+                          totalAmount += amount;
+                          totalProfit += profit;
+                          return DataRow(
+                            cells: [
+                              DataCell(Text(item['brandName'].toString())),
+                              DataCell(Text(item['company'].toString())),
+                              DataCell(Text(indianFormat.format(boxRate))),
+                              DataCell(Text(indianFormat.format(tradeRate))),
+                              DataCell(Text(indianFormat.format(unitsSaled))),
+                              DataCell(Text(indianFormat.format(amount.round()))),
+                              DataCell(Text(indianFormat.format(profit.round()))),
+                            ],
+                          );
+                        }).toList();
+                        dataRows.add(
+                          DataRow(
+                            color: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
+                              return Colors.grey[200];
+                            }),
+                            cells: [
+                              const DataCell(Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+                              const DataCell(Text('')),
+                              const DataCell(Text('')),
+                              const DataCell(Text('')),
+                              DataCell(Text(indianFormat.format(totalUnits), style: const TextStyle(fontWeight: FontWeight.bold))),
+                              DataCell(Text(indianFormat.format(totalAmount.round()), style: const TextStyle(fontWeight: FontWeight.bold))),
+                              DataCell(Text(indianFormat.format(totalProfit.round()), style: const TextStyle(fontWeight: FontWeight.bold))),
+                            ],
+                          ),
+                        );
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            columns: const [
+                              DataColumn(label: Text('Brand Name')),
+                              DataColumn(label: Text('Company Name')),
+                              DataColumn(label: Text('Box Rate')),
+                              DataColumn(label: Text('Trade Rate')),
+                              DataColumn(label: Text('Units Sale')),
+                              DataColumn(label: Text('Amount')),
+                              DataColumn(label: Text('Profit')),
+                            ],
+                            rows: dataRows,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
     );
   }
 }

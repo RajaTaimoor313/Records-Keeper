@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:records_keeper/tabs/sales/pick_list_tab.dart';
-import 'package:records_keeper/tabs/suppliers/supplier.dart';
+import 'package:haider_traders/tabs/sales/pick_list_tab.dart';
+import 'package:haider_traders/tabs/suppliers/supplier.dart';
 import 'package:intl/intl.dart';
 
 class PickListDetailScreen extends StatelessWidget {

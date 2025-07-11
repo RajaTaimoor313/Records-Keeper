@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 
 class Product {
   final String id;
@@ -116,7 +116,8 @@ class _StockReportTabState extends State<StockReportTab> {
   final TextEditingController _saleTotalController = TextEditingController();
   final TextEditingController _saleValueController = TextEditingController();
 
-  final TextEditingController _brandCategoryController = TextEditingController();
+  final TextEditingController _brandCategoryController =
+      TextEditingController();
 
   Product? _selectedProduct;
 
@@ -636,7 +637,7 @@ class _StockReportTabState extends State<StockReportTab> {
             children: [
               // Header
               const Text(
-                'Add Stock',
+                'Primary Sale',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -651,26 +652,31 @@ class _StockReportTabState extends State<StockReportTab> {
                   // Search Bar
                   Expanded(
                     child: Autocomplete<Product>(
-                      optionsBuilder: (TextEditingValue textEditingValue) async {
-                        if (textEditingValue.text.isEmpty) {
-                          return const [];
-                        }
+                      optionsBuilder:
+                          (TextEditingValue textEditingValue) async {
+                            if (textEditingValue.text.isEmpty) {
+                              return const [];
+                            }
 
-                        final db = await DatabaseHelper.instance.database;
-                        final searchTerm = textEditingValue.text.toUpperCase();
+                            final db = await DatabaseHelper.instance.database;
+                            final searchTerm = textEditingValue.text
+                                .toUpperCase();
 
-                        final results = await db.query(
-                          'products',
-                          where: 'id LIKE ? OR company LIKE ? OR brand LIKE ?',
-                          whereArgs: [
-                            '%$searchTerm%',
-                            '%$searchTerm%',
-                            '%$searchTerm%',
-                          ],
-                        );
+                            final results = await db.query(
+                              'products',
+                              where:
+                                  'id LIKE ? OR company LIKE ? OR brand LIKE ?',
+                              whereArgs: [
+                                '%$searchTerm%',
+                                '%$searchTerm%',
+                                '%$searchTerm%',
+                              ],
+                            );
 
-                        return results.map((map) => Product.fromMap(map)).toList();
-                      },
+                            return results
+                                .map((map) => Product.fromMap(map))
+                                .toList();
+                          },
                       displayStringForOption: (Product product) {
                         return '${product.company} - ${product.brand}';
                       },
@@ -709,7 +715,9 @@ class _StockReportTabState extends State<StockReportTab> {
                               child: Material(
                                 elevation: 4.0,
                                 child: Container(
-                                  constraints: const BoxConstraints(maxHeight: 200),
+                                  constraints: const BoxConstraints(
+                                    maxHeight: 200,
+                                  ),
                                   width: MediaQuery.of(context).size.width - 64,
                                   child: ListView.builder(
                                     padding: EdgeInsets.zero,
@@ -748,11 +756,301 @@ class _StockReportTabState extends State<StockReportTab> {
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      // Fetch products and extract unique brands
+                      final products = await DatabaseHelper.instance
+                          .getProducts();
+                      final List<String> brandList = products
+                          .map<String>((p) => p['brand'] as String)
+                          .toSet()
+                          .toList();
+
+                      final Map<String, double> brandToCtnRate = {
+                        for (var p in products)
+                          p['brand'] as String: (p['ctnRate'] is double
+                              ? p['ctnRate']
+                              : double.tryParse(p['ctnRate'].toString()) ??
+                                    0.0),
+                      };
+                      final creditors = await DatabaseHelper.instance
+                          .getCreditors();
+                      final List<String> companyList = creditors
+                          .map<String>((c) => c['company'] as String)
+                          .toSet()
+                          .toList();
+
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          TextEditingController companyController =
+                              TextEditingController();
+                          TextEditingController brandController =
+                              TextEditingController();
+                          TextEditingController ctnRateController =
+                              TextEditingController();
+                          TextEditingController ctnController =
+                              TextEditingController();
+                          TextEditingController valueController =
+                              TextEditingController();
+                          String? brandError;
+
+                          void updateValue() {
+                            double ctnRate =
+                                double.tryParse(ctnRateController.text) ?? 0.0;
+                            int ctn = int.tryParse(ctnController.text) ?? 0;
+                            valueController.text = (ctnRate * ctn)
+                                .toStringAsFixed(2);
+                          }
+
+                          ctnRateController.addListener(updateValue);
+                          ctnController.addListener(updateValue);
+
+                          return StatefulBuilder(
+                            builder: (context, setState) {
+                              return AlertDialog(
+                                title: const Text('Purchase Stock'),
+                                content: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Autocomplete<String>(
+                                        optionsBuilder:
+                                            (
+                                              TextEditingValue textEditingValue,
+                                            ) {
+                                              if (textEditingValue.text == '') {
+                                                return const Iterable<
+                                                  String
+                                                >.empty();
+                                              }
+                                              return companyList.where((
+                                                String option,
+                                              ) {
+                                                return option
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      textEditingValue.text
+                                                          .toLowerCase(),
+                                                    );
+                                              });
+                                            },
+                                        onSelected: (String selection) {
+                                          companyController.text = selection;
+                                        },
+                                        fieldViewBuilder:
+                                            (
+                                              context,
+                                              controller,
+                                              focusNode,
+                                              onEditingComplete,
+                                            ) {
+                                              return TextField(
+                                                controller: controller,
+                                                focusNode: focusNode,
+                                                decoration:
+                                                    const InputDecoration(
+                                                      labelText: 'Company',
+                                                    ),
+                                                onChanged: (value) {
+                                                  companyController.text =
+                                                      value;
+                                                },
+                                              );
+                                            },
+                                      ),
+                                      Autocomplete<String>(
+                                        optionsBuilder:
+                                            (
+                                              TextEditingValue textEditingValue,
+                                            ) {
+                                              if (textEditingValue.text == '') {
+                                                return const Iterable<
+                                                  String
+                                                >.empty();
+                                              }
+                                              return brandList.where((
+                                                String option,
+                                              ) {
+                                                return option
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      textEditingValue.text
+                                                          .toLowerCase(),
+                                                    );
+                                              });
+                                            },
+                                        onSelected: (String selection) {
+                                          brandController.text = selection;
+                                          // Auto-fill CTN Rate if available
+                                          if (brandToCtnRate.containsKey(
+                                            selection,
+                                          )) {
+                                            ctnRateController.text =
+                                                brandToCtnRate[selection]!
+                                                    .toStringAsFixed(2);
+                                          }
+                                          setState(() {
+                                            brandError = null;
+                                          });
+                                        },
+                                        fieldViewBuilder:
+                                            (
+                                              context,
+                                              controller,
+                                              focusNode,
+                                              onEditingComplete,
+                                            ) {
+                                              return TextField(
+                                                controller: controller,
+                                                focusNode: focusNode,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Brand',
+                                                  errorText: brandError,
+                                                ),
+                                                onChanged: (value) {
+                                                  brandController.text = value;
+                                                  // Auto-fill CTN Rate if available
+                                                  if (brandToCtnRate
+                                                      .containsKey(value)) {
+                                                    ctnRateController.text =
+                                                        brandToCtnRate[value]!
+                                                            .toStringAsFixed(2);
+                                                  }
+                                                  setState(() {
+                                                    brandError = null;
+                                                  });
+                                                },
+                                              );
+                                            },
+                                      ),
+                                      TextField(
+                                        controller: ctnRateController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'CTN Rate',
+                                        ),
+                                        keyboardType:
+                                            TextInputType.numberWithOptions(
+                                              decimal: true,
+                                            ),
+                                      ),
+                                      TextField(
+                                        controller: ctnController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'CTN',
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                      TextField(
+                                        controller: valueController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Value',
+                                        ),
+                                        readOnly: true,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      if (!brandList.contains(
+                                        brandController.text.trim(),
+                                      )) {
+                                        setState(() {
+                                          brandError = 'Add the Product First';
+                                        });
+                                        return;
+                                      }
+                                      // Add CTN to Received CTN if brand matches selected product
+                                      final enteredBrand = brandController.text
+                                          .trim();
+                                      final enteredCtn =
+                                          int.tryParse(ctnController.text) ?? 0;
+                                      if (_selectedProduct != null &&
+                                          _selectedProduct!.brand ==
+                                              enteredBrand) {
+                                        final currentReceivedCtn =
+                                            int.tryParse(
+                                              _receivedStockCtnController.text,
+                                            ) ??
+                                            0;
+                                        _receivedStockCtnController.text =
+                                            (currentReceivedCtn + enteredCtn)
+                                                .toString();
+                                        _calculateReceivedStock();
+                                        await _saveStockRecord();
+                                      }
+                                      // Add to creditor transaction history and update balance
+                                      final companyName = companyController.text
+                                          .trim();
+                                      final value =
+                                          double.tryParse(
+                                            valueController.text,
+                                          ) ??
+                                          0.0;
+                                      if (companyName.isNotEmpty && value > 0) {
+                                        final creditors = await DatabaseHelper
+                                            .instance
+                                            .getCreditors();
+                                        final creditor = creditors.firstWhere(
+                                          (c) =>
+                                              (c['company']?.toString() ?? '')
+                                                  .toLowerCase() ==
+                                              companyName.toLowerCase(),
+                                          orElse: () => {},
+                                        );
+                                        if (creditor.isNotEmpty) {
+                                          final creditorId =
+                                              creditor['id'] as int?;
+                                          final currentBalance =
+                                              (creditor['balance'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0;
+                                          final newBalance =
+                                              currentBalance + value;
+                                          await DatabaseHelper.instance
+                                              .updateCreditorBalance(
+                                                companyName,
+                                                newBalance,
+                                              );
+                                          final now = DateTime.now();
+                                          final dateStr =
+                                              "${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+                                          await DatabaseHelper.instance
+                                              .insertCreditorTransaction({
+                                                'creditor_id': creditorId,
+                                                'date': dateStr,
+                                                'details': 'Purchase Stock',
+                                                'debit': value,
+                                                'credit': 0.0,
+                                                'balance': newBalance,
+                                              });
+                                        }
+                                      }
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Purchase'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 18,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -802,7 +1100,9 @@ class _StockReportTabState extends State<StockReportTab> {
                                   const SizedBox(height: 4),
                                   Text('Brand: ${_selectedProduct!.brand}'),
                                   const SizedBox(height: 4),
-                                  Text('Brand Category: ${_selectedProduct!.brandCategory}'),
+                                  Text(
+                                    'Brand Category: ${_selectedProduct!.brandCategory}',
+                                  ),
                                 ],
                               ),
                             ),

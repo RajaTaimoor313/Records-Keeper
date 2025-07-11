@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/tabs/accounts/add_asset_tab.dart';
-import 'package:records_keeper/tabs/accounts/view_assets_tab.dart';
+import 'package:haider_traders/tabs/accounts/add_asset_tab.dart';
+import 'package:haider_traders/tabs/accounts/view_assets_tab.dart';
 
 class AssetsScreen extends StatefulWidget {
   const AssetsScreen({super.key});
@@ -12,6 +12,13 @@ class AssetsScreen extends StatefulWidget {
 class _AssetsScreenState extends State<AssetsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  double _totalAssets = 0.0;
+
+  void _updateTotalAssets(double value) {
+    setState(() {
+      _totalAssets = value;
+    });
+  }
 
   @override
   void initState() {
@@ -64,10 +71,48 @@ class _AssetsScreenState extends State<AssetsScreen>
             ),
           ),
           const SizedBox(height: 16),
+          Card(
+            color: Colors.deepPurple.shade50,
+            elevation: 0,
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+              child: Row(
+                children: [
+                  const Icon(Icons.account_balance_rounded, color: Colors.deepPurple, size: 32),
+                  const SizedBox(width: 16),
+                  Text(
+                    'Total Assets',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple.shade700,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Rs. ${_totalAssets.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [AddAssetTab(), ViewAssetsTab()],
+              children: [
+                const AddAssetTab(),
+                ViewAssetsTab(onTotalAssetsChanged: _updateTotalAssets),
+              ],
             ),
           ),
         ],

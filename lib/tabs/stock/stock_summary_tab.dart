@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 
 class CompanyStockSummary {
   final String company;
@@ -27,7 +27,7 @@ class CompanyStockSummary {
     }
     totalStockTotal = openingStockTotal + receivedTotal;
     closingStockTotal =
-        totalStockTotal - saleTotal; // saleTotal is 0 by default
+        totalStockTotal - saleTotal;
   }
 }
 
@@ -42,7 +42,7 @@ class _StockSummaryTabState extends State<StockSummaryTab> {
   bool _isLoading = true;
   List<CompanyStockSummary> _companySummaries = [];
   final Set<String> _expandedCompanies = {};
-  String? _selectedBrandId; // Track selected brand for row highlight
+  String? _selectedBrandId;
 
   @override
   void initState() {

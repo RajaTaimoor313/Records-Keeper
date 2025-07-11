@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/tabs/cash_flow/bf_tab.dart';
-import 'package:records_keeper/tabs/cash_flow/expenditure_tab.dart';
-import 'package:records_keeper/tabs/cash_flow/income_tab.dart';
+import 'package:haider_traders/tabs/cash_flow/bf_tab.dart';
+import 'package:haider_traders/tabs/cash_flow/expenditure_tab.dart';
+import 'package:haider_traders/tabs/cash_flow/income_tab.dart';
 
 class CashFlowScreen extends StatelessWidget {
   final String? initialTab;
@@ -15,7 +15,7 @@ class CashFlowScreen extends StatelessWidget {
         return const IncomeTab(isViewMode: false);
       case 'Expenditure':
         return const ExpenditureTab(isViewMode: false);
-      case 'B/F':
+      case 'Cash In Hand':
         return const BFTab();
       default:
         return const Center(

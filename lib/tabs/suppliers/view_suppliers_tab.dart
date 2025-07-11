@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/database_helper.dart';
-import 'package:records_keeper/tabs/suppliers/supplier.dart';
+import 'package:haider_traders/database_helper.dart';
+import 'package:haider_traders/tabs/suppliers/supplier.dart';
 
 class ViewSuppliersTab extends StatefulWidget {
   const ViewSuppliersTab({super.key});

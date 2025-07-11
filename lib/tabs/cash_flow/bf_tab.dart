@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 
 class BFTab extends StatefulWidget {
   const BFTab({super.key});
@@ -92,7 +92,7 @@ class _BFTabState extends State<BFTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('B/F Summary')),
+      appBar: AppBar(title: const Text('Cash In Hand Summary')),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

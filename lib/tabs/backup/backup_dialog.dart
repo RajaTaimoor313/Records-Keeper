@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/database_helper.dart';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:haider_traders/database_helper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
@@ -21,7 +21,7 @@ class _BackupDialogState extends State<BackupDialog> {
       final data = await DatabaseHelper.instance.exportDatabaseToJson();
       final jsonStr = jsonEncode(data);
       final directory = await getDownloadsDirectory();
-      final file = File('${directory!.path}/records_keeper_backup.json');
+      final file = File('${directory!.path}/haider_traders_backup.json');
       await file.writeAsString(jsonStr);
       if (mounted) {
         Navigator.of(context).pop();

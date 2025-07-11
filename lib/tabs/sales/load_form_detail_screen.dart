@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:records_keeper/tabs/sales/load_form.dart';
+import 'package:haider_traders/tabs/sales/load_form.dart';
 
 class LoadFormDetailScreen extends StatelessWidget {
   const LoadFormDetailScreen({super.key});

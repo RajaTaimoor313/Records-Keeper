@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,20 +12,13 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _isLoading = true;
-  double _totalExpenditure = 0;
-  double _totalIncome = 0;
-  int _totalProducts = 0;
-  int _totalShops = 0;
-  int _totalManPower = 0;
+  int _primarySaleUnits = 0;
+  double _primarySaleValue = 0.0;
 
-  bool _isRange = false;
-  DateTime? _selectedDate;
-  DateTimeRange? _selectedRange;
 
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime.now();
     _loadDashboardData();
   }
 
@@ -40,45 +34,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadDashboardData() async {
     try {
       final db = DatabaseHelper.instance;
-
+      int totalUnits = 0;
+      double totalValue = 0.0;
+      final loadFormHistory = await db.getLoadFormHistory();
       final products = await db.getProducts();
-      final shops = await db.getShops();
-      final manPowers = await db.getSuppliers();
-      double totalIncome = 0;
-      double totalExpenditure = 0;
-      if (_isRange && _selectedRange != null) {
-        final start = _selectedRange!.start;
-        final end = _selectedRange!.end;
-        final startStr =
-            '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
-        final endStr =
-            '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
-        final summaries = await db.getBFSummariesInRange(startStr, endStr);
-        for (final row in summaries) {
-          totalIncome += (row['total_income'] as num?)?.toDouble() ?? 0.0;
-          totalExpenditure +=
-              (row['total_expenditure'] as num?)?.toDouble() ?? 0.0;
-        }
-      } else if (!_isRange && _selectedDate != null) {
-        final d = _selectedDate!;
-        final dateStr =
-            '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-        final row = await db.getBFSummaryByDate(dateStr);
-        if (row != null) {
-          totalIncome = (row['total_income'] as num?)?.toDouble() ?? 0.0;
-          totalExpenditure =
-              (row['total_expenditure'] as num?)?.toDouble() ?? 0.0;
+      Map<String, dynamic>? getProductByBrand(String brand) {
+        try {
+          return products.firstWhere(
+            (prod) => prod['brand'] == brand,
+          );
+        } catch (_) {
+          return null;
         }
       }
-
+      for (final entry in loadFormHistory) {
+        final data = entry['data'];
+        if (data == null) continue;
+        final List<dynamic> items = [];
+        try {
+          items.addAll((jsonDecode(data) as Map<String, dynamic>)['items'] as List<dynamic>);
+        } catch (_) {
+          continue;
+        }
+        for (final item in items) {
+          final brandName = item['brandName'];
+          final unitsSaled = int.tryParse(item['sale'].toString()) ?? 0;
+          double tradeRate = 0.0;
+          if (item.containsKey('tradeRate') && item['tradeRate'] != null && item['tradeRate'].toString().isNotEmpty) {
+            tradeRate = double.tryParse(item['tradeRate'].toString()) ?? 0.0;
+          } else {
+            final prod = getProductByBrand(brandName);
+            if (prod != null && prod['salePrice'] != null) {
+              tradeRate = double.tryParse(prod['salePrice'].toString()) ?? 0.0;
+            }
+          }
+          totalUnits += unitsSaled;
+          totalValue += tradeRate * unitsSaled;
+        }
+      }
       if (!mounted) return;
-
       setState(() {
-        _totalProducts = products.length;
-        _totalShops = shops.length;
-        _totalManPower = manPowers.length;
-        _totalIncome = totalIncome;
-        _totalExpenditure = totalExpenditure;
+        _primarySaleUnits = totalUnits;
+        _primarySaleValue = totalValue;
         _isLoading = false;
       });
     } catch (e) {
@@ -95,24 +92,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  Widget _buildSummaryCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required Color backgroundColor,
-  }) {
+  Widget _buildPrimarySaleCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(15),
+        gradient: LinearGradient(
+          colors: [
+            Colors.deepPurple.shade400,
+            Colors.deepPurple.shade100,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.deepPurple.withOpacity(0.18),
+            spreadRadius: 4,
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -122,33 +120,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              const Text(
+                'Primary Sale',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(icon, color: color, size: 24),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(16),
+                child: const Icon(
+                  Icons.bar_chart,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+          const SizedBox(height: 32),
+          Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.confirmation_num, color: Colors.white, size: 28),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Units',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _primarySaleUnits.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(width: 24),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.stay_current_landscape, color: Colors.white, size: 28),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Value',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _formatIndianNumber(_primarySaleValue),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -181,148 +240,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 8),
           Text(
             'Welcome back! Here\'s your business overview',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Switch(
-                value: _isRange,
-                onChanged: (val) {
-                  setState(() {
-                    _isRange = val;
-                  });
-                },
-                activeColor: Colors.deepPurple,
-              ),
-              Text(
-                _isRange ? 'Range Picker' : 'Single Date Picker',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(width: 16),
-              if (!_isRange)
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.calendar_today, size: 18),
-                  label: Text(
-                    _selectedDate != null
-                        ? DateFormat('dd-MMMM-yyyy').format(_selectedDate!)
-                        : 'Select Date',
-                  ),
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate ?? DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2101),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _selectedDate = picked;
-                      });
-                      _loadDashboardData();
-                    }
-                  },
-                ),
-              if (_isRange)
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.date_range, size: 18),
-                  label: Text(
-                    _selectedRange != null
-                        ? '${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.start)} - ${DateFormat('dd-MMMM-yyyy').format(_selectedRange!.end)}'
-                        : 'Select Date Range',
-                  ),
-                  onPressed: () async {
-                    final picked = await showDateRangePicker(
-                      context: context,
-                      initialDateRange: _selectedRange,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2101),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _selectedRange = picked;
-                      });
-                      _loadDashboardData();
-                    }
-                  },
-                ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSummaryCard(
-                  title: 'Total Income',
-                  value: 'Rs. ${_formatIndianNumber(_totalIncome)}',
-                  icon: Icons.account_balance_wallet,
-                  color: Colors.green,
-                  backgroundColor: Colors.green.shade50,
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: _buildSummaryCard(
-                  title: 'Total Expenditure',
-                  value: 'Rs. ${_formatIndianNumber(_totalExpenditure)}',
-                  icon: Icons.shopping_cart,
-                  color: Colors.orange,
-                  backgroundColor: Colors.orange.shade50,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: const [
-              Expanded(child: Divider(thickness: 2)),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  'Other Overview',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                  ),
-                ),
-              ),
-              Expanded(child: Divider(thickness: 2)),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSummaryCard(
-                  title: 'Total Products',
-                  value: _totalProducts.toString(),
-                  icon: Icons.inventory_2,
-                  color: Colors.purple,
-                  backgroundColor: Colors.purple.shade50,
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: _buildSummaryCard(
-                  title: 'Total Shops',
-                  value: _totalShops.toString(),
-                  icon: Icons.store,
-                  color: Colors.indigo,
-                  backgroundColor: Colors.indigo.shade50,
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: _buildSummaryCard(
-                  title: 'Total Man Power',
-                  value: _totalManPower.toString(),
-                  icon: Icons.people,
-                  color: Colors.teal,
-                  backgroundColor: Colors.teal.shade50,
-                ),
-              ),
-            ],
-          ),
+          _buildPrimarySaleCard(),
         ],
       ),
     );

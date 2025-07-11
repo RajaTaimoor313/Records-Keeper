@@ -1,29 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/tabs/cash_flow/cash_flow_screen.dart';
-import 'package:records_keeper/tabs/credit/ledger_tab.dart';
-import 'package:records_keeper/tabs/credit/realisation_tab.dart';
-import 'package:records_keeper/tabs/creditors/add_creditors.dart';
-import 'package:records_keeper/tabs/dashboard/dashboard_screen.dart';
-import 'package:records_keeper/tabs/history/history_tab.dart';
-import 'package:records_keeper/tabs/reports/sale_report.dart';
-import 'package:records_keeper/tabs/reports/stock_report.dart';
-import 'package:records_keeper/tabs/sales/invoice_tab.dart';
-import 'package:records_keeper/tabs/sales/load_form.dart';
-import 'package:records_keeper/tabs/sales/pick_list_tab.dart';
-import 'package:records_keeper/tabs/sales/view_invoices_tab.dart';
-import 'package:records_keeper/tabs/shops/add_shop_tab.dart';
-import 'package:records_keeper/tabs/shops/view_shops_tab.dart';
-import 'package:records_keeper/tabs/stock/add_stock_tab.dart';
-import 'package:records_keeper/tabs/stock/stock_summary_tab.dart';
-import 'package:records_keeper/tabs/stock/stock_tab.dart';
-import 'package:records_keeper/tabs/stock/view_products_tab.dart';
-import 'package:records_keeper/tabs/suppliers/add_supplier_tab.dart';
-import 'package:records_keeper/tabs/suppliers/view_suppliers_tab.dart';
-import 'package:records_keeper/tabs/accounts/assets_screen.dart';
-import 'package:records_keeper/tabs/accounts/profit_loss_tab.dart';
-import 'tabs/cash_flow/day_end_summary_tab.dart';
-import 'package:records_keeper/tabs/creditors/view_creditors.dart';
-import 'package:records_keeper/tabs/backup/backup_dialog.dart';
+import 'package:haider_traders/tabs/cash_flow/cash_flow_screen.dart';
+import 'package:haider_traders/tabs/creditors/add_creditors.dart';
+import 'package:haider_traders/tabs/dashboard/dashboard_screen.dart';
+import 'package:haider_traders/tabs/debitors/ledger_tab.dart';
+import 'package:haider_traders/tabs/debitors/realisation_tab.dart';
+import 'package:haider_traders/tabs/history/history_tab.dart';
+import 'package:haider_traders/tabs/reports/sale_report.dart';
+import 'package:haider_traders/tabs/reports/stock_report.dart';
+import 'package:haider_traders/tabs/sales/invoice_tab.dart';
+import 'package:haider_traders/tabs/sales/load_form.dart';
+import 'package:haider_traders/tabs/sales/pick_list_tab.dart';
+import 'package:haider_traders/tabs/sales/view_invoices_tab.dart';
+import 'package:haider_traders/tabs/shops/add_shop_tab.dart';
+import 'package:haider_traders/tabs/shops/view_shops_tab.dart';
+import 'package:haider_traders/tabs/stock/add_stock_tab.dart';
+import 'package:haider_traders/tabs/stock/stock_summary_tab.dart';
+import 'package:haider_traders/tabs/stock/stock_tab.dart';
+import 'package:haider_traders/tabs/stock/view_products_tab.dart';
+import 'package:haider_traders/tabs/suppliers/add_supplier_tab.dart';
+import 'package:haider_traders/tabs/suppliers/view_suppliers_tab.dart';
+import 'package:haider_traders/tabs/accounts/assets_screen.dart';
+import 'package:haider_traders/tabs/accounts/profit_loss_tab.dart';
+import 'package:haider_traders/tabs/cash_flow/day_end_summary_tab.dart';
+import 'package:haider_traders/tabs/creditors/payments_tab.dart';
+import 'package:haider_traders/tabs/creditors/creditors_summary.dart';
+import 'package:haider_traders/tabs/backup/backup_dialog.dart';
+import 'package:intl/intl.dart';
+import 'package:haider_traders/database_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -177,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const Expanded(
             child: Text(
-              'Accounts Holder',
+              'Haider Traders',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -217,10 +220,23 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
               child: Center(
-                child: Image.asset(
-                  'assets/logo.png',
-                  height: 60,
-                  fit: BoxFit.contain,
+                child: Text(
+                  'Haider Traders',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                    color: Colors.deepPurple.shade700,
+                    fontFamily: 'Segoe Script',
+                    shadows: [
+                      Shadow(
+                        blurRadius: 8,
+                        color: Colors.deepPurple.withOpacity(0.15),
+                        offset: Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
@@ -236,8 +252,8 @@ class _HomeScreenState extends State<HomeScreen>
                   _buildSalesItem(),
                   _buildReportsItem(),
                   _buildCreditorsItem(),
+                  _buildDebitorsItem(),
                   _buildAccountsItem(),
-                  _buildCreditItem(),
                   _buildHistoryItem(),
                   _buildBackupItem(),
                 ],
@@ -342,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 _buildCashFlowSubItem('Income'),
                 _buildCashFlowSubItem('Expenditure'),
-                _buildCashFlowSubItem('B/F'),
+                _buildCashFlowSubItem('Cash In Hand'),
                 _buildCashFlowSubItem('Day end Summary'),
               ],
             ),
@@ -445,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 _buildStockSubItem('Add New Product'),
                 _buildStockSubItem('View Products'),
-                _buildStockSubItem('Add Stock'),
+                _buildStockSubItem('Primary Sale'),
                 _buildStockSubItem('Stock Summary'),
               ],
             ),
@@ -856,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen>
             child: Column(
               children: [
                 _buildReportsSubItem('Stock'),
-                _buildReportsSubItem('Sale'),
+                _buildReportsSubItem('Secondary Sale Summary'),
               ],
             ),
           ),
@@ -1001,7 +1017,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildCreditItem() {
+  Widget _buildDebitorsItem() {
     return Column(
       children: [
         ListTile(
@@ -1011,7 +1027,7 @@ class _HomeScreenState extends State<HomeScreen>
             width: 24,
             height: 24,
             child: Icon(
-              Icons.credit_score_rounded,
+              Icons.account_balance_wallet_rounded,
               size: 20,
               color: (_selectedIndex == 14 && _creditSubTab != null)
                   ? Colors.deepPurple
@@ -1021,7 +1037,7 @@ class _HomeScreenState extends State<HomeScreen>
           title: Row(
             children: [
               Text(
-                'Credit',
+                'Debitors',
                 style: TextStyle(
                   color: (_selectedIndex == 14 && _creditSubTab != null)
                       ? Colors.deepPurple
@@ -1154,13 +1170,14 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: _creditorsExpanded ? 96 : 0,
+          height: _creditorsExpanded ? (3 * 48.0) : 0,
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
             child: Column(
               children: [
                 _buildCreditorsSubItem('Add'),
-                _buildCreditorsSubItem('View'),
+                _buildCreditorsSubItem('Creditors Summary'),
+                _buildCreditorsSubItem('Payments'),
               ],
             ),
           ),
@@ -1277,7 +1294,7 @@ class _HomeScreenState extends State<HomeScreen>
         if (_cashFlowSubTab == 'Day end Summary') {
           return const DayEndSummaryTab();
         }
-        return CashFlowScreen(initialTab: _cashFlowSubTab);
+        return CashFlowScreen(initialTab: _cashFlowSubTab == 'Cash In Hand' ? 'Cash In Hand' : _cashFlowSubTab);
       case 2:
         if (_stockSubTab == null) {
           return _buildStockEmptyState();
@@ -1285,7 +1302,7 @@ class _HomeScreenState extends State<HomeScreen>
         switch (_stockSubTab) {
           case 'Add New Product':
             return const StockTab();
-          case 'Add Stock':
+          case 'Primary Sale':
             return const StockReportTab();
           case 'Stock Summary':
             return const StockSummaryTab();
@@ -1338,7 +1355,7 @@ class _HomeScreenState extends State<HomeScreen>
         }
       case 14:
         if (_creditSubTab == null) {
-          return _buildPlaceholder('Credit');
+          return _buildPlaceholder('Debitors');
         }
         switch (_creditSubTab) {
           case 'Ledger':
@@ -1346,7 +1363,7 @@ class _HomeScreenState extends State<HomeScreen>
           case 'Realisation':
             return const RealisationTab();
           default:
-            return _buildPlaceholder('Credit - $_creditSubTab');
+            return _buildPlaceholder('Debitors - $_creditSubTab');
         }
       case 15:
         return const HistoryTab();
@@ -1357,7 +1374,7 @@ class _HomeScreenState extends State<HomeScreen>
         switch (_reportsSubTab) {
           case 'Stock':
             return const StockReport();
-          case 'Sale':
+          case 'Secondary Sale Summary':
             return const SaleReport();
           default:
             return _buildPlaceholder('Reports - $_reportsSubTab');
@@ -1369,8 +1386,10 @@ class _HomeScreenState extends State<HomeScreen>
         switch (_creditorsSubTab) {
           case 'Add':
             return const AddCreditors();
-          case 'View':
-            return const ViewCreditors();
+          case 'Creditors Summary':
+            return const CreditorsSummary();
+          case 'Payments':
+            return const PaymentsTab();
           default:
             return _buildPlaceholder('Creditors -  [4m_creditorsSubTab [24m');
         }
@@ -1382,7 +1401,7 @@ class _HomeScreenState extends State<HomeScreen>
           case 'Profit & Loss':
             return const ProfitLossTab();
           case 'Balance Sheet':
-            return _buildPlaceholder('Accounts - Balance Sheet');
+            return _buildBalanceSheetCardsWithValues();
           case 'Assets':
             return const AssetsScreen();
           default:
@@ -1414,7 +1433,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Choose Income, Expenditure, B/F, or Day end Summary from the menu',
+            'Choose Income, Expenditure, Cash In Hand, or Day end Summary from the menu',
             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
         ],
@@ -1527,6 +1546,296 @@ class _HomeScreenState extends State<HomeScreen>
             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
         ],
+      ),
+    );
+  }
+
+
+
+  Widget _buildBalanceSheetCardsWithValues() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchBalanceSheetValues(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final data = snapshot.data!;
+        final investment = (data['cash'] ?? 0) + (data['debitors'] ?? 0) + (data['assets'] ?? 0) + (data['stock'] ?? 0) - (data['creditors'] ?? 0);
+        final cards = [
+          _EnhancedBalanceCard(
+            title: 'Cash',
+            icon: Icons.attach_money,
+            value: data['cash'],
+            tooltip: 'Balance of current date from Cash In Hand',
+          ),
+          _EnhancedBalanceCard(
+            title: 'Debitors',
+            icon: Icons.people_outline,
+            value: data['debitors'],
+            tooltip: 'Total Debtors from Ledger',
+          ),
+          _EnhancedBalanceCard(
+            title: 'Assets',
+            icon: Icons.pie_chart_outline,
+            value: data['assets'],
+            tooltip: 'Total Assets from Accounts',
+          ),
+          _EnhancedBalanceCard(
+            title: 'Stock',
+            icon: Icons.inventory_2_outlined,
+            value: data['stock'],
+            tooltip: 'Value from Closing Stock (Total)',
+          ),
+          _EnhancedBalanceCard(
+            title: 'Creditors',
+            icon: Icons.people_alt_outlined,
+            value: data['creditors'],
+            tooltip: 'Total Creditors from Creditors Summary',
+          ),
+        ];
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 600;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 24),
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.deepPurple.shade400, Colors.deepPurple.shade100],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurple.withOpacity(0.08),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.balance, size: 48, color: Colors.white),
+                        const SizedBox(width: 20),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Balance Sheet',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Overview of your financial position',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutCubic,
+                    margin: const EdgeInsets.only(bottom: 28),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.purple.shade50, Colors.deepPurple.shade100],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurple.withOpacity(0.07),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 28),
+                      child: Row(
+                        children: [
+                          Icon(Icons.account_balance, size: 54, color: Colors.deepPurple.shade400),
+                          const SizedBox(width: 28),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Investment',
+                                  style: TextStyle(
+                                    fontSize: 34,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple.shade700,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Rs. ${_formatIndianNumber(investment)}',
+                                  style: TextStyle(
+                                    fontSize: 30,
+                                    fontWeight: FontWeight.bold,
+                                    color: investment >= 0 ? Colors.green : Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Tooltip(
+                            message: 'Investment = Cash + Debtors + Assets + Stock - Creditors',
+                            child: Icon(Icons.info_outline, color: Colors.deepPurple.shade300),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: isWide
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: cards
+                                .map((c) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: c)))
+                                .toList(),
+                          )
+                        : Column(
+                            children: cards
+                                .map((c) => Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      child: c,
+                                    ))
+                                .toList(),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _formatIndianNumber(num value) {
+    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2);
+    return formatter.format(value).trim();
+  }
+
+  Future<Map<String, dynamic>> _fetchBalanceSheetValues() async {
+    final db = DatabaseHelper.instance;
+    final today = DateTime.now();
+    final todayStr = '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final bfSummary = await db.getBFSummaryByDate(todayStr);
+    final cash = bfSummary != null ? (bfSummary['net_balance'] ?? bfSummary['balance'] ?? 0.0) : 0.0;
+
+    final ledgerBalances = await db.database.then((dbInst) => dbInst.rawQuery('''
+      SELECT SUM(debit) as totalDebit, SUM(credit) as totalCredit FROM ledger
+    '''));
+    final totalDebit = (ledgerBalances.first['totalDebit'] as num?) ?? 0.0;
+    final totalCredit = (ledgerBalances.first['totalCredit'] as num?) ?? 0.0;
+    final debitors = totalDebit - totalCredit;
+
+    final assetsRows = await db.database.then((dbInst) => dbInst.rawQuery('SELECT SUM(value) as total FROM assets'));
+    final assets = (assetsRows.first['total'] as num?) ?? 0.0;
+
+    final stockRows = await db.database.then((dbInst) => dbInst.rawQuery('''
+      SELECT p.id, p.boxRate, sr.closing_stock_total FROM products p
+      LEFT JOIN stock_records sr ON p.id = sr.product_id
+      WHERE sr.date = (SELECT MAX(date) FROM stock_records WHERE product_id = p.id)
+    '''));
+    num stock = 0.0;
+    for (final row in stockRows) {
+      final closingStock = (row['closing_stock_total'] as num?) ?? 0.0;
+      final boxRate = (row['boxRate'] as num?) ?? 0.0;
+      stock += closingStock * boxRate;
+    }
+
+    final creditorsRows = await db.database.then((dbInst) => dbInst.rawQuery('SELECT SUM(balance) as total FROM creditors'));
+    final creditors = (creditorsRows.first['total'] as num?) ?? 0.0;
+
+    return {
+      'cash': cash,
+      'debitors': debitors,
+      'assets': assets,
+      'stock': stock,
+      'creditors': creditors,
+    };
+  }
+}
+
+class _EnhancedBalanceCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final num? value;
+  final String tooltip;
+  const _EnhancedBalanceCard({required this.title, required this.icon, required this.value, required this.tooltip});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPositive = (value ?? 0) >= 0;
+    return Tooltip(
+      message: tooltip,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, isPositive ? Colors.green.shade50 : Colors.red.shade50],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.07),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 32, color: Colors.deepPurple.shade300),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: Colors.deepPurple.shade700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value == null ? '--' : 'Rs. ${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format(value)}',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isPositive ? Colors.green : Colors.red,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

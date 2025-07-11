@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 
 class Product {
   final String id;
@@ -77,7 +77,6 @@ class _StockTabState extends State<StockTab> {
   List<Product> productRecords = [];
   List<Product> filteredRecords = [];
 
-  // Form controllers
   final TextEditingController _companyController = TextEditingController();
   final TextEditingController _brandController = TextEditingController();
   final TextEditingController _brandCategoryController = TextEditingController();
@@ -352,7 +351,6 @@ class _StockTabState extends State<StockTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Company Field
             TextFormField(
               controller: _companyController,
               decoration: InputDecoration(
@@ -391,7 +389,6 @@ class _StockTabState extends State<StockTab> {
             ),
             const SizedBox(height: 16),
 
-            // Brand Field
             TextFormField(
               controller: _brandController,
               decoration: InputDecoration(
@@ -429,7 +426,6 @@ class _StockTabState extends State<StockTab> {
               },
             ),
             const SizedBox(height: 16),
-            // Brand Category Field
             TextFormField(
               controller: _brandCategoryController,
               decoration: InputDecoration(
@@ -468,7 +464,6 @@ class _StockTabState extends State<StockTab> {
             ),
             const SizedBox(height: 16),
 
-            // Invoice Rate Section
             const Text(
               'Invoice Rate',
               style: TextStyle(
@@ -557,7 +552,6 @@ class _StockTabState extends State<StockTab> {
             ),
             const SizedBox(height: 16),
 
-            // Trade Rate Section
             const Text(
               'Trade Rate',
               style: TextStyle(
@@ -606,7 +600,6 @@ class _StockTabState extends State<StockTab> {
             ),
             const SizedBox(height: 16),
 
-            // Packing Section
             const Text(
               'Packing',
               style: TextStyle(
@@ -757,7 +750,6 @@ class _StockTabState extends State<StockTab> {
             ),
             const SizedBox(height: 24),
 
-            // Action Buttons
             Row(
               children: [
                 Expanded(

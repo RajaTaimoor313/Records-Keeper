@@ -4,8 +4,8 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
-import 'package:records_keeper/database_helper.dart';
-import 'package:records_keeper/tabs/sales/invoice_tab.dart';
+import 'package:haider_traders/database_helper.dart';
+import 'package:haider_traders/tabs/sales/invoice_tab.dart';
 
 class ViewInvoicesTab extends StatefulWidget {
   const ViewInvoicesTab({super.key});

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 import 'package:intl/intl.dart';
 
 class ViewAssetsTab extends StatefulWidget {
-  const ViewAssetsTab({super.key});
+  final void Function(double)? onTotalAssetsChanged;
+  const ViewAssetsTab({super.key, this.onTotalAssetsChanged});
 
   @override
   State<ViewAssetsTab> createState() => _ViewAssetsTabState();
@@ -46,6 +47,7 @@ class _ViewAssetsTabState extends State<ViewAssetsTab> {
         _filteredAssets = results;
         _isLoading = false;
       });
+      _notifyTotalAssets();
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -78,6 +80,14 @@ class _ViewAssetsTabState extends State<ViewAssetsTab> {
         }).toList();
       }
     });
+    _notifyTotalAssets();
+  }
+
+  void _notifyTotalAssets() {
+    if (widget.onTotalAssetsChanged != null) {
+      final total = _assets.fold<double>(0.0, (sum, asset) => sum + (asset['value'] ?? 0.0));
+      widget.onTotalAssetsChanged!(total);
+    }
   }
 
   Future<void> _deleteAsset(int id) async {

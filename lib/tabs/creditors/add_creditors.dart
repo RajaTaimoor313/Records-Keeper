@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/database_helper.dart';
+import 'package:haider_traders/database_helper.dart';
 
 class AddCreditors extends StatefulWidget {
   const AddCreditors({super.key});
@@ -47,7 +47,25 @@ class _AddCreditorsState extends State<AddCreditors> {
         'concern': concern,
         'person': person,
       };
-      await DatabaseHelper.instance.insertCreditor(creditor);
+      final creditorId = await DatabaseHelper.instance.insertCreditor(creditor);
+      if (balance != 0) {
+        final now = DateTime.now();
+        final dateStr = "${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+        double debit = 0, credit = 0;
+        if (balance > 0) {
+          debit = balance;
+        } else {
+          credit = -balance;
+        }
+        await DatabaseHelper.instance.insertCreditorTransaction({
+          'creditor_id': creditorId,
+          'date': dateStr,
+          'details': 'Opening Balance',
+          'debit': debit,
+          'credit': credit,
+          'balance': balance,
+        });
+      }
       if (!mounted) return;
       setState(() {
         _isLoading = false;

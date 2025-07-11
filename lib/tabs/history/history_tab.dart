@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:records_keeper/tabs/history/cash_income_history_screen.dart';
-import 'package:records_keeper/tabs/reports/sale_report.dart';
+import 'package:haider_traders/tabs/history/cash_income_history_screen.dart';
+import 'package:haider_traders/tabs/reports/sale_report.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -64,6 +64,26 @@ class _HistoryTabState extends State<HistoryTab> {
                 subtitle: 'View all past load forms.',
                 onTap: () {
                   Navigator.pushNamed(context, '/load-form-history');
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildHistoryOption(
+                context,
+                icon: Icons.money_off,
+                title: 'Expenditure History',
+                subtitle: 'View all past expenditure records.',
+                onTap: () {
+                  Navigator.pushNamed(context, '/expenditure-history');
+                },
+              ),
+              const SizedBox(height: 20),
+              _buildHistoryOption(
+                context,
+                icon: Icons.attach_money,
+                title: 'Income History',
+                subtitle: 'View all past income records.',
+                onTap: () {
+                  Navigator.pushNamed(context, '/income-history');
                 },
               ),
               const SizedBox(height: 20),
