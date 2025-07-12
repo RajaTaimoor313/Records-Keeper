@@ -3,6 +3,7 @@ import 'package:haider_traders/database_config.dart';
 import 'package:haider_traders/splash_screen.dart';
 import 'package:haider_traders/tabs/history/load_form_history_screen.dart';
 import 'package:haider_traders/tabs/history/pick_list_history_screen.dart';
+import 'package:haider_traders/tabs/history/sales_history_screen.dart';
 import 'package:haider_traders/tabs/history/expenditure_history_screen.dart';
 import 'package:haider_traders/tabs/history/income_history_screen.dart';
 import 'package:haider_traders/tabs/sales/pick_list_detail_screen.dart';
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
     routes: {
       '/pick-list-history': (context) => const PickListHistoryScreen(),
       '/pick-list-detail': (context) => const PickListDetailScreen(),
+      '/sales-history': (context) => const SalesHistoryScreen(),
       '/load-form-history': (context) => const LoadFormHistoryScreen(),
       '/load-form-detail': (context) => const LoadFormDetailScreen(),
       '/expenditure-history': (context) => const ExpenditureHistoryScreen(),

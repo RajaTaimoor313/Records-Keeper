@@ -4,7 +4,9 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 
 class SaleReport extends StatefulWidget {
-  const SaleReport({super.key});
+  final String? selectedDate;
+  
+  const SaleReport({super.key, this.selectedDate});
 
   @override
   State<SaleReport> createState() => _SaleReportState();
@@ -24,9 +26,9 @@ class _SaleReportState extends State<SaleReport> {
   Future<void> _loadData() async {
     setState(() => isLoading = true);
     final history = await DatabaseHelper.instance.getLoadFormHistory();
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final targetDate = widget.selectedDate ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
     setState(() {
-      loadFormHistory = history.where((entry) => entry['date'] == today).toList();
+      loadFormHistory = history.where((entry) => entry['date'] == targetDate).toList();
       isLoading = false;
     });
   }
@@ -64,15 +66,58 @@ class _SaleReportState extends State<SaleReport> {
     return detailed;
   }
 
+
   @override
   Widget build(BuildContext context) {
     final indianFormat = NumberFormat.decimalPattern('en_IN');
+    final targetDate = widget.selectedDate ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final isToday = widget.selectedDate == null;
+    
     return Scaffold(
-      appBar: AppBar(title: const Text('Secondary Sale Summary')),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : loadFormHistory.isEmpty
-              ? const Center(child: Text('No data for today.'))
+      appBar: AppBar(
+        title: Text('Secondary Sale Summary${isToday ? '' : ' - $targetDate'}'),
+        // actions: [
+        //   if (isToday && loadFormHistory.isNotEmpty)
+        //     IconButton(
+        //       icon: const Icon(Icons.save),
+        //       tooltip: 'Save to History',
+        //       onPressed: () => _saveToHistory(),
+        //     ),
+        // ],
+      ),
+              body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : loadFormHistory.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.receipt_long,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          isToday ? 'No data for today.' : 'No data for $targetDate',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        if (isToday) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Add items to the Load Form to see data here.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
               : ListView.builder(
                   itemCount: loadFormHistory.length,
                   itemBuilder: (context, idx) {

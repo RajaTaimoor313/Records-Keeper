@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:haider_traders/tabs/history/cash_income_history_screen.dart';
-import 'package:haider_traders/tabs/reports/sale_report.dart';
+import 'package:haider_traders/tabs/history/sales_history_screen.dart';
 
 class HistoryTab extends StatefulWidget {
   const HistoryTab({super.key});
@@ -42,7 +42,7 @@ class _HistoryTabState extends State<HistoryTab> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SaleReport()),
+                    MaterialPageRoute(builder: (context) => const SalesHistoryScreen()),
                   );
                 },
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:haider_traders/database_helper.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 class IncomeData {
   final String date;
@@ -59,20 +60,69 @@ class _IncomeTabState extends State<IncomeTab> {
   List<IncomeData> incomeRecords = [];
   List<IncomeData> filteredRecords = [];
   bool isLoading = true;
+  
+  // Date tracking for auto-clear functionality
+  String? lastKnownDate;
+  Timer? _dateCheckTimer;
 
   @override
   void initState() {
     super.initState();
     _loadIncomeRecords();
+    _initializeDateTracking();
+    _startDateChecking();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check for date changes when the widget becomes visible
+    _checkDateChange();
   }
 
   @override
   void dispose() {
+    _dateCheckTimer?.cancel();
     searchController.dispose();
     dateController.dispose();
     detailsController.dispose();
     amountController.dispose();
     super.dispose();
+  }
+
+  void _initializeDateTracking() {
+    lastKnownDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  }
+
+  void _startDateChecking() {
+    // Check for date changes every minute
+    _dateCheckTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _checkDateChange();
+    });
+  }
+
+  void _checkDateChange() {
+    final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    
+    if (lastKnownDate != null && lastKnownDate != currentDate) {
+      // Date has changed, clear the view data section and filter to current date
+      // This ensures that when a new day starts, the user sees only current day's data
+      setState(() {
+        showAddForm = false;
+        filterCategory = null;
+        sortBy = null;
+        searchController.clear();
+      });
+      lastKnownDate = currentDate;
+      
+      // Reload data and then filter to current date
+      _loadIncomeRecords().then((_) {
+        setState(() {
+          // Filter to show only current date's records
+          filteredRecords = incomeRecords.where((record) => record.date == currentDate).toList();
+        });
+      });
+    }
   }
 
   String _formatIndianNumber(double value) {
@@ -91,11 +141,14 @@ class _IncomeTabState extends State<IncomeTab> {
 
     try {
       final records = await DatabaseHelper.instance.getIncomes();
+      final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      
       setState(() {
         incomeRecords = records
             .map((record) => IncomeData.fromMap(record))
             .toList();
-        filteredRecords = List.from(incomeRecords);
+        // Filter to show only current date's records by default
+        filteredRecords = incomeRecords.where((record) => record.date == currentDate).toList();
         isLoading = false;
       });
     } catch (e) {

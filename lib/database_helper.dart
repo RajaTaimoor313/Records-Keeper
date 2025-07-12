@@ -7,7 +7,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
   static bool _isInitialized = false;
-  static const int schemaVersion = 1;
+  static const int schemaVersion = 2;
   static const String appVersion = '1.0.0';
   static String? _customDbPath; // <-- Add this line
 
@@ -42,9 +42,26 @@ class DatabaseHelper {
     }
     return await openDatabase(
       path,
-      version: 1,
+      version: schemaVersion,
       onCreate: _createDB,
-      onUpgrade: (db, oldVersion, newVersion) async {},
+      onUpgrade: (db, oldVersion, newVersion) async {
+        // Migration: create daily_sales table if it does not exist
+        final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='daily_sales'");
+        if (tables.isEmpty) {
+          await db.execute('''
+            CREATE TABLE daily_sales (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              date TEXT NOT NULL,
+              primary_sale_units INTEGER NOT NULL DEFAULT 0,
+              primary_sale_value REAL NOT NULL DEFAULT 0,
+              secondary_sale_units INTEGER NOT NULL DEFAULT 0,
+              secondary_sale_value REAL NOT NULL DEFAULT 0,
+              created_at TEXT NOT NULL,
+              UNIQUE(date)
+            )
+          ''');
+        }
+      },
       onOpen: (db) async {
         final columns = await db.rawQuery("PRAGMA table_info(products)");
         final hasBrandCategory = columns.any(
@@ -63,6 +80,43 @@ class DatabaseHelper {
           await db.execute(
             "ALTER TABLE shops ADD COLUMN previousBalance REAL NOT NULL DEFAULT 0",
           );
+        }
+        // MIGRATION: Ensure sales_history table exists
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS sales_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            data TEXT NOT NULL
+          )
+        ''');
+
+        // AUTO-TRANSFER: Move previous day's load_form data to sales_history
+        final loadFormRows = await db.query('load_form');
+        if (loadFormRows.isNotEmpty) {
+          // Assume all rows are for the same date (or use the latest date in data)
+          final today = DateTime.now();
+          // Try to get the last saved date from load_form_history (if available)
+          // Otherwise, use today
+          String todayStr = '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+          // If any row is not for today, transfer
+          // (Assume load_form does not have a date column, so we use the app date)
+          // If you have a date column, use it here for more accuracy
+          // For now, always transfer on app open if not today
+          final loadFormHistoryRows = await db.query('load_form_history', orderBy: 'date DESC', limit: 1);
+          String? lastLoadFormDate = loadFormHistoryRows.isNotEmpty ? loadFormHistoryRows.first['date'] as String? : null;
+          if (lastLoadFormDate != null && lastLoadFormDate != todayStr) {
+            // Move to sales_history
+            final data = jsonEncode({
+              'date': lastLoadFormDate,
+              'items': loadFormRows,
+            });
+            await db.insert('sales_history', {
+              'date': lastLoadFormDate,
+              'data': data,
+            });
+            // Clear load_form
+            await db.delete('load_form');
+          }
         }
       },
     );
@@ -199,6 +253,19 @@ class DatabaseHelper {
       ''');
 
       await txn.execute('''
+        CREATE TABLE daily_sales (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          primary_sale_units INTEGER NOT NULL DEFAULT 0,
+          primary_sale_value REAL NOT NULL DEFAULT 0,
+          secondary_sale_units INTEGER NOT NULL DEFAULT 0,
+          secondary_sale_value REAL NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          UNIQUE(date)
+        )
+      ''');
+
+      await txn.execute('''
         CREATE TABLE suppliers (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
@@ -251,6 +318,14 @@ class DatabaseHelper {
 
       await txn.execute('''
         CREATE TABLE load_form_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          data TEXT NOT NULL
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE sales_history (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           date TEXT NOT NULL,
           data TEXT NOT NULL
@@ -501,6 +576,9 @@ class DatabaseHelper {
       'items': jsonEncode(invoice['items']),
       'date': (invoice['date'] ?? DateTime.now()).toIso8601String(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
+    
+    // Also save to sales history
+    await _addInvoiceToSalesHistory(invoice);
   }
 
   Future<List<Map<String, dynamic>>> getInvoices() async {
@@ -1022,6 +1100,39 @@ class DatabaseHelper {
     return await db.query('load_form_history', orderBy: 'date DESC');
   }
 
+  Future<int> addSalesHistory(String date, String data) async {
+    final db = await instance.database;
+    return await db.insert('sales_history', {'date': date, 'data': data});
+  }
+
+  Future<List<Map<String, dynamic>>> getSalesHistory() async {
+    final db = await instance.database;
+    return await db.query('sales_history', orderBy: 'date DESC');
+  }
+
+  Future<Map<String, dynamic>?> getSalesHistoryByDate(String date) async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'sales_history',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return null;
+  }
+
+  Future<void> populateSalesHistoryFromInvoices() async {
+    // This method is kept for backward compatibility but not used for load form data
+    // Load form data is saved directly through addSalesHistory method
+  }
+
+  Future<void> _addInvoiceToSalesHistory(Map<String, dynamic> invoice) async {
+    // This method is kept for backward compatibility but not used for load form data
+    // Load form data is saved directly through addSalesHistory method
+  }
+
   Future<void> clearLoadForm() async {
     final db = await database;
     await db.delete('load_form');
@@ -1298,5 +1409,55 @@ class DatabaseHelper {
   Future<int> deleteTodayIncome(String date) async {
     final db = await instance.database;
     return await db.delete('income', where: 'date = ?', whereArgs: [date]);
+  }
+
+  // Daily Sales Methods
+  Future<void> saveDailySales(String date, int primaryUnits, double primaryValue, int secondaryUnits, double secondaryValue) async {
+    final db = await instance.database;
+    await db.insert(
+      'daily_sales',
+      {
+        'date': date,
+        'primary_sale_units': primaryUnits,
+        'primary_sale_value': primaryValue,
+        'secondary_sale_units': secondaryUnits,
+        'secondary_sale_value': secondaryValue,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<Map<String, dynamic>?> getDailySales(String date) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'daily_sales',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<List<Map<String, dynamic>>> getDailySalesHistory({int limit = 30}) async {
+    final db = await instance.database;
+    return await db.query(
+      'daily_sales',
+      orderBy: 'date DESC',
+      limit: limit,
+    );
+  }
+
+  Future<void> clearDailySales(String date) async {
+    final db = await instance.database;
+    await db.delete(
+      'daily_sales',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
+  }
+
+  Future<String> getCurrentDate() async {
+    final now = DateTime.now();
+    return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 }

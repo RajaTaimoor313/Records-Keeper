@@ -1375,7 +1375,7 @@ class _HomeScreenState extends State<HomeScreen>
           case 'Stock':
             return const StockReport();
           case 'Secondary Sale Summary':
-            return const SaleReport();
+            return const SaleReport(selectedDate: null);
           default:
             return _buildPlaceholder('Reports - $_reportsSubTab');
         }
